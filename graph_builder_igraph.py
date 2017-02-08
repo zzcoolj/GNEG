@@ -3,13 +3,14 @@ import matplotlib.pyplot as plt
 import core_dec
 from itertools import islice
 import string
+import pickle
 
 # import common.py file from another directory
 import sys
 sys.path.insert(0, '../common/')
 import common
 
-window_size = 10
+window_size = 12
 
 # Initialize graph
 # Graph is weighted, directed
@@ -97,13 +98,13 @@ def graph_builder(file_path):
     for sent in text:
         encoded_sent = []
 
-        # TODO remove punctuation
+        # TODO remove punctuation, may not so efficient
         translator = str.maketrans('', '', string.punctuation)
         sent = sent.translate(translator)
 
         # update the dictionary
         for word in common.tokenize_text_into_words(sent):
-            # TODO All words are in lowercase so far.
+            # TODO All words are in lowercase so far, may change after
             word = word.lower()
             if word not in word2id:
                 id = len(word2id)
@@ -123,27 +124,30 @@ def graph_builder(file_path):
 
 
 def show_detailed_information():
-    print(word2id, "\n************\n",  id2word)
-    print(G)
-    print("degree ->", G.degree(G.vs))
-    print("strength ->", G.strength(G.vs, weights=G.es["weight"]))
+    # print(word2id, "\n************\n",  id2word)
+    # print(G)
+    # print("degree ->", G.degree(G.vs))
+    # print("strength ->", G.strength(G.vs, weights=G.es["weight"]))
     # print(G.es["weight"])
+    print("k-core weighted ->", sorted_cores_g)
 
 
-def get_k_core():
-    G.vs["weight"] = G.strength(G.vs, weights=G.es["weight"])
-    # print("k-core unweighted ->", core_dec.core_dec(G, weighted=False))
-    return core_dec.core_dec(G)
+def get_k_core(graph):
+    graph.vs["weight"] = graph.strength(graph.vs, weights=graph.es["weight"])
+    # print("k-core unweighted ->", core_dec.core_dec(graph, weighted=False))
+    return core_dec.core_dec(graph)
 
 
-# TODO save
-# G.write_pickle("graph")
+def save(graph, sorted_cores_dictionary):
+    graph.write_pickle("graph.pickle")
+    with open('sorted_cores_g.pickle', 'wb') as handle:
+        pickle.dump(sorted_cores_dictionary, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 graph_builder("/Users/zzcoolj/Code/GoW/data/test.txt")
-print("k-core weighted ->", get_k_core())
+sorted_cores_g = get_k_core(G)
+save(G, sorted_cores_g)
+show_detailed_information()
 
-
-# show_detailed_information()
+# TODO draw graph
 # draw_graph()
-# TODO Save Graph by using pickle
