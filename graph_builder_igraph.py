@@ -4,13 +4,14 @@ import core_dec
 from itertools import islice
 import string
 import pickle
+import time
 
 # import common.py file from another directory
 import sys
 sys.path.insert(0, '../common/')
 import common
 
-window_size = 12
+window_size = 7
 
 # Initialize graph
 # Graph is weighted, directed
@@ -144,10 +145,16 @@ def save(graph, sorted_cores_dictionary):
         pickle.dump(sorted_cores_dictionary, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-graph_builder("/Users/zzcoolj/Code/GoW/data/test.txt")
+start_time = time.time()
+# graph_builder("/Users/zzcoolj/Code/GoW/data/test.txt")
+graph_builder("../word2vec/data/text8")
+print("graph_builder done:", common.count_time(start_time))
 sorted_cores_g = get_k_core(G)
+print("k_core done:", common.count_time(start_time))
 save(G, sorted_cores_g)
-show_detailed_information()
+print("save_graph done:", common.count_time(start_time))
+# show_detailed_information()
+print("MISSION COMPLETE")
 
 # TODO draw graph
 # draw_graph()
