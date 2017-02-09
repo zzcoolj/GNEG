@@ -1,5 +1,5 @@
 import igraph
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import core_dec
 from itertools import islice
 import string
