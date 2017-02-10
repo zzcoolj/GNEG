@@ -1,15 +1,20 @@
 import igraph
-#import matplotlib.pyplot as plt
 import core_dec
 from itertools import islice
 import string
 import pickle
 import time
 
+
 # import common.py file from another directory
 import sys
 sys.path.insert(0, '../common/')
 import common
+# sys.path.insert(0, '/Users/zzcoolj/anaconda/pkgs')
+# sys.path.insert(0, '/Users/zzcoolj/anaconda/lib')
+# sys.path.insert(0, '/Users/zzcoolj/anaconda/include')
+# import cairo
+
 
 window_size = 7
 
@@ -129,7 +134,8 @@ def show_detailed_information():
     # print(G)
     # print("degree ->", G.degree(G.vs))
     # print("strength ->", G.strength(G.vs, weights=G.es["weight"]))
-    # print(G.es["weight"])
+    # print(G.vs["name"])
+    # print(G.vs["k_core"])
     print("k-core weighted ->", sorted_cores_g)
 
 
@@ -145,16 +151,29 @@ def save(graph, sorted_cores_dictionary):
         pickle.dump(sorted_cores_dictionary, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def add_k_core_information_to_graph(graph, k_core_list):
+    for name, core in k_core_list:
+        graph.vs.select(word2id[name])["k_core"] = core
+
+
+# TODO module(cairo + py3cairo) cairo doesn't work in mac.
+# TODO The best guess is that py3cairo, a Python bindings(interface) of cairo is not well configured
+# TODO Try draw_graph later in linux or Windows, it's not so important now...
+def draw_graph():
+    g = igraph.Graph([(0, 1), (0, 2), (2, 3), (3, 4), (4, 2), (2, 5), (5, 0), (6, 3), (5, 6)])
+    igraph.plot(g, "result.pdf", layout=g.layout_kamada_kawai())
+
+
 start_time = time.time()
 # graph_builder("/Users/zzcoolj/Code/GoW/data/test.txt")
 graph_builder("../word2vec/data/text8")
-print("graph_builder done:", common.count_time(start_time))
+print("[graph_builder] done:", common.count_time(start_time))
 sorted_cores_g = get_k_core(G)
-print("k_core done:", common.count_time(start_time))
+print("[k_core] done:", common.count_time(start_time))
 save(G, sorted_cores_g)
-print("save_graph done:", common.count_time(start_time))
+print("[save_graph] done:", common.count_time(start_time))
+add_k_core_information_to_graph(G, sorted_cores_g)
+print("[add_k_core_information_to_graph] done:", common.count_time(start_time))
 # show_detailed_information()
-print("MISSION COMPLETE")
-
-# TODO draw graph
 # draw_graph()
+print("[MISSION COMPLETE]")
