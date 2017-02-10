@@ -16,7 +16,7 @@ import common
 # import cairo
 
 
-window_size = 7
+window_size = 10
 
 # Initialize graph
 # Graph is weighted, directed
@@ -145,10 +145,13 @@ def get_k_core(graph):
     return core_dec.core_dec(graph)
 
 
-def save(graph, sorted_cores_dictionary):
-    graph.write_pickle("graph.pickle")
+def save_sorted_cores_dictionary(sorted_cores_dictionary):
     with open('sorted_cores_g.pickle', 'wb') as handle:
         pickle.dump(sorted_cores_dictionary, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def save_graph_pickle(graph):
+    graph.write_pickle("graph.pickle")
 
 
 def add_k_core_information_to_graph(graph, k_core_list):
@@ -159,21 +162,41 @@ def add_k_core_information_to_graph(graph, k_core_list):
 # TODO module(cairo + py3cairo) cairo doesn't work in mac.
 # TODO The best guess is that py3cairo, a Python bindings(interface) of cairo is not well configured
 # TODO Try draw_graph later in linux or Windows, it's not so important now...
-def draw_graph():
-    g = igraph.Graph([(0, 1), (0, 2), (2, 3), (3, 4), (4, 2), (2, 5), (5, 0), (6, 3), (5, 6)])
-    igraph.plot(g, "result.pdf", layout=g.layout_kamada_kawai())
+# def draw_graph(g):
+#     # g = igraph.Graph([(0, 1), (0, 2), (2, 3), (3, 4), (4, 2), (2, 5), (5, 0), (6, 3), (5, 6)])
+#     # igraph.plot(g, "result.pdf", layout=g.layout_kamada_kawai())
+
+
+def save_graph_svg(g):
+    def gen_hex_colour_code(seed):
+        import random
+        random.seed(seed)
+        return "#" + ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
+
+    visual_style = dict()
+    visual_style["layout"] = g.layout("kk")
+    visual_style["labels"] = "name"
+    visual_style["colors"] = [gen_hex_colour_code(k_core) for k_core in g.vs["k_core"]]
+    # visual_style["edge_color"] = ["#D6CFCE" * g.vcount()]
+    visual_style["edge_colors"] = ["gray"] * g.ecount()
+    g.write_svg("test.svg", **visual_style)
 
 
 start_time = time.time()
-# graph_builder("/Users/zzcoolj/Code/GoW/data/test.txt")
-graph_builder("../word2vec/data/text8")
+graph_builder("/Users/zzcoolj/Code/GoW/data/test.txt")
+# graph_builder("../word2vec/data/text8")
 print("[graph_builder] done:", common.count_time(start_time))
 sorted_cores_g = get_k_core(G)
 print("[k_core] done:", common.count_time(start_time))
-save(G, sorted_cores_g)
-print("[save_graph] done:", common.count_time(start_time))
+save_sorted_cores_dictionary(sorted_cores_g)
+print("[save_sorted_cores_dictionary] done:", common.count_time(start_time))
 add_k_core_information_to_graph(G, sorted_cores_g)
 print("[add_k_core_information_to_graph] done:", common.count_time(start_time))
-# show_detailed_information()
-# draw_graph()
+save_graph_pickle(G)
+print("[save_graph_pickle] done:", common.count_time(start_time))
+save_graph_svg(G)
+print("[save_graph_svg] done:", common.count_time(start_time))
 print("[MISSION COMPLETE]")
+
+show_detailed_information()
+# draw_graph(G)
