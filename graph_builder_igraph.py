@@ -175,6 +175,8 @@ def save_graph_svg(g):
 
     visual_style = dict()
     visual_style["layout"] = g.layout("kk")
+    visual_style["width"] = 2000
+    visual_style["height"] = 2000
     visual_style["labels"] = "name"
     visual_style["colors"] = [gen_hex_colour_code(k_core) for k_core in g.vs["k_core"]]
     # visual_style["edge_color"] = ["#D6CFCE" * g.vcount()]
