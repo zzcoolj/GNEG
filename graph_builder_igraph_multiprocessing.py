@@ -75,11 +75,11 @@ def write_edges_of_different_window_size(encoded_text, file_basename, output_fol
         common.write_list_to_file(output_folder+file_basename+"_encoded_edges_window_size_{0}.txt".format(i), edges[i])
 
 
-def worker(file_path, output_folder):
+def worker(file_path, output_folder, max_window_size):
     # TODO attention output_folder should contain "/" in the end
     print('Processing file %s (%s)...' % (file_path, multi_processing.get_pid()))
     encoded_text, file_basename = get_encoded_text(file_path, output_folder, "./DOC/TEXT/P")
-    write_edges_of_different_window_size(encoded_text, file_basename, output_folder, 3)
+    write_edges_of_different_window_size(encoded_text, file_basename, output_folder, max_window_size)
 
 
 # TESTS
@@ -90,4 +90,4 @@ def worker(file_path, output_folder):
 
 # write_edges_of_different_window_size(get_encoded_text("/Users/zzcoolj/Code/GoW/data/aquaint-2_sample_xin_eng_200512.xml", "./DOC/TEXT/P"), 5)
 
-# multi_processing.master("/Users/zzcoolj/Code/GoW/data/xin_eng_for_test", ".xml", "data/", worker, process_num=3)
+# multi_processing.master("/Users/zzcoolj/Code/GoW/data/xin_eng_for_test", ".xml", "data/", worker, max_window_size=3, process_num=3)
