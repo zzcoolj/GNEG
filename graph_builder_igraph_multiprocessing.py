@@ -90,4 +90,4 @@ def worker(file_path, output_folder):
 
 # write_edges_of_different_window_size(get_encoded_text("/Users/zzcoolj/Code/GoW/data/aquaint-2_sample_xin_eng_200512.xml", "./DOC/TEXT/P"), 5)
 
-multi_processing.master("/Users/zzcoolj/Code/GoW/data/xin_eng_for_test", ".xml", "data/", worker, process_num=3)
+# multi_processing.master("/Users/zzcoolj/Code/GoW/data/xin_eng_for_test", ".xml", "data/", worker, process_num=3)
