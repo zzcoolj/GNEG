@@ -104,6 +104,7 @@ def graph_builder(file_path):
     for sent in text:
         encoded_sent = []
 
+        # TODO It's really stupid to remove punctuations here, checkout multiprocessing version.
         # TODO remove punctuation, may not so efficient
         translator = str.maketrans('', '', string.punctuation)
         sent = sent.translate(translator)
@@ -146,12 +147,12 @@ def get_k_core(graph):
 
 
 def save_sorted_cores_dictionary(sorted_cores_dictionary):
-    with open('sorted_cores_g.pickle', 'wb') as handle:
+    with open('data/sorted_cores_g.pickle', 'wb') as handle:
         pickle.dump(sorted_cores_dictionary, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def save_graph_pickle(graph):
-    graph.write_pickle("graph.pickle")
+    graph.write_pickle("data/graph.pickle")
 
 
 def add_k_core_information_to_graph(graph, k_core_list):
@@ -181,7 +182,7 @@ def save_graph_svg(g):
     visual_style["colors"] = [gen_hex_colour_code(k_core) for k_core in g.vs["k_core"]]
     # visual_style["edge_color"] = ["#D6CFCE" * g.vcount()]
     visual_style["edge_colors"] = ["gray"] * g.ecount()
-    g.write_svg("test.svg", **visual_style)
+    g.write_svg("data/test.svg", **visual_style)
 
 
 start_time = time.time()
