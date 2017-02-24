@@ -47,6 +47,8 @@ def write_encoded_text_and_local_dict(file_path, output_folder, node_path):
 
     file_basename = multi_processing.get_file_name(file_path)
     # Write the encoded_text
+    if not output_folder.endswith('/'):
+        output_folder += '/'
     common.write_list_to_pickle(encoded_text, output_folder+"pickle_encoded_text_"+file_basename)
     # Write the dictionary
     common.write_dict_to_file(output_folder+"dict_"+file_basename+".dicloc", word2id)
@@ -73,8 +75,9 @@ def write_edges_of_different_window_size(encoded_text, file_basename, output_fol
 
 
     # Write edges to files
+    if not output_folder.endswith('/'):
+        output_folder += '/'
     for i in range(2, max_window_size+1):
-        # TODO add folder path before file name
         common.write_list_to_file(output_folder+file_basename+"_encoded_edges_window_size_{0}.txt".format(i), edges[i])
 
 
@@ -107,14 +110,14 @@ def get_transfer_dict_for_local_dict(local_dict, merged_dict):
 
 
 # Solution 1
-def get_transfered_encoded_text(local_dict_file_path, merged_dict, output_folder, max_window_size):
+def get_transfered_encoded_text(local_dict_file_path, merged_dict, output_folder, max_window_size, local_dict_extension):
 
 # Solution 2
 # def get_transfered_encoded_text(local_dict_file_path, *merged_dict, output_folder, max_window_size):
 
     print('Processing2 file %s (%s)...' % (local_dict_file_path, multi_processing.get_pid()))
 
-    local_dict = common.read_two_columns_file_to_build_dictionary(local_dict_file_path)
+    local_dict = common.read_two_columns_file_to_build_dictionary_type_specified(local_dict_file_path, str, int)
     transfer_dict = get_transfer_dict_for_local_dict(local_dict, merged_dict)
 
     '''
@@ -124,7 +127,7 @@ def get_transfered_encoded_text(local_dict_file_path, merged_dict, output_folder
         local_encoded_text_pickle:  /Users/zzcoolj/Code/GoW/data/pickle_encoded_text_xin_eng_200410
     '''
     # Get encoded_text_pickle path according to local_dict_file_path
-    local_encoded_text_pickle = local_dict_file_path.replace("dict", "pickle_encoded_text")[:-7]
+    local_encoded_text_pickle = local_dict_file_path.replace("dict_", "pickle_encoded_text_")[:-len(local_dict_extension)]
     local_encoded_text = common.read_pickle_to_build_list(local_encoded_text_pickle)
 
     # Translate the local encoded text with transfer_dict
@@ -132,51 +135,56 @@ def get_transfered_encoded_text(local_dict_file_path, merged_dict, output_folder
     for encoded_sent in local_encoded_text:
         transfered_encoded_sent = []
         for encoded_word in encoded_sent:
-            # TODO dict{int: int}
-            transfered_encoded_sent.append(transfer_dict[str(encoded_word)])
+            transfered_encoded_sent.append(transfer_dict[encoded_word])
         transfered_encoded_text.append(transfered_encoded_sent)
+
+    # TODO Have to write the transfered_encoded_text?
 
     # Write edges files of different window size based on the transfered encoded text
     file_basename = multi_processing.get_file_name(local_dict_file_path)
     write_edges_of_different_window_size(transfered_encoded_text, file_basename, output_folder, max_window_size)
 
 
-def multiprocessing_get_merged_dict_and_edges_files(data_folder, file_extension, output_folder, node_path):
-    # TODO attention output_folder should contain "/" in the end
-
+def multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, xml_node_path, process_num):
     # 1st multiprocessing: Get dictionary and encoded text of each origin file
-    kw = {'output_folder': output_folder, 'node_path': node_path}
+    kw = {'output_folder': dicts_folder, 'node_path': xml_node_path}
     multi_processing.master(data_folder,
                             file_extension,
                             write_encoded_text_and_local_dict,
-                            process_num=3,
+                            process_num=process_num,
                             **kw)
 
-    # Get one merged dictionary from all local dictionaries
-    merged_dict = merge_dict(output_folder)
-    common.write_dict_to_file(output_folder+"merged_dict.txt", merged_dict)
 
-    # TODO split into two functions, so as to I can test 2nd multiprocessing directly
+def multiprocessing_get_edges_files(local_dicts_folder, local_dict_extension, edges_folder, merged_dict, max_window_size, process_num):
     # 2nd multiprocessing: Build a transfer dict (by local dictionary and merged dictionary)
     #                       and write a new encoded text by using the transfer dict.
-    # TODO build a list of merged_dict
-    files_number = len(multi_processing.get_files(data_folder, file_extension))
+
+    # Build a list of merged_dict. Each process could use its own merged dict, don't have to share memory.
+    local_dicts_number = len(multi_processing.get_files(local_dicts_folder, local_dict_extension))
     merged_dicts = []
-    for i in range(files_number):
+    for i in range(local_dicts_number):
         merged_dicts.append(merged_dict.copy())
 
-    kw2 = {'output_folder': output_folder, 'max_window_size': 3}
-    multi_processing.master2(output_folder,
-                             ".dicloc",
+    kw2 = {'output_folder': edges_folder, 'max_window_size': max_window_size, 'local_dict_extension': local_dict_extension}
+    multi_processing.master2(local_dicts_folder,
+                             local_dict_extension,
                              merged_dicts,
                              get_transfered_encoded_text,
-                             process_num=3,
+                             process_num=process_num,
                              **kw2)
 
-    # TODO for test
-    # get_transfered_encoded_text("data/dict_xin_eng_200410.dicloc", merged_dict, output_folder, 3)
 
+def multiprocessing_all(xml_data_folder, xml_file_extension, xml_node_path,
+                        dicts_folder, local_dict_extension,
+                        edges_folder, max_window_size,
+                        process_num):
+    multiprocessing_write_encoded_text_and_local_dict(xml_data_folder, xml_file_extension, dicts_folder, xml_node_path, process_num)
 
+    # Get one merged dictionary from all local dictionaries
+    merged_dict = merge_dict(dicts_folder)
+    common.write_dict_to_file(dicts_folder + "merged_dict.txt", merged_dict)
+
+    multiprocessing_get_edges_files(dicts_folder, local_dict_extension, edges_folder, merged_dict, max_window_size, process_num)
 
 
 # TESTS
@@ -185,9 +193,19 @@ def multiprocessing_get_merged_dict_and_edges_files(data_folder, file_extension,
 
 # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
 
-# merge_dict("data/")
+# # One core test (local dictionaries ready)
+# merged_dict = merge_dict('data/dicts/')
+# common.write_dict_to_file('data/dicts/merged_dict.txt', merged_dict)
+# get_transfered_encoded_text('data/dicts/dict_xin_eng_200410.dicloc', merged_dict, 'data/edges/', 3, '.dicloc')
 
-multiprocessing_get_merged_dict_and_edges_files(data_folder='/Users/zzcoolj/Code/GoW/data/xin_eng_for_test',
-                                                file_extension='.xml',
-                                                output_folder='data/',
-                                                node_path='./DOC/TEXT/P')
+# Multiprocessing test
+multiprocessing_all(xml_data_folder='/Users/zzcoolj/Code/GoW/data/xin_eng_for_test',
+                    xml_file_extension='.xml',
+                    xml_node_path='./DOC/TEXT/P',
+                    dicts_folder='data/dicts_and_encoded_texts/',
+                    local_dict_extension='.dicloc',
+                    edges_folder='data/edges/',
+                    max_window_size=3,
+                    process_num=3)
+
+
