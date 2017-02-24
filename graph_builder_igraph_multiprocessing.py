@@ -199,13 +199,13 @@ def multiprocessing_all(xml_data_folder, xml_file_extension, xml_node_path,
 # get_transfered_encoded_text('data/dicts/dict_xin_eng_200410.dicloc', merged_dict, 'data/edges/', 3, '.dicloc')
 
 # Multiprocessing test
-multiprocessing_all(xml_data_folder='/Users/zzcoolj/Code/GoW/data/xin_eng_for_test',
-                    xml_file_extension='.xml',
-                    xml_node_path='./DOC/TEXT/P',
-                    dicts_folder='data/dicts_and_encoded_texts/',
-                    local_dict_extension='.dicloc',
-                    edges_folder='data/edges/',
-                    max_window_size=3,
-                    process_num=3)
+# multiprocessing_all(xml_data_folder='/Users/zzcoolj/Code/GoW/data/xin_eng_for_test',
+#                     xml_file_extension='.xml',
+#                     xml_node_path='./DOC/TEXT/P',
+#                     dicts_folder='data/dicts_and_encoded_texts/',
+#                     local_dict_extension='.dicloc',
+#                     edges_folder='data/edges/',
+#                     max_window_size=3,
+#                     process_num=3)
 
 
