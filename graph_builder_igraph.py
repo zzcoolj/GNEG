@@ -135,7 +135,7 @@ def show_detailed_information():
     # print(G)
     # print("degree ->", G.degree(G.vs))
     # print("strength ->", G.strength(G.vs, weights=G.es["weight"]))
-    # print(G.vs["name"])
+    print(G.vs["name"])
     # print(G.vs["k_core"])
     print("k-core weighted ->", sorted_cores_g)
 
@@ -186,7 +186,7 @@ def save_graph_svg(g):
 
 
 start_time = time.time()
-graph_builder("/Users/zzcoolj/Code/GoW/data/test.txt")
+graph_builder("/Users/zzcoolj/Code/GoW/data/test_for_graph_builder_igraph.txt")
 # graph_builder("../word2vec/data/text8")
 print("[graph_builder] done:", common.count_time(start_time))
 sorted_cores_g = get_k_core(G)
