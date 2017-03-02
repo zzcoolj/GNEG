@@ -299,3 +299,4 @@ def calculate_k_core_and_save_graph(graph, merged_dict):
 #                     process_num=3)
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 # build_graph_and_get_k_core('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
+
