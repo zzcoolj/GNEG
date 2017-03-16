@@ -204,7 +204,7 @@ def multiprocessing_all(xml_data_folder, xml_file_extension, xml_node_path,
     multiprocessing_write_encoded_text_and_local_dict(xml_data_folder, xml_file_extension, dicts_folder, xml_node_path, process_num)
 
     # Get one merged dictionary from all local dictionaries
-    merged_dict = merge_dict(dicts_folder)
+    merged_dict = merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
     common.write_dict_to_file(dicts_folder + "merged_dict.txt", merged_dict, 'str')
 
     multiprocessing_get_edges_files(dicts_folder, local_dict_extension, edges_folder, merged_dict, max_window_size, process_num)
@@ -233,7 +233,7 @@ def merge_local_word_count(word_count_folder, output_folder):
     return dict(c)
 
 
-def build_graph_and_get_k_core(merged_dict_path, counted_edges_path):
+def build_graph(merged_dict_path, counted_edges_path):
     # Initialize graph
     # Graph is weighted, directed
     G = igraph.Graph()
@@ -257,8 +257,7 @@ def build_graph_and_get_k_core(merged_dict_path, counted_edges_path):
             G[source_target_weight[0], source_target_weight[1], "weight"] = source_target_weight[2]
     # TODO delete
     print("Edges added")
-
-    calculate_k_core_and_save_graph(G, merged_dict)
+    return G, merged_dict
 
 
 def calculate_k_core_and_save_graph(graph, merged_dict):
@@ -267,9 +266,9 @@ def calculate_k_core_and_save_graph(graph, merged_dict):
         # print("k-core unweighted ->", core_dec.core_dec(graph, weighted=False))
         return core_dec.core_dec(graph)
 
-    def add_k_core_information_to_graph(graph, k_core_list, merged_dict):
+    def add_k_core_information_to_graph(graph, k_core_list, mergedDict):
         for name, core in k_core_list:
-            graph.vs.select(merged_dict[name])["k_core"] = core
+            graph.vs.select(mergedDict[name])["k_core"] = core
 
     def save_graph_svg(g):
         def gen_hex_colour_code(seed):
@@ -300,16 +299,18 @@ def calculate_k_core_and_save_graph(graph, merged_dict):
 # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
 
 # One core test (local dictionaries ready)
-write_encoded_text_and_local_dict("data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
+write_encoded_text_and_local_dict("data/test_input_data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
 merged_dict = merge_dict(dict_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 get_local_edges_files_and_local_word_count('data/dicts_and_encoded_texts/dict_test_for_graph_builder_igraph_multiprocessing.dicloc',
                                            merged_dict, 'data/edges/', max_window_size=10, local_dict_extension='.dicloc')
-merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-build_graph_and_get_k_core('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
 merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
+G, mergedDict = build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
+calculate_k_core_and_save_graph(G, mergedDict)
+
 
 # # Multiprocessing test
-# multiprocessing_all(xml_data_folder='/Users/zzcoolj/Code/GoW/data/xin_eng_for_test',
+# multiprocessing_all(xml_data_folder='/Users/zzcoolj/Code/GoW/data/test_input_data/xin_eng_for_test',
 #                     xml_file_extension='.xml',
 #                     xml_node_path='./DOC/TEXT/P',
 #                     dicts_folder='data/dicts_and_encoded_texts/',
@@ -317,5 +318,7 @@ merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output
 #                     edges_folder='data/edges/',
 #                     max_window_size=3,
 #                     process_num=3)
+# merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-# build_graph_and_get_k_core('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
+# G, mergedDict = build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
+# calculate_k_core_and_save_graph(G, mergedDict)

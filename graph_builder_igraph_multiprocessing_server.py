@@ -14,4 +14,5 @@ graph_builder_igraph_multiprocessing.multiprocessing_all(
     max_window_size=3,
     process_num=10)
 graph_builder_igraph_multiprocessing.merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-graph_builder_igraph_multiprocessing.build_graph_and_get_k_core('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
+G, mergedDict = graph_builder_igraph_multiprocessing.build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
+graph_builder_igraph_multiprocessing.calculate_k_core_and_save_graph(G, mergedDict)
