@@ -3,13 +3,15 @@ import os
 import igraph
 import operator
 from collections import Counter
-
+import configparser
 import core_dec
-
 import sys
 sys.path.insert(0, '../common/')
 import common
 import multi_processing
+
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 
 '''
@@ -20,7 +22,7 @@ So each time the merged dictionary will be different:
 '''
 
 
-def write_encoded_text_and_local_dict(file_path, output_folder, node_path):
+def write_encoded_text_and_local_dict_for_xml(file_path, output_folder):
     print('Processing file %s (%s)...' % (file_path, multi_processing.get_pid()))
 
     word2id = dict()  # key: word <-> value: index
@@ -28,7 +30,8 @@ def write_encoded_text_and_local_dict(file_path, output_folder, node_path):
     encoded_text = []
     puncs = set(string.punctuation)
 
-    for paragraph in common.search_all_specific_nodes_in_xml_known_node_path(file_path, node_path):
+    for paragraph in common.search_all_specific_nodes_in_xml_known_node_path(file_path,
+                                                                             config['input data']['xml_node_path']):
         for sent in common.tokenize_informal_paragraph_into_sentences(paragraph):
             encoded_sent = []
 
@@ -67,6 +70,57 @@ def write_encoded_text_and_local_dict(file_path, output_folder, node_path):
     common.write_dict_to_file(output_folder+"dict_"+file_basename+".dicloc", word2id, 'str')
 
 
+# Each line of txt file is one sentence.
+def write_encoded_text_and_local_dict_for_txt(file_path, output_folder):
+    def sentences():
+        for line in open(file_path, 'r', encoding='utf-8'):
+            yield line
+
+    print('Processing file %s (%s)...' % (file_path, multi_processing.get_pid()))
+
+    word2id = dict()  # key: word <-> value: index
+    id2word = dict()
+    encoded_text = []
+    puncs = set(string.punctuation)
+
+    for sent in sentences():
+        encoded_sent = []
+        # update the dictionary
+        for word in common.tokenize_text_into_words(sent, "WordPunct"):
+            # Remove numbers
+            if config.getboolean("graph", "remove_numbers") and word.isnumeric():
+                # TODO Maybe distinguish some meaningful numbers, like year
+                continue
+            # Remove punctuations
+            # if all(j.isdigit() or j in puncs for j in word):
+            if config.getboolean("graph", "remove_punctuations"):
+                if all(c in puncs for c in word):
+                    continue
+            # Stem word
+            if config.getboolean("graph", "stem_word"):
+                word = common.stem_word(word)
+            # Make all words in lowercase
+            if config.getboolean("graph", "lowercase"):
+                word = word.lower()
+            if word not in word2id:
+                id = len(word2id)
+                word2id[word] = id
+                id2word[id] = word
+            encoded_sent.append(word2id[word])
+        encoded_text.append(encoded_sent)
+
+    file_basename = multi_processing.get_file_name(file_path)
+    # names like "AA", "AB", ...
+    parent_folder_name = multi_processing.get_file_folder(file_path).split('/')[-1]
+    # Write the encoded_text
+    if not output_folder.endswith('/'):
+        output_folder += '/'
+    common.write_list_to_pickle(encoded_text,
+                                output_folder + "encoded_text_" + parent_folder_name + "_" + file_basename + ".pickle")
+    # Write the dictionary
+    write_dict_to_file(output_folder+"dict_"+parent_folder_name+"_"+file_basename+".dicloc", word2id)
+
+
 def write_edges_of_different_window_size(encoded_text, file_basename, output_folder, max_window_size):
     edges = {}
 
@@ -95,16 +149,24 @@ def write_edges_of_different_window_size(encoded_text, file_basename, output_fol
 
 
 def merge_dict(dict_folder, output_folder):
+    def read_first_column_file_to_build_set(file):
+        d = set()
+        with open(file, encoding='utf-8') as f:
+            for line in f:
+                (key, val) = line.rstrip('\n').split("\t")
+                d.add(key)
+        return d
+
     # Take all files in the folder starting with "dict_"
     files = [os.path.join(dict_folder, name) for name in os.listdir(dict_folder)
              if (os.path.isfile(os.path.join(dict_folder, name))
                  and name.startswith("dict_"))]
     all_keys = set()
     for file in files:
-        all_keys |= common.read_first_column_file_to_build_set(file)
+        all_keys |= read_first_column_file_to_build_set(file)
 
     result = dict(zip(all_keys, range(len(all_keys))))
-    common.write_dict_to_file(output_folder + 'merged_dict.txt', result, 'str')
+    write_dict_to_file(output_folder + 'merged_dict.txt', result)
     return result
 
 
@@ -137,8 +199,13 @@ def get_local_edges_files_and_local_word_count(local_dict_file_path, merged_dict
 
     print('Processing file %s (%s)...' % (local_dict_file_path, multi_processing.get_pid()))
 
+    print('0')
+    # TODO NOW
     local_dict = common.read_two_columns_file_to_build_dictionary_type_specified(local_dict_file_path, str, int)
+    print('2')
     transfer_dict = get_transfer_dict_for_local_dict(local_dict, merged_dict)
+
+    print('1')
 
     '''
     Local dict and local encoded text must be in the same folder,
@@ -168,12 +235,12 @@ def get_local_edges_files_and_local_word_count(local_dict_file_path, merged_dict
     write_edges_of_different_window_size(transfered_encoded_text, file_name, output_folder, max_window_size)
 
 
-def multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, xml_node_path, process_num):
+def multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num, worker):
     # 1st multiprocessing: Get dictionary and encoded text of each origin file
-    kw = {'output_folder': dicts_folder, 'node_path': xml_node_path}
+    kw = {'output_folder': dicts_folder}
     multi_processing.master(data_folder,
                             file_extension,
-                            write_encoded_text_and_local_dict,
+                            worker=worker,
                             process_num=process_num,
                             **kw)
 
@@ -197,16 +264,14 @@ def multiprocessing_get_edges_files(local_dicts_folder, local_dict_extension, ed
                              **kw2)
 
 
-def multiprocessing_all(xml_data_folder, xml_file_extension, xml_node_path,
+def multiprocessing_all(data_folder, file_extension,
                         dicts_folder, local_dict_extension,
                         edges_folder, max_window_size,
-                        process_num):
-    multiprocessing_write_encoded_text_and_local_dict(xml_data_folder, xml_file_extension, dicts_folder, xml_node_path, process_num)
-
+                        process_num, worker):
+    # multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
+    #                                                   worker=worker)
     # Get one merged dictionary from all local dictionaries
     merged_dict = merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
-    common.write_dict_to_file(dicts_folder + "merged_dict.txt", merged_dict, 'str')
-
     multiprocessing_get_edges_files(dicts_folder, local_dict_extension, edges_folder, merged_dict, max_window_size, process_num)
 
 
@@ -231,6 +296,12 @@ def merge_local_word_count(word_count_folder, output_folder):
         c += counter_temp
     common.write_dict_to_file(output_folder + "all_word_count.txt", dict(c), 'str')
     return dict(c)
+
+
+def write_dict_to_file(file_path, dictionary):
+    f = open(file_path, 'w', encoding='utf-8')
+    for key, value in dictionary.items():
+        f.write('%s\t%s\n' % (key, value))
 
 
 def build_graph(merged_dict_path, counted_edges_path):
@@ -298,15 +369,20 @@ def calculate_k_core_and_save_graph(graph, merged_dict):
 # TESTS
 # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
 
+
 # One core test (local dictionaries ready)
-write_encoded_text_and_local_dict("data/test_input_data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
-merged_dict = merge_dict(dict_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
-get_local_edges_files_and_local_word_count('data/dicts_and_encoded_texts/dict_test_for_graph_builder_igraph_multiprocessing.dicloc',
-                                           merged_dict, 'data/edges/', max_window_size=10, local_dict_extension='.dicloc')
-merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
-merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-G, mergedDict = build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
-calculate_k_core_and_save_graph(G, mergedDict)
+# write_encoded_text_and_local_dict_for_xml("data/test_input_data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
+# merged_dict = merge_dict(dict_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+# get_local_edges_files_and_local_word_count('data/dicts_and_encoded_texts/dict_test_for_graph_builder_igraph_multiprocessing.dicloc',
+#                                            merged_dict, 'data/edges/', max_window_size=10, local_dict_extension='.dicloc')
+# merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+# merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
+# G, mergedDict = build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
+# calculate_k_core_and_save_graph(G, mergedDict)
+
+# write_encoded_text_and_local_dict_for_txt(
+#     file_path="data/training data/Wikipedia-Dumps_en_20170420_prep/AA/wiki_01.txt",
+#     output_folder='output/intermediate data/dicts_and_encoded_texts')
 
 
 # # Multiprocessing test
@@ -322,3 +398,19 @@ calculate_k_core_and_save_graph(G, mergedDict)
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 # G, mergedDict = build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
 # calculate_k_core_and_save_graph(G, mergedDict)
+
+# multiprocessing_write_encoded_text_and_local_dict(
+#     data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+#     file_extension='.txt',
+#     dicts_folder='output/intermediate data/dicts_and_encoded_texts/',
+#     process_num=4,
+#     worker=write_encoded_text_and_local_dict_for_txt)
+
+multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+                    file_extension='.txt',
+                    dicts_folder='output/intermediate data/dicts_and_encoded_texts/',
+                    local_dict_extension='.dicloc',
+                    edges_folder='output/intermediate data/edges/',
+                    max_window_size=3,
+                    process_num=4,
+                    worker=write_encoded_text_and_local_dict_for_txt)
