@@ -320,6 +320,10 @@ def write_dict_to_file(file_path, dictionary):
         f.write('%s\t%s\n' % (key, value))
 
 
+# TODO LATER remove edges by their frequency
+# TODO LATER remove words by their frequency
+
+
 # TESTS
 # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
 
