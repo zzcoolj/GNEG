@@ -275,7 +275,6 @@ def multiprocessing_all(data_folder, file_extension,
                         process_num, worker,
                         dicts_folder=config['graph']['dicts_and_encoded_texts_folder'],
                         edges_folder=config['graph']['edges_folder']):
-
     multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
                                                       worker=worker)
     # Get one merged dictionary from all local dictionaries
