@@ -412,13 +412,6 @@ def calculate_k_core_and_save_graph(graph, merged_dict):
 # G, mergedDict = build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
 # calculate_k_core_and_save_graph(G, mergedDict)
 
-# multiprocessing_write_encoded_text_and_local_dict(
-#     data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
-#     file_extension='.txt',
-#     dicts_folder='output/intermediate data/dicts_and_encoded_texts/',
-#     process_num=4,
-#     worker=write_encoded_text_and_local_dict_for_txt)
-
 multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
                     file_extension='.txt',
                     max_window_size=3,
