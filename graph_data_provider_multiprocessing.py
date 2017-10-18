@@ -317,68 +317,6 @@ def write_dict_to_file(file_path, dictionary):
         f.write('%s\t%s\n' % (key, value))
 
 
-def build_graph(merged_dict_path, counted_edges_path):
-    # Initialize graph
-    # Graph is weighted, directed
-    G = igraph.Graph()
-
-    # Add vertices
-    merged_dict = common.read_two_columns_file_to_build_dictionary_type_specified(merged_dict_path, str, int)
-    sorted_merged_dict = sorted(merged_dict.items(), key=operator.itemgetter(1), reverse=False)
-    sorted_names = [item[0] for item in sorted_merged_dict]
-    G.add_vertices(len(merged_dict))
-    # Add name attribute to vertices
-    G.vs["name"] = sorted_names
-    # TODO delete
-    print("Vertices added")
-
-    # Add edges
-    counted_edges = common.read_n_columns_file_to_build_list_of_lists_type_specified(counted_edges_path, [int, int, int])
-    for source_target_weight in counted_edges:
-        # We don't care self-loop edges
-        if not source_target_weight[0] == source_target_weight[1]:
-            G.add_edge(source_target_weight[0], source_target_weight[1])
-            G[source_target_weight[0], source_target_weight[1], "weight"] = source_target_weight[2]
-    # TODO delete
-    print("Edges added")
-    return G, merged_dict
-
-
-def calculate_k_core_and_save_graph(graph, merged_dict):
-    def get_k_core(graph):
-        graph.vs["weight"] = graph.strength(graph.vs, weights=graph.es["weight"])
-        # print("k-core unweighted ->", core_dec.core_dec(graph, weighted=False))
-        return core_dec.core_dec(graph)
-
-    def add_k_core_information_to_graph(graph, k_core_list, mergedDict):
-        for name, core in k_core_list:
-            graph.vs.select(mergedDict[name])["k_core"] = core
-
-    def save_graph_svg(g):
-        def gen_hex_colour_code(seed):
-            import random
-            random.seed(seed)
-            return "#" + ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
-
-        visual_style = dict()
-        visual_style["layout"] = g.layout("kk")
-        visual_style["width"] = 2000
-        visual_style["height"] = 2000
-        visual_style["labels"] = "name"
-        visual_style["colors"] = [gen_hex_colour_code(k_core) for k_core in g.vs["k_core"]]
-        # visual_style["edge_color"] = ["#D6CFCE" * g.vcount()]
-        visual_style["edge_colors"] = ["gray"] * g.ecount()
-        g.write_svg("data/k_core.svg", **visual_style)
-
-    sorted_cores_g = get_k_core(graph)
-    # TODO delete
-    print("k core done")
-    # save_sorted_cores_dictionary(sorted_cores_g)
-    add_k_core_information_to_graph(graph, sorted_cores_g, merged_dict)
-    # save_graph_pickle(graph)
-    save_graph_svg(graph)
-
-
 # TESTS
 # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
 
@@ -390,8 +328,6 @@ def calculate_k_core_and_save_graph(graph, merged_dict):
 #                                            merged_dict, 'data/edges/', max_window_size=10, local_dict_extension='.dicloc')
 # merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-# G, mergedDict = build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
-# calculate_k_core_and_save_graph(G, mergedDict)
 
 # write_encoded_text_and_local_dict_for_txt(
 #     file_path="data/training data/Wikipedia-Dumps_en_20170420_prep/AA/wiki_01.txt",
@@ -409,8 +345,6 @@ def calculate_k_core_and_save_graph(graph, merged_dict):
 #                     process_num=3)
 # merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-# G, mergedDict = build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
-# calculate_k_core_and_save_graph(G, mergedDict)
 
 multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
                     file_extension='.txt',

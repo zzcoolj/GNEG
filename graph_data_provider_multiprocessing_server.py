@@ -12,9 +12,7 @@ nltk.data.path = ['/vol/datailes/tools/nlp/nltk_data/2016']
 #     edges_folder='data/edges/',
 #     max_window_size=3,
 #     process_num=10)
-# graph_builder_igraph_multiprocessing.merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-# G, mergedDict = graph_builder_igraph_multiprocessing.build_graph('data/dicts_and_encoded_texts/merged_dict.txt', 'data/counted_edges.txt')
-# graph_builder_igraph_multiprocessing.calculate_k_core_and_save_graph(G, mergedDict)
+
 
 graph_data_provider_multiprocessing.multiprocessing_all(
     data_folder='/vol/corpusiles/open/Wikipedia-Dumps/en/20170420/prep/AA',
