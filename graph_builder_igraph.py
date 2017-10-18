@@ -4,9 +4,7 @@ from itertools import islice
 import string
 import pickle
 import time
-
-
-# import common.py file from another directory
+import operator
 import sys
 sys.path.insert(0, '../common/')
 import common

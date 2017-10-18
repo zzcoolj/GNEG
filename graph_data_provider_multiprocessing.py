@@ -1,10 +1,7 @@
 import string
 import os
-import igraph
-import operator
 from collections import Counter
 import configparser
-import core_dec
 import sys
 sys.path.insert(0, '../common/')
 import common
@@ -22,6 +19,7 @@ So each time the merged dictionary will be different:
 '''
 
 
+# For data in /vol/corpusiles/restricted/ldc/ldc2008t25/data/xin_eng
 def write_encoded_text_and_local_dict_for_xml(file_path, output_folder):
     print('Processing file %s (%s)...' % (file_path, multi_processing.get_pid()))
 
@@ -70,7 +68,7 @@ def write_encoded_text_and_local_dict_for_xml(file_path, output_folder):
     common.write_dict_to_file(output_folder+"dict_"+file_basename+".dicloc", word2id, 'str')
 
 
-# Each line of txt file is one sentence.
+# For data in /vol/corpusiles/open/Wikipedia-Dumps/en/20170420/prep/ (Each line of txt file is one sentence.)
 def write_encoded_text_and_local_dict_for_txt(file_path, output_folder):
     def sentences():
         for line in open(file_path, 'r', encoding='utf-8'):
@@ -289,7 +287,13 @@ def merge_edges_count_of_a_specific_window_size(window_size, edges_folder=config
                                                 output_folder=config['graph']['edges_folder']):
     files = []
     for i in range(2, window_size+1):
-        files.extend(multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i)))
+        files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
+        if not files_to_add:
+            print('No encoded edges file of window size '+str(i)+'. Reset window size to '+str(i-1)+'.')
+            window_size = i-1
+            break
+        else:
+            files.extend(files_to_add)
 
     all_edges = []
     for file in files:
@@ -321,7 +325,8 @@ def write_dict_to_file(file_path, dictionary):
 # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
 
 
-# One core test (local dictionaries ready)
+# # One core test (local dictionaries ready)
+# # xml
 # write_encoded_text_and_local_dict_for_xml("data/test_input_data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
 # merged_dict = merge_dict(dict_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # get_local_edges_files_and_local_word_count('data/dicts_and_encoded_texts/dict_test_for_graph_builder_igraph_multiprocessing.dicloc',
@@ -329,12 +334,14 @@ def write_dict_to_file(file_path, dictionary):
 # merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
+# # txt
 # write_encoded_text_and_local_dict_for_txt(
 #     file_path="data/training data/Wikipedia-Dumps_en_20170420_prep/AA/wiki_01.txt",
 #     output_folder='output/intermediate data/dicts_and_encoded_texts')
 
 
 # # Multiprocessing test
+# # xml
 # multiprocessing_all(xml_data_folder='/Users/zzcoolj/Code/GoW/data/test_input_data/xin_eng_for_test',
 #                     xml_file_extension='.xml',
 #                     xml_node_path='./DOC/TEXT/P',
@@ -346,10 +353,11 @@ def write_dict_to_file(file_path, dictionary):
 # merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
-multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
-                    file_extension='.txt',
-                    max_window_size=3,
-                    process_num=4,
-                    worker=write_encoded_text_and_local_dict_for_txt)
-merge_local_word_count()
-merge_edges_count_of_a_specific_window_size(window_size=4)
+# txt
+# multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+#                     file_extension='.txt',
+#                     max_window_size=3,
+#                     process_num=4,
+#                     worker=write_encoded_text_and_local_dict_for_txt)
+# merge_local_word_count()
+# merge_edges_count_of_a_specific_window_size(window_size=50)
