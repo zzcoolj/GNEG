@@ -40,3 +40,11 @@ def create_graph_with_weighted_edges(edges_file, directed):
 g = create_graph_with_weighted_edges(edges_file='output/intermediate data/edges/encoded_edges_count_window_size_3.txt',
                                      directed=True)
 show_detailed_information(g)
+# print(g[10008][29963])
+# print(nx.shortest_path_length(g, 10008, 29963))
+# print(nx.shortest_path_length(g, 10008, 29963, weight='weight'))
+# print(len(nx.shortest_path_length(g, 10008, weight='weight')))
+# print(nx.shortest_path_length(g, 10008, weight='weight'))
+print(nx.shortest_path_length(g, 10, weight='weight'))
+print(nx.shortest_path_length(g, target=10, weight='weight'))
+# multimillionair 03

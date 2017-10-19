@@ -275,11 +275,11 @@ def multiprocessing_all(data_folder, file_extension,
                         process_num, worker,
                         dicts_folder=config['graph']['dicts_and_encoded_texts_folder'],
                         edges_folder=config['graph']['edges_folder']):
-    multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
-                                                      worker=worker)
+    # multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
+    #                                                   worker=worker)
     # Get one merged dictionary from all local dictionaries
     merged_dict = merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
-    multiprocessing_get_edges_files(dicts_folder, edges_folder, merged_dict, max_window_size, process_num)
+    # multiprocessing_get_edges_files(dicts_folder, edges_folder, merged_dict, max_window_size, process_num)
 
 
 def merge_edges_count_of_a_specific_window_size(window_size, edges_folder=config['graph']['edges_folder'],
@@ -320,6 +320,7 @@ def write_dict_to_file(file_path, dictionary):
         f.write('%s\t%s\n' % (key, value))
 
 
+# TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO LATER remove edges by their frequency
 # TODO LATER remove words by their frequency
 
