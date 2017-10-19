@@ -195,20 +195,7 @@ def get_local_edges_files_and_local_word_count(local_dict_file_path, merged_dict
         common.write_dict_to_file(folder_name + "/word_count_" + file_name + ".txt", result, 'str')
         return result
 
-    def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, value_type):
-        """
-        file:
-            en-000000001    Food waste or food loss is food that is discarded or lost uneaten.
 
-        Output:
-            {'en-000000001': 'Food waste or food loss is food that is discarded or lost uneaten.'}
-        """
-        d = {}
-        with open(file, encoding='utf-8') as f:
-            for line in f:
-                (key, val) = line.rstrip('\n').split("\t")
-                d[key_type(key)] = value_type(val)
-        return d
 
     print('Processing file %s (%s)...' % (local_dict_file_path, multi_processing.get_pid()))
 
@@ -250,11 +237,13 @@ def multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extensio
                             **kw)
 
 
-def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, merged_dict, max_window_size, process_num):
+def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window_size, process_num):
     # 2nd multiprocessing: Build a transfer dict (by local dictionary and merged dictionary)
     #                       and write a new encoded text by using the transfer dict.
 
     # Build a list of merged_dict. Each process could use its own merged dict, don't have to share memory.
+    merged_dict = read_two_columns_file_to_build_dictionary_type_specified(file=local_dicts_folder+'dict_merged.txt',
+                                                                           key_type=str, value_type=int)
     local_dicts_number = len(
         multi_processing.get_files_endswith(local_dicts_folder, config['graph']['local_dict_extension']))
     merged_dicts = []
@@ -278,8 +267,8 @@ def multiprocessing_all(data_folder, file_extension,
     # multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
     #                                                   worker=worker)
     # Get one merged dictionary from all local dictionaries
-    merged_dict = merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
-    # multiprocessing_get_edges_files(dicts_folder, edges_folder, merged_dict, max_window_size, process_num)
+    # merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
+    multiprocessing_get_edges_files(dicts_folder, edges_folder, max_window_size, process_num)
 
 
 def merge_edges_count_of_a_specific_window_size(window_size, edges_folder=config['graph']['edges_folder'],
@@ -318,6 +307,22 @@ def write_dict_to_file(file_path, dictionary):
     f = open(file_path, 'w', encoding='utf-8')
     for key, value in dictionary.items():
         f.write('%s\t%s\n' % (key, value))
+
+
+def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, value_type):
+    """
+    file:
+        en-000000001    Food waste or food loss is food that is discarded or lost uneaten.
+
+    Output:
+        {'en-000000001': 'Food waste or food loss is food that is discarded or lost uneaten.'}
+    """
+    d = {}
+    with open(file, encoding='utf-8') as f:
+        for line in f:
+            (key, val) = line.rstrip('\n').split("\t")
+            d[key_type(key)] = value_type(val)
+    return d
 
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
