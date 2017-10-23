@@ -184,7 +184,7 @@ def get_transfer_dict_for_local_dict(local_dict, merged_dict):
 
 
 # Solution 1
-def get_local_edges_files_and_local_word_count(local_dict_file_path, merged_dict, output_folder, max_window_size):
+def get_local_edges_files_and_local_word_count(local_dict_file_path, output_folder, max_window_size):
 
 # Solution 2
 # def get_local_edges_files_and_local_word_count(local_dict_file_path, *merged_dict, output_folder, max_window_size):
@@ -195,17 +195,19 @@ def get_local_edges_files_and_local_word_count(local_dict_file_path, merged_dict
         common.write_dict_to_file(folder_name + "/word_count_" + file_name + ".txt", result, 'str')
         return result
 
-
-
     print('Processing file %s (%s)...' % (local_dict_file_path, multi_processing.get_pid()))
+
+    # TODO NOW
+    merged_dict = read_two_columns_file_to_build_dictionary_type_specified(
+        file=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt', key_type=str, value_type=int)
 
     local_dict = read_two_columns_file_to_build_dictionary_type_specified(local_dict_file_path, str, int)
     transfer_dict = get_transfer_dict_for_local_dict(local_dict, merged_dict)
     '''
     Local dict and local encoded text must be in the same folder,
     and their names should be look like below:
-        local_dict_file_path:            /Users/zzcoolj/Code/GoW/data/dict_xin_eng_200410.txt
-        local_encoded_text_pickle:  /Users/zzcoolj/Code/GoW/data/pickle_encoded_text_xin_eng_200410
+        local_dict_file_path:       dict_xin_eng_200410.txt
+        local_encoded_text_pickle:  pickle_encoded_text_xin_eng_200410
     '''
     # Get encoded_text_pickle path according to local_dict_file_path
     local_encoded_text_pickle = local_dict_file_path.replace("dict_", "encoded_text_")[:-len(config['graph']['local_dict_extension'])]
@@ -241,19 +243,19 @@ def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window
     # 2nd multiprocessing: Build a transfer dict (by local dictionary and merged dictionary)
     #                       and write a new encoded text by using the transfer dict.
 
-    # Build a list of merged_dict. Each process could use its own merged dict, don't have to share memory.
-    merged_dict = read_two_columns_file_to_build_dictionary_type_specified(file=local_dicts_folder+'dict_merged.txt',
-                                                                           key_type=str, value_type=int)
-    local_dicts_number = len(
-        multi_processing.get_files_endswith(local_dicts_folder, config['graph']['local_dict_extension']))
-    merged_dicts = []
-    for i in range(local_dicts_number):
-        merged_dicts.append(merged_dict.copy())
+    # TODO NOW Consume too much memory
+    # # Build a list of merged_dict. Each process could use its own merged dict, don't have to share memory.
+    # merged_dict = read_two_columns_file_to_build_dictionary_type_specified(file=local_dicts_folder+'dict_merged.txt',
+    #                                                                        key_type=str, value_type=int)
+    # local_dicts_number = len(
+    #     multi_processing.get_files_endswith(local_dicts_folder, config['graph']['local_dict_extension']))
+    # merged_dicts = []
+    # for i in range(local_dicts_number):
+    #     merged_dicts.append(merged_dict.copy())
 
     kw2 = {'output_folder': edges_folder, 'max_window_size': max_window_size}
     multi_processing.master2(local_dicts_folder,
                              config['graph']['local_dict_extension'],
-                             merged_dicts,
                              get_local_edges_files_and_local_word_count,
                              process_num=process_num,
                              **kw2)
@@ -266,7 +268,7 @@ def multiprocessing_all(data_folder, file_extension,
                         edges_folder=config['graph']['edges_folder']):
     # multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
     #                                                   worker=worker)
-    # Get one merged dictionary from all local dictionaries
+    # # Get one merged dictionary from all local dictionaries
     # merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
     multiprocessing_get_edges_files(dicts_folder, edges_folder, max_window_size, process_num)
 
