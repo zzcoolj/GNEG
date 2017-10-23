@@ -10,48 +10,101 @@ import multi_processing
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-
 '''
 Attention:
 Each time we create a local dictionary, word order will not be the same (word id is identical).
-So each time the merged dictionary will be different:
-    Each time a word may have different id in the merged dictionary.
+So each time the merged dictionary will be different: Each time a word may have different id in the merged dictionary.
 '''
 
 
-# For data in /vol/corpusiles/restricted/ldc/ldc2008t25/data/xin_eng
-def write_encoded_text_and_local_dict_for_xml(file_path, output_folder):
-    print('Processing file %s (%s)...' % (file_path, multi_processing.get_pid()))
+def multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
+                                                      data_type):
+    """1st multiprocessing
+    Get dictionary and encoded text of each origin file
+    """
+    def write_encoded_text_and_local_dict_for_xml(file_path, output_folder):
+        """For data in /vol/corpusiles/restricted/ldc/ldc2008t25/data/xin_eng
+        """
+        print('Processing file %s (%s)...' % (file_path, multi_processing.get_pid()))
 
-    word2id = dict()  # key: word <-> value: index
-    id2word = dict()
-    encoded_text = []
-    puncs = set(string.punctuation)
+        word2id = dict()  # key: word <-> value: index
+        id2word = dict()
+        encoded_text = []
+        puncs = set(string.punctuation)
 
-    for paragraph in common.search_all_specific_nodes_in_xml_known_node_path(file_path,
-                                                                             config['input data']['xml_node_path']):
-        for sent in common.tokenize_informal_paragraph_into_sentences(paragraph):
+        for paragraph in common.search_all_specific_nodes_in_xml_known_node_path(file_path,
+                                                                                 config['input data']['xml_node_path']):
+            for sent in common.tokenize_informal_paragraph_into_sentences(paragraph):
+                encoded_sent = []
+
+                # update the dictionary
+                for word in common.tokenize_text_into_words(sent, "WordPunct"):
+
+                    # Remove numbers
+                    if word.isnumeric():
+                        # TODO Maybe distinguish some meaningful numbers, like year
+                        continue
+
+                    # Remove punctuations
+                    # if all(j.isdigit() or j in puncs for j in word):
+                    if all(c in puncs for c in word):
+                        continue
+
+                    # Stem word
+                    word = common.stem_word(word)
+
+                    # Make all words in lowercase
+                    word = word.lower()
+
+                    if word not in word2id:
+                        id = len(word2id)
+                        word2id[word] = id
+                        id2word[id] = word
+                    encoded_sent.append(word2id[word])
+                encoded_text.append(encoded_sent)
+
+        file_basename = multi_processing.get_file_name(file_path)
+        # Write the encoded_text
+        if not output_folder.endswith('/'):
+            output_folder += '/'
+        common.write_list_to_pickle(encoded_text, output_folder + "encoded_text_" + file_basename + ".pickle")
+        # Write the dictionary
+        common.write_dict_to_file(output_folder + "dict_" + file_basename + ".dicloc", word2id, 'str')
+
+    def write_encoded_text_and_local_dict_for_txt(file_path, output_folder):
+        """For data in /vol/corpusiles/open/Wikipedia-Dumps/en/20170420/prep/ (Each line of txt file is one sentence.)
+        """
+
+        def sentences():
+            for line in open(file_path, 'r', encoding='utf-8'):
+                yield line
+
+        print('Processing file %s (%s)...' % (file_path, multi_processing.get_pid()))
+
+        word2id = dict()  # key: word <-> value: index
+        id2word = dict()
+        encoded_text = []
+        puncs = set(string.punctuation)
+
+        for sent in sentences():
             encoded_sent = []
-
             # update the dictionary
             for word in common.tokenize_text_into_words(sent, "WordPunct"):
-
                 # Remove numbers
-                if word.isnumeric():
+                if config.getboolean("graph", "remove_numbers") and word.isnumeric():
                     # TODO Maybe distinguish some meaningful numbers, like year
                     continue
-
                 # Remove punctuations
                 # if all(j.isdigit() or j in puncs for j in word):
-                if all(c in puncs for c in word):
-                    continue
-
+                if config.getboolean("graph", "remove_punctuations"):
+                    if all(c in puncs for c in word):
+                        continue
                 # Stem word
-                word = common.stem_word(word)
-
+                if config.getboolean("graph", "stem_word"):
+                    word = common.stem_word(word)
                 # Make all words in lowercase
-                word = word.lower()
-
+                if config.getboolean("graph", "lowercase"):
+                    word = word.lower()
                 if word not in word2id:
                     id = len(word2id)
                     word2id[word] = id
@@ -59,91 +112,32 @@ def write_encoded_text_and_local_dict_for_xml(file_path, output_folder):
                 encoded_sent.append(word2id[word])
             encoded_text.append(encoded_sent)
 
-    file_basename = multi_processing.get_file_name(file_path)
-    # Write the encoded_text
-    if not output_folder.endswith('/'):
-        output_folder += '/'
-    common.write_list_to_pickle(encoded_text, output_folder+"encoded_text_"+file_basename+".pickle")
-    # Write the dictionary
-    common.write_dict_to_file(output_folder+"dict_"+file_basename+".dicloc", word2id, 'str')
+        file_basename = multi_processing.get_file_name(file_path)
+        # names like "AA", "AB", ...
+        parent_folder_name = multi_processing.get_file_folder(file_path).split('/')[-1]
+        # Write the encoded_text
+        if not output_folder.endswith('/'):
+            output_folder += '/'
+        common.write_list_to_pickle(encoded_text,
+                                    output_folder + "encoded_text_" + parent_folder_name + "_" + file_basename + ".pickle")
+        # Write the dictionary
+        write_dict_to_file(output_folder + "dict_" + parent_folder_name + "_" + file_basename + ".dicloc", word2id)
 
-
-# For data in /vol/corpusiles/open/Wikipedia-Dumps/en/20170420/prep/ (Each line of txt file is one sentence.)
-def write_encoded_text_and_local_dict_for_txt(file_path, output_folder):
-    def sentences():
-        for line in open(file_path, 'r', encoding='utf-8'):
-            yield line
-
-    print('Processing file %s (%s)...' % (file_path, multi_processing.get_pid()))
-
-    word2id = dict()  # key: word <-> value: index
-    id2word = dict()
-    encoded_text = []
-    puncs = set(string.punctuation)
-
-    for sent in sentences():
-        encoded_sent = []
-        # update the dictionary
-        for word in common.tokenize_text_into_words(sent, "WordPunct"):
-            # Remove numbers
-            if config.getboolean("graph", "remove_numbers") and word.isnumeric():
-                # TODO Maybe distinguish some meaningful numbers, like year
-                continue
-            # Remove punctuations
-            # if all(j.isdigit() or j in puncs for j in word):
-            if config.getboolean("graph", "remove_punctuations"):
-                if all(c in puncs for c in word):
-                    continue
-            # Stem word
-            if config.getboolean("graph", "stem_word"):
-                word = common.stem_word(word)
-            # Make all words in lowercase
-            if config.getboolean("graph", "lowercase"):
-                word = word.lower()
-            if word not in word2id:
-                id = len(word2id)
-                word2id[word] = id
-                id2word[id] = word
-            encoded_sent.append(word2id[word])
-        encoded_text.append(encoded_sent)
-
-    file_basename = multi_processing.get_file_name(file_path)
-    # names like "AA", "AB", ...
-    parent_folder_name = multi_processing.get_file_folder(file_path).split('/')[-1]
-    # Write the encoded_text
-    if not output_folder.endswith('/'):
-        output_folder += '/'
-    common.write_list_to_pickle(encoded_text,
-                                output_folder + "encoded_text_" + parent_folder_name + "_" + file_basename + ".pickle")
-    # Write the dictionary
-    write_dict_to_file(output_folder+"dict_"+parent_folder_name+"_"+file_basename+".dicloc", word2id)
-
-
-def write_edges_of_different_window_size(encoded_text, file_basename, output_folder, max_window_size):
-    edges = {}
-
-    # Construct edges
-    for i in range(2, max_window_size+1):
-        edges[i] = []
-    for encoded_sent in encoded_text:
-        sentence_len = len(encoded_sent)
-        for start_index in range(sentence_len-1):
-            if start_index + max_window_size < sentence_len:
-                max_range = max_window_size+start_index
-            else:
-                max_range = sentence_len
-
-            for end_index in range(1+start_index, max_range):
-                current_window_size = end_index - start_index + 1
-                # encoded_edge = [encoded_sent[start_index], encoded_sent[end_index]]
-                encoded_edge = (encoded_sent[start_index], encoded_sent[end_index])
-                edges[current_window_size].append(encoded_edge)
-
-    # Write edges to files
-    if not output_folder.endswith('/'):
-        output_folder += '/'
-    for i in range(2, max_window_size+1):
-        common.write_list_to_file(output_folder+file_basename+"_encoded_edges_window_size_{0}.txt".format(i), edges[i])
+    kw = {'output_folder': dicts_folder}
+    if data_type is 'txt':
+        multi_processing.master(files_getter=multi_processing.get_files_endswith_in_all_subfolders,
+                                data_folder=data_folder,
+                                file_extension=file_extension,
+                                worker=write_encoded_text_and_local_dict_for_txt,
+                                process_num=process_num,
+                                **kw)
+    elif data_type is 'xml':
+        multi_processing.master(files_getter=multi_processing.get_files_endswith_in_all_subfolders,
+                                data_folder=data_folder,
+                                file_extension=file_extension,
+                                worker=write_encoded_text_and_local_dict_for_xml,
+                                process_num=process_num,
+                                **kw)
 
 
 def merge_dict(dict_folder, output_folder):
@@ -168,109 +162,99 @@ def merge_dict(dict_folder, output_folder):
     return result
 
 
-def get_transfer_dict_for_local_dict(local_dict, merged_dict):
+def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window_size, process_num):
+    """2nd multiprocessing
+    Build a transfer dict (by local dictionary and merged dictionary)
+    and write a new encoded text by using the transfer dict.
     """
-    local_dict:
-        "hello": 37
-    merged_dict:
-        "hello": 52
-    transfer_dict:
-        37: 52
-    """
-    transfer_dict = {}
-    for key, value in local_dict.items():
-        transfer_dict[value] = merged_dict[key]
-    return transfer_dict
 
+    def get_local_edges_files_and_local_word_count(local_dict_file_path, output_folder, max_window_size):
+        def word_count(encoded_text, file_name):
+            result = dict(Counter([item for sublist in encoded_text for item in sublist]))
+            folder_name = multi_processing.get_file_folder(local_dict_file_path)
+            common.write_dict_to_file(folder_name + "/word_count_" + file_name + ".txt", result, 'str')
+            return result
 
-# Solution 1
-def get_local_edges_files_and_local_word_count(local_dict_file_path, output_folder, max_window_size):
+        def get_transfer_dict_for_local_dict(local_dict, merged_dict):
+            """
+            local_dict:
+                "hello": 37
+            merged_dict:
+                "hello": 52
+            transfer_dict:
+                37: 52
+            """
+            transfer_dict = {}
+            for key, value in local_dict.items():
+                transfer_dict[value] = merged_dict[key]
+            return transfer_dict
 
-# Solution 2
-# def get_local_edges_files_and_local_word_count(local_dict_file_path, *merged_dict, output_folder, max_window_size):
+        def write_edges_of_different_window_size(encoded_text, file_basename, output_folder, max_window_size):
+            edges = {}
 
-    def word_count(encoded_text, file_name):
-        result = dict(Counter([item for sublist in encoded_text for item in sublist]))
-        folder_name = multi_processing.get_file_folder(local_dict_file_path)
-        common.write_dict_to_file(folder_name + "/word_count_" + file_name + ".txt", result, 'str')
-        return result
+            # Construct edges
+            for i in range(2, max_window_size + 1):
+                edges[i] = []
+            for encoded_sent in encoded_text:
+                sentence_len = len(encoded_sent)
+                for start_index in range(sentence_len - 1):
+                    if start_index + max_window_size < sentence_len:
+                        max_range = max_window_size + start_index
+                    else:
+                        max_range = sentence_len
 
-    print('Processing file %s (%s)...' % (local_dict_file_path, multi_processing.get_pid()))
+                    for end_index in range(1 + start_index, max_range):
+                        current_window_size = end_index - start_index + 1
+                        # encoded_edge = [encoded_sent[start_index], encoded_sent[end_index]]
+                        encoded_edge = (encoded_sent[start_index], encoded_sent[end_index])
+                        edges[current_window_size].append(encoded_edge)
 
-    # TODO NOW
-    merged_dict = read_two_columns_file_to_build_dictionary_type_specified(
-        file=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt', key_type=str, value_type=int)
+            # Write edges to files
+            if not output_folder.endswith('/'):
+                output_folder += '/'
+            for i in range(2, max_window_size + 1):
+                common.write_list_to_file(
+                    output_folder + file_basename + "_encoded_edges_window_size_{0}.txt".format(i), edges[i])
 
-    local_dict = read_two_columns_file_to_build_dictionary_type_specified(local_dict_file_path, str, int)
-    transfer_dict = get_transfer_dict_for_local_dict(local_dict, merged_dict)
-    '''
-    Local dict and local encoded text must be in the same folder,
-    and their names should be look like below:
-        local_dict_file_path:       dict_xin_eng_200410.txt
-        local_encoded_text_pickle:  pickle_encoded_text_xin_eng_200410
-    '''
-    # Get encoded_text_pickle path according to local_dict_file_path
-    local_encoded_text_pickle = local_dict_file_path.replace("dict_", "encoded_text_")[:-len(config['graph']['local_dict_extension'])]
-    local_encoded_text = common.read_pickle_to_build_list(local_encoded_text_pickle + ".pickle")
-    # Translate the local encoded text with transfer_dict
-    transfered_encoded_text = []
-    for encoded_sent in local_encoded_text:
-        transfered_encoded_sent = []
-        for encoded_word in encoded_sent:
-            transfered_encoded_sent.append(transfer_dict[encoded_word])
-        transfered_encoded_text.append(transfered_encoded_sent)
+        print('Processing file %s (%s)...' % (local_dict_file_path, multi_processing.get_pid()))
 
-    # TODO Have to write the transfered_encoded_text?
+        merged_dict = read_two_columns_file_to_build_dictionary_type_specified(
+            file=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt', key_type=str, value_type=int)
+        local_dict = read_two_columns_file_to_build_dictionary_type_specified(local_dict_file_path, str, int)
+        transfer_dict = get_transfer_dict_for_local_dict(local_dict, merged_dict)
+        '''
+        Local dict and local encoded text must be in the same folder,
+        and their names should be look like below:
+            local_dict_file_path:       dict_xin_eng_200410.txt
+            local_encoded_text_pickle:  pickle_encoded_text_xin_eng_200410
+        '''
+        # Get encoded_text_pickle path according to local_dict_file_path
+        local_encoded_text_pickle = local_dict_file_path.replace("dict_", "encoded_text_")[
+                                    :-len(config['graph']['local_dict_extension'])]
+        local_encoded_text = common.read_pickle_to_build_list(local_encoded_text_pickle + ".pickle")
+        # Translate the local encoded text with transfer_dict
+        transfered_encoded_text = []
+        for encoded_sent in local_encoded_text:
+            transfered_encoded_sent = []
+            for encoded_word in encoded_sent:
+                transfered_encoded_sent.append(transfer_dict[encoded_word])
+            transfered_encoded_text.append(transfered_encoded_sent)
 
-    file_name = multi_processing.get_file_name(local_dict_file_path).replace("dict_", "")
-    # Word count
-    word_count(transfered_encoded_text, file_name)
-    # Write edges files of different window size based on the transfered encoded text
-    write_edges_of_different_window_size(transfered_encoded_text, file_name, output_folder, max_window_size)
+        # TODO Have to write the transfered_encoded_text?
 
+        file_name = multi_processing.get_file_name(local_dict_file_path).replace("dict_", "")
+        # Word count
+        word_count(transfered_encoded_text, file_name)
+        # Write edges files of different window size based on the transfered encoded text
+        write_edges_of_different_window_size(transfered_encoded_text, file_name, output_folder, max_window_size)
 
-def multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num, worker):
-    # 1st multiprocessing: Get dictionary and encoded text of each origin file
-    kw = {'output_folder': dicts_folder}
-    multi_processing.master(data_folder,
-                            file_extension,
-                            worker=worker,
+    kw = {'output_folder': edges_folder, 'max_window_size': max_window_size}
+    multi_processing.master(files_getter=multi_processing.get_files_endswith,
+                            data_folder=local_dicts_folder,
+                            file_extension=config['graph']['local_dict_extension'],
+                            worker=get_local_edges_files_and_local_word_count,
                             process_num=process_num,
                             **kw)
-
-
-def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window_size, process_num):
-    # 2nd multiprocessing: Build a transfer dict (by local dictionary and merged dictionary)
-    #                       and write a new encoded text by using the transfer dict.
-
-    # TODO NOW Consume too much memory
-    # # Build a list of merged_dict. Each process could use its own merged dict, don't have to share memory.
-    # merged_dict = read_two_columns_file_to_build_dictionary_type_specified(file=local_dicts_folder+'dict_merged.txt',
-    #                                                                        key_type=str, value_type=int)
-    # local_dicts_number = len(
-    #     multi_processing.get_files_endswith(local_dicts_folder, config['graph']['local_dict_extension']))
-    # merged_dicts = []
-    # for i in range(local_dicts_number):
-    #     merged_dicts.append(merged_dict.copy())
-
-    kw2 = {'output_folder': edges_folder, 'max_window_size': max_window_size}
-    multi_processing.master2(local_dicts_folder,
-                             config['graph']['local_dict_extension'],
-                             get_local_edges_files_and_local_word_count,
-                             process_num=process_num,
-                             **kw2)
-
-
-def multiprocessing_all(data_folder, file_extension,
-                        max_window_size,
-                        process_num, worker,
-                        dicts_folder=config['graph']['dicts_and_encoded_texts_folder'],
-                        edges_folder=config['graph']['edges_folder']):
-    # multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
-    #                                                   worker=worker)
-    # # Get one merged dictionary from all local dictionaries
-    # merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
-    multiprocessing_get_edges_files(dicts_folder, edges_folder, max_window_size, process_num)
 
 
 def merge_edges_count_of_a_specific_window_size(window_size, edges_folder=config['graph']['edges_folder'],
@@ -327,6 +311,18 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, val
     return d
 
 
+def multiprocessing_all(data_folder, file_extension,
+                        max_window_size,
+                        process_num, data_type,
+                        dicts_folder=config['graph']['dicts_and_encoded_texts_folder'],
+                        edges_folder=config['graph']['edges_folder']):
+    multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
+                                                      data_type)
+    # Get one merged dictionary from all local dictionaries
+    merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
+    multiprocessing_get_edges_files(dicts_folder, edges_folder, max_window_size, process_num)
+
+
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO LATER remove edges by their frequency
 # TODO LATER remove words by their frequency
@@ -364,11 +360,11 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, val
 # merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
-# txt
-# multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
-#                     file_extension='.txt',
-#                     max_window_size=3,
-#                     process_num=4,
-#                     worker=write_encoded_text_and_local_dict_for_txt)
+# # txt
+multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+                    file_extension='.txt',
+                    max_window_size=3,
+                    process_num=4,
+                    data_type='txt')
 # merge_local_word_count()
 # merge_edges_count_of_a_specific_window_size(window_size=50)
