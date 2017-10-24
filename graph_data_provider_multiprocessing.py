@@ -388,4 +388,4 @@ def multiprocessing_all(data_folder, file_extension,
 #                     process_num=4,
 #                     data_type='txt')
 # merge_local_word_count()
-multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
+# multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
