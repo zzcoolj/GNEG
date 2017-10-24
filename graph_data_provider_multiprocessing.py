@@ -361,10 +361,10 @@ def multiprocessing_all(data_folder, file_extension,
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
 # # txt
-multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
-                    file_extension='.txt',
-                    max_window_size=3,
-                    process_num=4,
-                    data_type='txt')
+# multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+#                     file_extension='.txt',
+#                     max_window_size=3,
+#                     process_num=4,
+#                     data_type='txt')
 # merge_local_word_count()
 # merge_edges_count_of_a_specific_window_size(window_size=50)
