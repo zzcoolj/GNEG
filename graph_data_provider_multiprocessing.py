@@ -259,21 +259,33 @@ def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window
 
 def merge_edges_count_of_a_specific_window_size(window_size, edges_folder=config['graph']['edges_folder'],
                                                 output_folder=config['graph']['edges_folder']):
+    def counters_yielder():
+        print(len(files), "files to be counted.")
+        for file in files:
+            yield Counter(dict(Counter(common.read_two_columns_file_to_build_list_of_tuples_type_specified(file, int, int))))
+
     files = []
     for i in range(2, window_size+1):
         files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
         if not files_to_add:
-            print('No encoded edges file of window size '+str(i)+'. Reset window size to '+str(i-1)+'.')
+            print('No encoded edges file of window size '+str(window_size)+'. Reset window size to '+str(i-1)+'.')
             window_size = i-1
             break
         else:
             files.extend(files_to_add)
 
-    all_edges = []
-    for file in files:
-        all_edges.extend(common.read_two_columns_file_to_build_list_of_tuples_type_specified(file, int, int))
+    # all_edges = []
+    # for file in files:
+    #     all_edges.extend(common.read_two_columns_file_to_build_list_of_tuples_type_specified(file, int, int))
+    # counted_edges = dict(Counter(all_edges))
 
-    counted_edges = dict(Counter(all_edges))
+    count = 1
+    counted_edges = Counter(dict())
+    for c in counters_yielder():
+        print(count)
+        counted_edges += c
+        count += 1
+
     common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
                               counted_edges, 'tuple')
 
@@ -360,7 +372,7 @@ def multiprocessing_all(data_folder, file_extension,
 # merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
-# # txt
+# txt
 # multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
 #                     file_extension='.txt',
 #                     max_window_size=3,
