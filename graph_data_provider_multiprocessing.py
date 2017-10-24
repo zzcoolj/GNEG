@@ -2,6 +2,7 @@ import string
 import os
 from collections import Counter
 import configparser
+from multiprocessing import Pool
 import sys
 sys.path.insert(0, '../common/')
 import common
@@ -257,37 +258,39 @@ def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window
                             **kw)
 
 
-def merge_edges_count_of_a_specific_window_size(window_size, edges_folder=config['graph']['edges_folder'],
-                                                output_folder=config['graph']['edges_folder']):
+def get_counted_edges_worker(edges_files_paths):
     def counters_yielder():
-        print(len(files), "files to be counted.")
-        for file in files:
-            yield Counter(dict(Counter(common.read_two_columns_file_to_build_list_of_tuples_type_specified(file, int, int))))
+        print(len(edges_files_paths), "files to be counted.")
+        for file in edges_files_paths:
+            yield Counter(
+                dict(Counter(common.read_two_columns_file_to_build_list_of_tuples_type_specified(file, int, int))))
 
+    counted_edges = Counter(dict())
+    for c in counters_yielder():
+        counted_edges += c
+    return counted_edges
+
+
+def merge_edges_count_of_a_specific_window_size(window_size, process_num, edges_folder=config['graph']['edges_folder'],
+                                                output_folder=config['graph']['edges_folder']):
+    # Get all target edges files to be merged and counted.
     files = []
-    for i in range(2, window_size+1):
+    for i in range(2, window_size + 1):
         files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
         if not files_to_add:
-            print('No encoded edges file of window size '+str(window_size)+'. Reset window size to '+str(i-1)+'.')
-            window_size = i-1
+            print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
+                i - 1) + '.')
+            window_size = i - 1
             break
         else:
             files.extend(files_to_add)
 
-    # all_edges = []
-    # for file in files:
-    #     all_edges.extend(common.read_two_columns_file_to_build_list_of_tuples_type_specified(file, int, int))
-    # counted_edges = dict(Counter(all_edges))
-
-    count = 1
-    counted_edges = Counter(dict())
-    for c in counters_yielder():
-        print(count)
-        counted_edges += c
-        count += 1
-
-    common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
-                              counted_edges, 'tuple')
+    files_list = multi_processing.chunkify(files, process_num)
+    with Pool(process_num) as p:
+        local_counted_edges = p.map(get_counted_edges_worker, files_list)
+        counted_edges = sum(local_counted_edges, Counter())
+        common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
+                                  counted_edges, 'tuple')
 
 
 def merge_local_word_count(word_count_folder=config['graph']['dicts_and_encoded_texts_folder'],
@@ -379,4 +382,4 @@ def multiprocessing_all(data_folder, file_extension,
 #                     process_num=4,
 #                     data_type='txt')
 # merge_local_word_count()
-# merge_edges_count_of_a_specific_window_size(window_size=50)
+# merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)

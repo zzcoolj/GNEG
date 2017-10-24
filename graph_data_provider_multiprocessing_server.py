@@ -10,4 +10,4 @@ nltk.data.path = ['/vol/datailes/tools/nlp/nltk_data/2016']
 #     process_num=30,
 #     data_type='txt')
 # graph_data_provider_multiprocessing.merge_local_word_count()
-graph_data_provider_multiprocessing.merge_edges_count_of_a_specific_window_size(window_size=50)
+graph_data_provider_multiprocessing.merge_edges_count_of_a_specific_window_size(window_size=50, process_num=30)
