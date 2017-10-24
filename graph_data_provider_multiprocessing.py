@@ -258,21 +258,37 @@ def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window
                             **kw)
 
 
+def merge_local_word_count(word_count_folder=config['graph']['dicts_and_encoded_texts_folder'],
+                           output_folder=config['graph']['dicts_and_encoded_texts_folder']):
+    files = multi_processing.get_files_startswith(word_count_folder, "word_count_")
+    c = Counter()
+    for file in files:
+        counter_temp = common.read_two_columns_file_to_build_dictionary_type_specified(file, int, int)
+        c += counter_temp
+    common.write_dict_to_file(output_folder + "word_count_all.txt", dict(c), 'str')
+    return dict(c)
+
+
 def get_counted_edges_worker(edges_files_paths):
     def counters_yielder():
-        print(len(edges_files_paths), "files to be counted.")
         for file in edges_files_paths:
             yield Counter(
                 dict(Counter(common.read_two_columns_file_to_build_list_of_tuples_type_specified(file, int, int))))
 
+    total = len(edges_files_paths)
+    print(total, "files to be counted.")
+    count = 1
     counted_edges = Counter(dict())
     for c in counters_yielder():
         counted_edges += c
+        print('%i/%i files processed.' % (count, total), end='\r', flush=True)
+        count += 1
     return counted_edges
 
 
-def merge_edges_count_of_a_specific_window_size(window_size, process_num, edges_folder=config['graph']['edges_folder'],
-                                                output_folder=config['graph']['edges_folder']):
+def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, process_num,
+                                                                edges_folder=config['graph']['edges_folder'],
+                                                                output_folder=config['graph']['edges_folder']):
     # Get all target edges files to be merged and counted.
     files = []
     for i in range(2, window_size + 1):
@@ -288,20 +304,10 @@ def merge_edges_count_of_a_specific_window_size(window_size, process_num, edges_
     files_list = multi_processing.chunkify(files, process_num)
     with Pool(process_num) as p:
         local_counted_edges = p.map(get_counted_edges_worker, files_list)
+        print('All sub-processes done.')
         counted_edges = sum(local_counted_edges, Counter())
         common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
                                   counted_edges, 'tuple')
-
-
-def merge_local_word_count(word_count_folder=config['graph']['dicts_and_encoded_texts_folder'],
-                           output_folder=config['graph']['dicts_and_encoded_texts_folder']):
-    files = multi_processing.get_files_startswith(word_count_folder, "word_count_")
-    c = Counter()
-    for file in files:
-        counter_temp = common.read_two_columns_file_to_build_dictionary_type_specified(file, int, int)
-        c += counter_temp
-    common.write_dict_to_file(output_folder + "word_count_all.txt", dict(c), 'str')
-    return dict(c)
 
 
 def write_dict_to_file(file_path, dictionary):
@@ -354,7 +360,7 @@ def multiprocessing_all(data_folder, file_extension,
 # get_local_edges_files_and_local_word_count('data/dicts_and_encoded_texts/dict_test_for_graph_builder_igraph_multiprocessing.dicloc',
 #                                            merged_dict, 'data/edges/', max_window_size=10, local_dict_extension='.dicloc')
 # merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
-# merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
+# multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
 # # txt
 # write_encoded_text_and_local_dict_for_txt(
@@ -373,7 +379,7 @@ def multiprocessing_all(data_folder, file_extension,
 #                     max_window_size=3,
 #                     process_num=3)
 # merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
-# merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
+# multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
 # txt
 # multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
@@ -382,4 +388,4 @@ def multiprocessing_all(data_folder, file_extension,
 #                     process_num=4,
 #                     data_type='txt')
 # merge_local_word_count()
-# merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
+multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
