@@ -11,12 +11,26 @@ import multi_processing
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-'''
-Attention:
+""" Attention
 Each time we create a local dictionary, word order will not be the same (word id is identical).
 So each time the merged dictionary will be different: Each time a word may have different id in the merged dictionary.
-'''
-# TODO NOW explain the meaning of "local" and "transferred".
+"""
+
+""" Meaning of local and transferred
+local: (dict and encoded_text)
+    Based on the original file, different local files may have different token id for the same token. 
+    Because local files have never "communicate" with each other.
+transferred: (word_count and encoded edges)
+    Based on the merged dict (which is universal across all local dicts.), for the same token, all transferred files 
+    have same id for it.
+"""
+
+""" When we lost some original information?
+Remove rare tokens:
+    In the 3rd (final) multiprocessing of merging transferred edges files to get a specific window size edges count.
+    So information of all tokens are kept in transferred edges files and transferred word count files.
+    We just ignore the information about invalid vocabulary in the final stage.
+"""
 
 
 def multiprocessing_write_local_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
@@ -69,7 +83,7 @@ def multiprocessing_write_local_encoded_text_and_local_dict(data_folder, file_ex
         # Write the encoded_text
         if not output_folder.endswith('/'):
             output_folder += '/'
-        common.write_list_to_pickle(encoded_text, output_folder + "encoded_text_" + file_basename + ".pickle")
+        common.write_to_pickle(encoded_text, output_folder + "encoded_text_" + file_basename + ".pickle")
         # Write the dictionary
         common.write_dict_to_file(output_folder + "dict_" + file_basename + ".dicloc", word2id, 'str')
 
@@ -120,8 +134,8 @@ def multiprocessing_write_local_encoded_text_and_local_dict(data_folder, file_ex
         # Write the encoded_text
         if not output_folder.endswith('/'):
             output_folder += '/'
-        common.write_list_to_pickle(encoded_text,
-                                    output_folder + "encoded_text_" + parent_folder_name + "_" + file_basename + ".pickle")
+        common.write_to_pickle(encoded_text,
+                               output_folder + "encoded_text_" + parent_folder_name + "_" + file_basename + ".pickle")
         # Write the dictionary
         write_dict_to_file(output_folder + "dict_" + parent_folder_name + "_" + file_basename + ".dicloc", word2id)
 
@@ -171,7 +185,7 @@ def multiprocessing_write_transferred_edges_files_and_transferred_word_count(loc
     and write a new encoded text by using the transfer dict.
     """
 
-    def get_local_edges_files_and_local_word_count(local_dict_file_path, output_folder, max_window_size):
+    def get_transferred_edges_files_and_transferred_word_count(local_dict_file_path, output_folder, max_window_size):
         def word_count(encoded_text, file_name):
             result = dict(Counter([item for sublist in encoded_text for item in sublist]))
             folder_name = multi_processing.get_file_folder(local_dict_file_path)
@@ -234,7 +248,7 @@ def multiprocessing_write_transferred_edges_files_and_transferred_word_count(loc
         # Get encoded_text_pickle path according to local_dict_file_path
         local_encoded_text_pickle = local_dict_file_path.replace("dict_", "encoded_text_")[
                                     :-len(config['graph']['local_dict_extension'])]
-        local_encoded_text = common.read_pickle_to_build_list(local_encoded_text_pickle + ".pickle")
+        local_encoded_text = common.read_pickle(local_encoded_text_pickle + ".pickle")
         # Translate the local encoded text with transfer_dict
         transferred_encoded_text = []
         for encoded_sent in local_encoded_text:
@@ -255,7 +269,7 @@ def multiprocessing_write_transferred_edges_files_and_transferred_word_count(loc
     multi_processing.master(files_getter=multi_processing.get_files_endswith,
                             data_folder=local_dicts_folder,
                             file_extension=config['graph']['local_dict_extension'],
-                            worker=get_local_edges_files_and_local_word_count,
+                            worker=get_transferred_edges_files_and_transferred_word_count,
                             process_num=process_num,
                             **kw)
 
@@ -318,14 +332,17 @@ def get_counted_edges_worker(edges_files_paths):
         counted_edges += c
         print('%i/%i files processed.' % (count, total), end='\r', flush=True)
         count += 1
-    common.write_dict_to_file(config['graph']['edges_folder'] + str(multi_processing.get_pid()) + ".txt",
-                              counted_edges, 'tuple')
+    common.write_to_pickle(counted_edges, config['graph']['edges_folder'] + str(multi_processing.get_pid()) + ".pickle")
+    # TODO Delete soon
+    # common.write_dict_to_file(config['graph']['edges_folder'] + str(multi_processing.get_pid()) + ".txt",
+    #                           counted_edges, 'tuple')
 
 
 def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, process_num,
                                                                 edges_folder=config['graph']['edges_folder'],
                                                                 output_folder=config['graph']['edges_folder']):
     def counted_edges_from_worker_yielder(folder=edges_folder):
+        # TODO Delete soon
         def read_counted_edges_from_worker(file_path):
             d = {}
             with open(file_path) as f:
@@ -336,27 +353,31 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                     d[key] = val
             return d
 
-        paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
+        paths = multi_processing.get_files_endswith(data_folder=folder, file_extension='.pickle')
+        # TODO Delete soon
+        # paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
         for path in paths:
-            yield Counter(read_counted_edges_from_worker(path))
+            # TODO Delete soon
+            # yield Counter(read_counted_edges_from_worker(path))
+            yield Counter(common.read_pickle(path))
 
-    # # Get all target edges files' paths to be merged and counted.
-    # files = []
-    # for i in range(2, window_size + 1):
-    #     files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
-    #     if not files_to_add:
-    #         print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
-    #             i - 1) + '.')
-    #         window_size = i - 1
-    #         break
-    #     else:
-    #         files.extend(files_to_add)
-    #
-    # # Each thread processes several target edges files and save their counted_edges.
-    # files_list = multi_processing.chunkify(files, process_num)
+    # Get all target edges files' paths to be merged and counted.
+    files = []
+    for i in range(2, window_size + 1):
+        files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
+        if not files_to_add:
+            print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
+                i - 1) + '.')
+            window_size = i - 1
+            break
+        else:
+            files.extend(files_to_add)
+
+    # Each thread processes several target edges files and save their counted_edges.
+    files_list = multi_processing.chunkify(files, process_num)
     with Pool(process_num) as p:
-        # p.map(get_counted_edges_worker, files_list)
-        # print('All sub-processes done.')
+        p.map(get_counted_edges_worker, files_list)
+        print('All sub-processes done.')
 
         # Merge all counted_edges from workers and get the final result.
         count = 1
@@ -368,8 +389,10 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
         common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
                                   counted_edges, 'tuple')
         # Remove all counted_edges from workers.
-        files_paths = multi_processing.get_files_paths_not_contain(data_folder=edges_folder,
-                                                                   not_contain='encoded_edges')
+        # TODO Delete soon
+        # files_paths = multi_processing.get_files_paths_not_contain(data_folder=edges_folder,
+        #                                                            not_contain='encoded_edges')
+        files_paths = multi_processing.get_files_endswith(data_folder=edges_folder, file_extension='.pickle')
         for file_path in files_paths:
             print('Remove file %s' % file_path)
             os.remove(file_path)
@@ -410,8 +433,6 @@ def multiprocessing_all(data_folder, file_extension,
 
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
-# TODO LATER remove edges by their frequency
-# TODO LATER remove words by their frequency
 
 
 # TESTS
