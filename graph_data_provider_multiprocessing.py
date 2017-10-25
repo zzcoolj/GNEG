@@ -336,27 +336,27 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                     d[key] = val
             return d
 
-        files_paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
-        for file_path in files_paths:
-            yield Counter(read_counted_edges_from_worker(file_path))
-
-    # Get all target edges files' paths to be merged and counted.
-    files = []
-    for i in range(2, window_size + 1):
-        files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
-        if not files_to_add:
-            print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
-                i - 1) + '.')
-            window_size = i - 1
-            break
-        else:
-            files.extend(files_to_add)
-
-    # Each thread processes several target edges files and save their counted_edges.
-    files_list = multi_processing.chunkify(files, process_num)
+    #     files_paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
+    #     for file_path in files_paths:
+    #         yield Counter(read_counted_edges_from_worker(file_path))
+    #
+    # # Get all target edges files' paths to be merged and counted.
+    # files = []
+    # for i in range(2, window_size + 1):
+    #     files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
+    #     if not files_to_add:
+    #         print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
+    #             i - 1) + '.')
+    #         window_size = i - 1
+    #         break
+    #     else:
+    #         files.extend(files_to_add)
+    #
+    # # Each thread processes several target edges files and save their counted_edges.
+    # files_list = multi_processing.chunkify(files, process_num)
     with Pool(process_num) as p:
-        p.map(get_counted_edges_worker, files_list)
-        print('All sub-processes done.')
+        # p.map(get_counted_edges_worker, files_list)
+        # print('All sub-processes done.')
 
         # Merge all counted_edges from workers and get the final result.
         count = 1
