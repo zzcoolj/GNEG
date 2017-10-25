@@ -454,4 +454,4 @@ def multiprocessing_all(data_folder, file_extension,
 #                     data_type='txt')
 # merge_transferred_word_count()
 # write_valid_vocabulary()
-multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
+# multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
