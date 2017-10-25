@@ -336,10 +336,10 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                     d[key] = val
             return d
 
-    #     files_paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
-    #     for file_path in files_paths:
-    #         yield Counter(read_counted_edges_from_worker(file_path))
-    #
+        paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
+        for path in paths:
+            yield Counter(read_counted_edges_from_worker(path))
+
     # # Get all target edges files' paths to be merged and counted.
     # files = []
     # for i in range(2, window_size + 1):
