@@ -296,9 +296,18 @@ def get_counted_edges_worker(edges_files_paths):
         return result
 
     def counters_yielder():
+        def read_edges_file_with_respect_to_valid_vocabulary(file_path, valid_vocabulary_list):
+            d = []
+            with open(file_path) as f:
+                for line in f:
+                    (first, second) = line.rstrip('\n').split("\t")
+                    if (first in valid_vocabulary_list) and (second in valid_vocabulary_list):
+                        d.append((first, second))
+            return d
+
         for file in edges_files_paths:
             yield Counter(dict(Counter(
-                read_edges_file_with_respect_to_valid_vocabulary(file=file, valid_vocabulary=valid_vocabulary))))
+                read_edges_file_with_respect_to_valid_vocabulary(file_path=file, valid_vocabulary_list=valid_vocabulary))))
 
     valid_vocabulary = dict.fromkeys(read_valid_vocabulary())
     total = len(edges_files_paths)
@@ -316,7 +325,22 @@ def get_counted_edges_worker(edges_files_paths):
 def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, process_num,
                                                                 edges_folder=config['graph']['edges_folder'],
                                                                 output_folder=config['graph']['edges_folder']):
-    # Get all target edges files to be merged and counted.
+    def counted_edges_from_worker_yielder(folder=edges_folder):
+        def read_counted_edges_from_worker(file_path):
+            d = {}
+            with open(file_path) as f:
+                for line in f:
+                    elements = line.rstrip('\n').split("\t")
+                    key = (elements[0], elements[1])
+                    val = int(elements[2])
+                    d[key] = val
+            return d
+
+        files_paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
+        for file_path in files_paths:
+            yield Counter(read_counted_edges_from_worker(file_path))
+
+    # Get all target edges files' paths to be merged and counted.
     files = []
     for i in range(2, window_size + 1):
         files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
@@ -328,15 +352,27 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
         else:
             files.extend(files_to_add)
 
+    # Each thread processes several target edges files and save their counted_edges.
     files_list = multi_processing.chunkify(files, process_num)
     with Pool(process_num) as p:
         p.map(get_counted_edges_worker, files_list)
         print('All sub-processes done.')
-        # TODO NOW merge all temp files.
-        # local_counted_edges = p.map(get_counted_edges_worker, files_list)
-        # counted_edges = sum(local_counted_edges, Counter())
-        # common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
-        #                           counted_edges, 'tuple')
+
+        # Merge all counted_edges from workers and get the final result.
+        count = 1
+        counted_edges = Counter(dict())
+        for c in counted_edges_from_worker_yielder():
+            counted_edges += c
+            print('%i/%i files processed.' % (count, process_num), end='\r', flush=True)
+            count += 1
+        common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
+                                  counted_edges, 'tuple')
+        # Remove all counted_edges from workers.
+        files_paths = multi_processing.get_files_paths_not_contain(data_folder=edges_folder,
+                                                                   not_contain='encoded_edges')
+        for file_path in files_paths:
+            print('Remove file %s' % file_path)
+            os.remove(file_path)
 
 
 def write_dict_to_file(file_path, dictionary):
@@ -358,16 +394,6 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, val
         for line in f:
             (key, val) = line.rstrip('\n').split("\t")
             d[key_type(key)] = value_type(val)
-    return d
-
-
-def read_edges_file_with_respect_to_valid_vocabulary(file, valid_vocabulary):
-    d = []
-    with open(file) as f:
-        for line in f:
-            (first, second) = line.rstrip('\n').split("\t")
-            if (first in valid_vocabulary) and (second in valid_vocabulary):
-                d.append((first, second))
     return d
 
 
@@ -428,4 +454,4 @@ def multiprocessing_all(data_folder, file_extension,
 #                     data_type='txt')
 # merge_transferred_word_count()
 # write_valid_vocabulary()
-# multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
+multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
