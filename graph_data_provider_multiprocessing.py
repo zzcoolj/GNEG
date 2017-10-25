@@ -1,3 +1,5 @@
+__author__ = 'Zheng ZHANG'
+
 import string
 import os
 from collections import Counter
@@ -432,47 +434,48 @@ def multiprocessing_all(data_folder, file_extension,
     multiprocessing_write_transferred_edges_files_and_transferred_word_count(dicts_folder, edges_folder, max_window_size, process_num)
 
 
+if __name__ == '__main__':
+    # TESTS
+    # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
+
+
+    # # One core test (local dictionaries ready)
+    # # xml
+    # write_encoded_text_and_local_dict_for_xml("data/test_input_data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
+    # merged_dict = merge_local_dict(dict_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+    # get_local_edges_files_and_local_word_count('data/dicts_and_encoded_texts/dict_test_for_graph_builder_igraph_multiprocessing.dicloc',
+    #                                            merged_dict, 'data/edges/', max_window_size=10, local_dict_extension='.dicloc')
+    # merge_transferred_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+    # multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
+
+    # # txt
+    # write_encoded_text_and_local_dict_for_txt(
+    #     file_path="data/training data/Wikipedia-Dumps_en_20170420_prep/AA/wiki_01.txt",
+    #     output_folder='output/intermediate data/dicts_and_encoded_texts')
+
+
+    # # Multiprocessing test
+    # # xml
+    # multiprocessing_all(xml_data_folder='/Users/zzcoolj/Code/GoW/data/test_input_data/xin_eng_for_test',
+    #                     xml_file_extension='.xml',
+    #                     xml_node_path='./DOC/TEXT/P',
+    #                     dicts_folder='data/dicts_and_encoded_texts/',
+    #                     local_dict_extension='.dicloc',
+    #                     edges_folder='data/edges/',
+    #                     max_window_size=3,
+    #                     process_num=3)
+    # merge_transferred_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+    # multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
+
+    # txt
+    # multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+    #                     file_extension='.txt',
+    #                     max_window_size=3,
+    #                     process_num=4,
+    #                     data_type='txt')
+    # merge_transferred_word_count()
+    # write_valid_vocabulary()
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
+
+
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
-
-
-# TESTS
-# write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
-
-
-# # One core test (local dictionaries ready)
-# # xml
-# write_encoded_text_and_local_dict_for_xml("data/test_input_data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
-# merged_dict = merge_local_dict(dict_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
-# get_local_edges_files_and_local_word_count('data/dicts_and_encoded_texts/dict_test_for_graph_builder_igraph_multiprocessing.dicloc',
-#                                            merged_dict, 'data/edges/', max_window_size=10, local_dict_extension='.dicloc')
-# merge_transferred_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
-# multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-
-# # txt
-# write_encoded_text_and_local_dict_for_txt(
-#     file_path="data/training data/Wikipedia-Dumps_en_20170420_prep/AA/wiki_01.txt",
-#     output_folder='output/intermediate data/dicts_and_encoded_texts')
-
-
-# # Multiprocessing test
-# # xml
-# multiprocessing_all(xml_data_folder='/Users/zzcoolj/Code/GoW/data/test_input_data/xin_eng_for_test',
-#                     xml_file_extension='.xml',
-#                     xml_node_path='./DOC/TEXT/P',
-#                     dicts_folder='data/dicts_and_encoded_texts/',
-#                     local_dict_extension='.dicloc',
-#                     edges_folder='data/edges/',
-#                     max_window_size=3,
-#                     process_num=3)
-# merge_transferred_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
-# multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
-
-# txt
-# multiprocessing_all(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
-#                     file_extension='.txt',
-#                     max_window_size=3,
-#                     process_num=4,
-#                     data_type='txt')
-# merge_transferred_word_count()
-# write_valid_vocabulary()
-# multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
