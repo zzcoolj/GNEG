@@ -309,7 +309,8 @@ def get_counted_edges_worker(edges_files_paths):
         counted_edges += c
         print('%i/%i files processed.' % (count, total), end='\r', flush=True)
         count += 1
-    return counted_edges
+    common.write_dict_to_file(config['graph']['edges_folder'] + str(multi_processing.get_pid()) + ".txt",
+                              counted_edges, 'tuple')
 
 
 def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, process_num,
@@ -329,11 +330,13 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
 
     files_list = multi_processing.chunkify(files, process_num)
     with Pool(process_num) as p:
-        local_counted_edges = p.map(get_counted_edges_worker, files_list)
+        p.map(get_counted_edges_worker, files_list)
         print('All sub-processes done.')
-        counted_edges = sum(local_counted_edges, Counter())
-        common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
-                                  counted_edges, 'tuple')
+        # TODO NOW merge all temp files.
+        # local_counted_edges = p.map(get_counted_edges_worker, files_list)
+        # counted_edges = sum(local_counted_edges, Counter())
+        # common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
+        #                           counted_edges, 'tuple')
 
 
 def write_dict_to_file(file_path, dictionary):
@@ -424,5 +427,5 @@ def multiprocessing_all(data_folder, file_extension,
 #                     process_num=4,
 #                     data_type='txt')
 # merge_transferred_word_count()
-write_valid_vocabulary()
-multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
+# write_valid_vocabulary()
+# multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
