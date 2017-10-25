@@ -16,10 +16,11 @@ Attention:
 Each time we create a local dictionary, word order will not be the same (word id is identical).
 So each time the merged dictionary will be different: Each time a word may have different id in the merged dictionary.
 '''
+# TODO NOW explain the meaning of "local" and "transferred".
 
 
-def multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
-                                                      data_type):
+def multiprocessing_write_local_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
+                                                            data_type):
     """1st multiprocessing
     Get dictionary and encoded text of each origin file
     """
@@ -141,7 +142,7 @@ def multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extensio
                                 **kw)
 
 
-def merge_dict(dict_folder, output_folder):
+def merge_local_dict(dict_folder, output_folder):
     def read_first_column_file_to_build_set(file):
         d = set()
         with open(file, encoding='utf-8') as f:
@@ -163,7 +164,8 @@ def merge_dict(dict_folder, output_folder):
     return result
 
 
-def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window_size, process_num):
+def multiprocessing_write_transferred_edges_files_and_transferred_word_count(local_dicts_folder, edges_folder,
+                                                                             max_window_size, process_num):
     """2nd multiprocessing
     Build a transfer dict (by local dictionary and merged dictionary)
     and write a new encoded text by using the transfer dict.
@@ -234,20 +236,20 @@ def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window
                                     :-len(config['graph']['local_dict_extension'])]
         local_encoded_text = common.read_pickle_to_build_list(local_encoded_text_pickle + ".pickle")
         # Translate the local encoded text with transfer_dict
-        transfered_encoded_text = []
+        transferred_encoded_text = []
         for encoded_sent in local_encoded_text:
             transfered_encoded_sent = []
             for encoded_word in encoded_sent:
                 transfered_encoded_sent.append(transfer_dict[encoded_word])
-            transfered_encoded_text.append(transfered_encoded_sent)
+            transferred_encoded_text.append(transfered_encoded_sent)
 
-        # TODO Have to write the transfered_encoded_text?
+        # TODO Have to write the transferred_encoded_text?
 
         file_name = multi_processing.get_file_name(local_dict_file_path).replace("dict_", "")
         # Word count
-        word_count(transfered_encoded_text, file_name)
+        word_count(transferred_encoded_text, file_name)
         # Write edges files of different window size based on the transfered encoded text
-        write_edges_of_different_window_size(transfered_encoded_text, file_name, output_folder, max_window_size)
+        write_edges_of_different_window_size(transferred_encoded_text, file_name, output_folder, max_window_size)
 
     kw = {'output_folder': edges_folder, 'max_window_size': max_window_size}
     multi_processing.master(files_getter=multi_processing.get_files_endswith,
@@ -258,8 +260,8 @@ def multiprocessing_get_edges_files(local_dicts_folder, edges_folder, max_window
                             **kw)
 
 
-def merge_local_word_count(word_count_folder=config['graph']['dicts_and_encoded_texts_folder'],
-                           output_folder=config['graph']['dicts_and_encoded_texts_folder']):
+def merge_transferred_word_count(word_count_folder=config['graph']['dicts_and_encoded_texts_folder'],
+                                 output_folder=config['graph']['dicts_and_encoded_texts_folder']):
     files = multi_processing.get_files_startswith(word_count_folder, "word_count_")
     c = Counter()
     for file in files:
@@ -269,12 +271,36 @@ def merge_local_word_count(word_count_folder=config['graph']['dicts_and_encoded_
     return dict(c)
 
 
+def write_valid_vocabulary(
+        merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
+        output_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_' + config['graph'][
+            'min_count'] + '.txt',
+        min_count=int(config['graph']['min_count'])):
+    merged_word_count = read_two_columns_file_to_build_dictionary_type_specified(file=merged_word_count_path,
+                                                                                 key_type=str, value_type=int)
+    valid_vocabulary = []
+    for word_id, count in merged_word_count.items():
+        if count >= min_count:
+            valid_vocabulary.append(word_id)
+    common.write_simple_list_to_file(output_path, valid_vocabulary)
+
+
 def get_counted_edges_worker(edges_files_paths):
+    def read_valid_vocabulary(file_path=config['graph']['dicts_and_encoded_texts_folder'] +
+                                        'valid_vocabulary_min_count_' + config['graph']['min_count'] + '.txt'):
+        result = []
+        with open(file_path) as f:
+            for line in f:
+                line_element = line.rstrip('\n')
+                result.append(line_element)
+        return result
+
     def counters_yielder():
         for file in edges_files_paths:
-            yield Counter(
-                dict(Counter(common.read_two_columns_file_to_build_list_of_tuples_type_specified(file, int, int))))
+            yield Counter(dict(Counter(
+                read_edges_file_with_respect_to_valid_vocabulary(file=file, valid_vocabulary=valid_vocabulary))))
 
+    valid_vocabulary = dict.fromkeys(read_valid_vocabulary())
     total = len(edges_files_paths)
     print(total, "files to be counted.")
     count = 1
@@ -332,16 +358,26 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, val
     return d
 
 
+def read_edges_file_with_respect_to_valid_vocabulary(file, valid_vocabulary):
+    d = []
+    with open(file) as f:
+        for line in f:
+            (first, second) = line.rstrip('\n').split("\t")
+            if (first in valid_vocabulary) and (second in valid_vocabulary):
+                d.append((first, second))
+    return d
+
+
 def multiprocessing_all(data_folder, file_extension,
                         max_window_size,
                         process_num, data_type,
                         dicts_folder=config['graph']['dicts_and_encoded_texts_folder'],
                         edges_folder=config['graph']['edges_folder']):
-    multiprocessing_write_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
-                                                      data_type)
+    multiprocessing_write_local_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num,
+                                                            data_type)
     # Get one merged dictionary from all local dictionaries
-    merge_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
-    multiprocessing_get_edges_files(dicts_folder, edges_folder, max_window_size, process_num)
+    merge_local_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
+    multiprocessing_write_transferred_edges_files_and_transferred_word_count(dicts_folder, edges_folder, max_window_size, process_num)
 
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
@@ -356,10 +392,10 @@ def multiprocessing_all(data_folder, file_extension,
 # # One core test (local dictionaries ready)
 # # xml
 # write_encoded_text_and_local_dict_for_xml("data/test_input_data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
-# merged_dict = merge_dict(dict_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+# merged_dict = merge_local_dict(dict_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # get_local_edges_files_and_local_word_count('data/dicts_and_encoded_texts/dict_test_for_graph_builder_igraph_multiprocessing.dicloc',
 #                                            merged_dict, 'data/edges/', max_window_size=10, local_dict_extension='.dicloc')
-# merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+# merge_transferred_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
 # # txt
@@ -378,7 +414,7 @@ def multiprocessing_all(data_folder, file_extension,
 #                     edges_folder='data/edges/',
 #                     max_window_size=3,
 #                     process_num=3)
-# merge_local_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
+# merge_transferred_word_count(word_count_folder='data/dicts_and_encoded_texts/', output_folder='data/dicts_and_encoded_texts/')
 # multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
 # txt
@@ -387,5 +423,6 @@ def multiprocessing_all(data_folder, file_extension,
 #                     max_window_size=3,
 #                     process_num=4,
 #                     data_type='txt')
-# merge_local_word_count()
-# multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
+# merge_transferred_word_count()
+write_valid_vocabulary()
+multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
