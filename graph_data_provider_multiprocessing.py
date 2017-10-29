@@ -334,7 +334,11 @@ def get_counted_edges_worker(edges_files_paths):
         counted_edges += c
         print('%i/%i files processed.' % (count, total), end='\r', flush=True)
         count += 1
-    common.write_to_pickle(counted_edges, config['graph']['edges_folder'] + str(multi_processing.get_pid()) + ".pickle")
+    # The result could be counted edges of several files (i.e. len(edges_files_paths) >= 1). Using the first file name
+    # as part of the pickle file name is just to make sure the pickle name is unique (pickle file couldn't be
+    # overwritten).
+    common.write_to_pickle(counted_edges, config['graph']['edges_folder'] + multi_processing.get_file_name(
+        edges_files_paths[0]) + ".pickle")
     # TODO Delete soon
     # common.write_dict_to_file(config['graph']['edges_folder'] + str(multi_processing.get_pid()) + ".txt",
     #                           counted_edges, 'tuple')
@@ -343,7 +347,7 @@ def get_counted_edges_worker(edges_files_paths):
 def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, process_num,
                                                                 edges_folder=config['graph']['edges_folder'],
                                                                 output_folder=config['graph']['edges_folder']):
-    def counted_edges_from_worker_yielder(folder=edges_folder):
+    def counted_edges_from_worker_yielder(paths):
         # TODO Delete soon
         def read_counted_edges_from_worker(file_path):
             d = {}
@@ -355,7 +359,6 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                     d[key] = val
             return d
 
-        paths = multi_processing.get_files_endswith(data_folder=folder, file_extension='.pickle')
         # TODO Delete soon
         # paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
         for path in paths:
@@ -363,32 +366,31 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
             # yield Counter(read_counted_edges_from_worker(path))
             yield Counter(common.read_pickle(path))
 
-    # # Get all target edges files' paths to be merged and counted.
-    # files = []
-    # for i in range(2, window_size + 1):
-    #     files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
-    #     if not files_to_add:
-    #         print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
-    #             i - 1) + '.')
-    #         window_size = i - 1
-    #         break
-    #     else:
-    #         files.extend(files_to_add)
-    #
-    # # Each thread processes several target edges files and save their counted_edges.
-    # files_list = multi_processing.chunkify(files, process_num)
-    # p = Pool(process_num)
-    # p.map(get_counted_edges_worker, files_list)
-    # p.close()
-    # p.join()
-    # print('All sub-processes done.')
+    # Get all target edges files' paths to be merged and counted.
+    files = []
+    for i in range(2, window_size + 1):
+        files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
+        if not files_to_add:
+            print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
+                i - 1) + '.')
+            window_size = i - 1
+            break
+        else:
+            files.extend(files_to_add)
 
-    # TODO Delete after run in server
-    window_size = 5
+    # Each thread processes several target edges files and save their counted_edges.
+    files_list = multi_processing.chunkify(lst=files, n=process_num*2)
+    p = Pool(process_num)
+    p.imap(get_counted_edges_worker, files_list)
+    p.close()
+    p.join()
+    print('All sub-processes done.')
+
     # Merge all counted_edges from workers and get the final result.
+    counted_edges_paths = multi_processing.get_files_endswith(data_folder=edges_folder, file_extension='.pickle')
     count = 1
     counted_edges = Counter(dict())
-    for c in counted_edges_from_worker_yielder():
+    for c in counted_edges_from_worker_yielder(paths=counted_edges_paths):
         counted_edges += c
         print('%i/%i files processed.' % (count, process_num), end='\r', flush=True)
         count += 1
@@ -398,8 +400,7 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
     # TODO Delete soon
     # files_paths = multi_processing.get_files_paths_not_contain(data_folder=edges_folder,
     #                                                            not_contain='encoded_edges')
-    files_paths = multi_processing.get_files_endswith(data_folder=edges_folder, file_extension='.pickle')
-    for file_path in files_paths:
+    for file_path in counted_edges_paths:
         print('Remove file %s' % file_path)
         os.remove(file_path)
 
