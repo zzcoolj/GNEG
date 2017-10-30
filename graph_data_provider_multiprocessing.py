@@ -104,31 +104,43 @@ def multiprocessing_write_local_encoded_text_and_local_dict(data_folder, file_ex
         encoded_text = []
         puncs = set(string.punctuation)
 
-        for sent in sentences():
-            encoded_sent = []
-            # update the dictionary
-            for word in common.tokenize_text_into_words(sent, "WordPunct"):
-                # Remove numbers
-                if config.getboolean("graph", "remove_numbers") and word.isnumeric():
-                    # TODO Maybe distinguish some meaningful numbers, like year
-                    continue
-                # Remove punctuations
-                # if all(j.isdigit() or j in puncs for j in word):
-                if config.getboolean("graph", "remove_punctuations"):
-                    if all(c in puncs for c in word):
+        if config.getboolean("input data", "preprocessing_text"):
+            for sent in sentences():
+                encoded_sent = []
+                # update the dictionary
+                for word in common.tokenize_text_into_words(sent, "WordPunct"):
+                    # Remove numbers
+                    if config.getboolean("input data", "remove_numbers") and word.isnumeric():
+                        # TODO Maybe distinguish some meaningful numbers, like year
                         continue
-                # Stem word
-                if config.getboolean("graph", "stem_word"):
-                    word = common.stem_word(word)
-                # Make all words in lowercase
-                if config.getboolean("graph", "lowercase"):
-                    word = word.lower()
-                if word not in word2id:
-                    id = len(word2id)
-                    word2id[word] = id
-                    id2word[id] = word
-                encoded_sent.append(word2id[word])
-            encoded_text.append(encoded_sent)
+                    # Remove punctuations
+                    # if all(j.isdigit() or j in puncs for j in word):
+                    if config.getboolean("input data", "remove_punctuations"):
+                        if all(c in puncs for c in word):
+                            continue
+                    # Stem word
+                    if config.getboolean("input data", "stem_word"):
+                        word = common.stem_word(word)
+                    # Make all words in lowercase
+                    if config.getboolean("input data", "lowercase"):
+                        word = word.lower()
+                    if word not in word2id:
+                        id = len(word2id)
+                        word2id[word] = id
+                        id2word[id] = word
+                    encoded_sent.append(word2id[word])
+                encoded_text.append(encoded_sent)
+        else:
+            for sent in sentences():
+                encoded_sent = []
+                # update the dictionary
+                for word in sent.split(' '):
+                    if word not in word2id:
+                        id = len(word2id)
+                        word2id[word] = id
+                        id2word[id] = word
+                    encoded_sent.append(word2id[word])
+                encoded_text.append(encoded_sent)
 
         file_basename = multi_processing.get_file_name(file_path)
         # names like "AA", "AB", ...
@@ -416,7 +428,8 @@ def multiprocessing_all(data_folder, file_extension,
                                                             data_type)
     # Get one merged dictionary from all local dictionaries
     merge_local_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
-    multiprocessing_write_transferred_edges_files_and_transferred_word_count(dicts_folder, edges_folder, max_window_size, process_num)
+    multiprocessing_write_transferred_edges_files_and_transferred_word_count(dicts_folder, edges_folder,
+                                                                             max_window_size, process_num)
 
 
 if __name__ == '__main__':
