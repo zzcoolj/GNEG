@@ -339,31 +339,13 @@ def get_counted_edges_worker(edges_files_paths):
     # overwritten).
     common.write_to_pickle(counted_edges, config['graph']['edges_folder'] + multi_processing.get_file_name(
         edges_files_paths[0]) + ".pickle")
-    # TODO Delete soon
-    # common.write_dict_to_file(config['graph']['edges_folder'] + str(multi_processing.get_pid()) + ".txt",
-    #                           counted_edges, 'tuple')
 
 
 def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, process_num,
                                                                 edges_folder=config['graph']['edges_folder'],
                                                                 output_folder=config['graph']['edges_folder']):
     def counted_edges_from_worker_yielder(paths):
-        # TODO Delete soon
-        def read_counted_edges_from_worker(file_path):
-            d = {}
-            with open(file_path) as f:
-                for line in f:
-                    elements = line.rstrip('\n').split("\t")
-                    key = (elements[0], elements[1])
-                    val = int(elements[2])
-                    d[key] = val
-            return d
-
-        # TODO Delete soon
-        # paths = multi_processing.get_files_paths_not_contain(data_folder=folder, not_contain='encoded_edges')
         for path in paths:
-            # TODO Delete soon
-            # yield Counter(read_counted_edges_from_worker(path))
             yield Counter(common.read_pickle(path))
 
     # Get all target edges files' paths to be merged and counted.
@@ -392,14 +374,12 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
     counted_edges = Counter(dict())
     for c in counted_edges_from_worker_yielder(paths=counted_edges_paths):
         counted_edges += c
-        print('%i/%i files processed.' % (count, process_num), end='\r', flush=True)
+        print('%i/%i files processed.' % (count, len(files_list)), end='\r', flush=True)
         count += 1
     common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
                               counted_edges, 'tuple')
+
     # Remove all counted_edges from workers.
-    # TODO Delete soon
-    # files_paths = multi_processing.get_files_paths_not_contain(data_folder=edges_folder,
-    #                                                            not_contain='encoded_edges')
     for file_path in counted_edges_paths:
         print('Remove file %s' % file_path)
         os.remove(file_path)
