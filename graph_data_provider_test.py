@@ -3,7 +3,7 @@ ATTENTION: All results are based on setting preprocessing_word=False in config.i
 """
 
 import unittest
-import graph_data_provider_multiprocessing as gdp
+import graph_data_provider as gdp
 
 
 class TestGraphDataProvider(unittest.TestCase):
