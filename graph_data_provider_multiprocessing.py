@@ -185,7 +185,7 @@ def merge_local_dict(dict_folder, output_folder):
     # Take all files in the folder starting with "dict_"
     files = [os.path.join(dict_folder, name) for name in os.listdir(dict_folder)
              if (os.path.isfile(os.path.join(dict_folder, name))
-                 and name.startswith("dict_"))]
+                 and name.startswith("dict_") and (name != 'dict_merged.txt'))]
     all_keys = set()
     for file in files:
         all_keys |= read_first_column_file_to_build_set(file)
@@ -488,3 +488,4 @@ if __name__ == '__main__':
 
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
+# TODO NOW This program now allows self-loop, add one option for that.

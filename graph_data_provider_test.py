@@ -32,24 +32,76 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertEqual(result[merged_dict['00']], 3)
         self.assertEqual(result[merged_dict[',']], 5)
 
+    def get_id2word(self):
+        word2id = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+            file=self.dicts_folder + 'dict_merged.txt', key_type=str,
+            value_type=int)
+        id2word = dict()
+        for word, id in word2id.items():
+            id2word[id] = word
+        return id2word
+
     def test_write_valid_vocabulary(self):
         result = gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                             output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
                                                 self.min_count) + '.txt',
                                             min_count=self.min_count)
         self.assertEqual(len(result), 6)
+
         result = gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                             output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
                                                 self.min_count) + '.txt',
                                             min_count=1)
         self.assertEqual(len(result), 94)
 
+        result = gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
+                                            output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
+                                                self.min_count) + '.txt',
+                                            min_count=3)
+        self.assertEqual(len(result), 6 + 3)
+        # id2word = self.get_id2word()
+        # print([id2word[int(i)] for i in result])
+
     def test_multiprocessing_merge_edges_count_of_a_specific_window_size(self):
+        gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
+                                   output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
+                                       self.min_count) + '.txt',
+                                   min_count=self.min_count)
         result = gdp.multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=5,
                                                                                  min_count=self.min_count,
                                                                                  dicts_folder=self.dicts_folder,
                                                                                  edges_folder=self.edges_folder,
                                                                                  output_folder=self.edges_folder)
+        word2id = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+            file=self.dicts_folder + 'dict_merged.txt', key_type=str,
+            value_type=int)
+        print()
+        self.assertEqual(result[(str(word2id['and']), str(word2id[',']))], 2)
+        self.assertEqual(result[(str(word2id['and']), str(word2id['.']))], 2)
+        self.assertEqual(result[(str(word2id['and']), str(word2id['the']))], 1)
+
+        self.assertEqual(result[(str(word2id['the']), str(word2id['of']))], 6)
+        self.assertEqual(result[(str(word2id['the']), str(word2id['.']))], 2)
+        self.assertEqual(result[(str(word2id['the']), str(word2id['and']))], 3)
+        self.assertEqual(result[(str(word2id['the']), str(word2id['in']))], 1)
+        self.assertEqual(result[(str(word2id['the']), str(word2id[',']))], 2)
+
+        self.assertEqual(result[(str(word2id['of']), str(word2id['.']))], 3)
+        self.assertEqual(result[(str(word2id['of']), str(word2id['the']))], 2)
+        self.assertEqual(result[(str(word2id['of']), str(word2id['and']))], 3)
+        self.assertEqual(result[(str(word2id['of']), str(word2id['in']))], 2)
+        self.assertEqual(result[(str(word2id['of']), str(word2id[',']))], 1)
+
+        self.assertEqual(result[(str(word2id['in']), str(word2id['.']))], 1)
+        self.assertEqual(result[(str(word2id['in']), str(word2id['the']))], 5)
+        self.assertEqual(result[(str(word2id['in']), str(word2id['and']))], 1)
+        self.assertEqual(result[(str(word2id['in']), str(word2id[',']))], 1)
+
+        self.assertEqual(result[(str(word2id[',']), str(word2id['and']))], 2)
+        self.assertEqual(result[(str(word2id[',']), str(word2id['in']))], 1)
+        self.assertEqual(result[(str(word2id[',']), str(word2id['the']))], 1)
+
+        self.assertEqual(len(result), 20 + 3)  # 3 self loops
 
 
 if __name__ == '__main__':
