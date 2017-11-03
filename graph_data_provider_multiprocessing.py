@@ -102,7 +102,7 @@ def write_encoded_text_and_local_dict_for_txt(file_path, output_folder):
     encoded_text = []
     puncs = set(string.punctuation)
 
-    if config.getboolean("input data", "preprocessing_text"):
+    if config.getboolean("input data", "preprocessing_word"):
         for sent in sentences():
             encoded_sent = []
             # update the dictionary

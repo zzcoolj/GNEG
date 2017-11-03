@@ -1,3 +1,7 @@
+"""
+ATTENTION: All results are based on setting preprocessing_word=False in config.ini.
+"""
+
 import unittest
 import graph_data_provider_multiprocessing as gdp
 
