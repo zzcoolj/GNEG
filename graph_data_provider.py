@@ -374,7 +374,11 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
             files.extend(files_to_add)
 
     # Each thread processes several target edges files and save their counted_edges.
-    files_list = multi_processing.chunkify(lst=files, n=process_num*2)
+    files_size = len(files)
+    num_tasks = files_size // int(config['graph']['safe_files_number_per_processor'])
+    if num_tasks < process_num:
+        num_tasks = process_num
+    files_list = multi_processing.chunkify(lst=files, n=num_tasks)
     p = Pool(process_num)
     worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
     worker_output_path = output_folder
@@ -480,10 +484,10 @@ if __name__ == '__main__':
     # multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
     # txt
-    prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
-                              file_extension='.txt',
-                              max_window_size=3,
-                              process_num=4)
+    # prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+    #                           file_extension='.txt',
+    #                           max_window_size=3,
+    #                           process_num=4)
     multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6)
 
 
