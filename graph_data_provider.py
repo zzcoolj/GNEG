@@ -484,7 +484,7 @@ if __name__ == '__main__':
                               file_extension='.txt',
                               max_window_size=3,
                               process_num=4)
-    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=6)
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6)
 
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
