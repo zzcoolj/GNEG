@@ -323,7 +323,7 @@ def train_sg_pair(model, word, context_index, alpha, learn_vectors=True, learn_h
 
 def train_cbow_pair(model, word, input_word_indices, l1, alpha, learn_vectors=True, learn_hidden=True,
                     compute_loss=False):
-    print('target word: ' + model.wv.index2word[word.index] + '[' + str(word.index) + ']')
+    # print('target word: ' + model.wv.index2word[word.index] + '[' + str(word.index) + ']')
     neu1e = zeros(l1.shape)
 
     if model.hs:
@@ -348,7 +348,7 @@ def train_cbow_pair(model, word, input_word_indices, l1, alpha, learn_vectors=Tr
         while len(word_indices) < model.negative + 1:
             w = model.cum_table.searchsorted(model.random.randint(model.cum_table[-1]))
             if w != word.index:
-                print('negative word: ' + model.wv.index2word[w] + '[' + str(w) + ']')
+                # print('negative word: ' + model.wv.index2word[w] + '[' + str(w) + ']')
                 word_indices.append(w)
         l2b = model.syn1neg[word_indices]  # 2d matrix, k+1 x layer1_size
         prod_term = dot(l1, l2b.T)

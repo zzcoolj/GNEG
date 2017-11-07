@@ -301,26 +301,27 @@ def merge_transferred_word_count(word_count_folder, output_folder):
     return dict(c)
 
 
-def write_valid_vocabulary(merged_word_count_path, output_path, min_count):
+def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_vocab_size=None):
     merged_word_count = read_two_columns_file_to_build_dictionary_type_specified(file=merged_word_count_path,
                                                                                  key_type=str, value_type=int)
-    valid_vocabulary = []
+
+    valid_word_count = {}
     for word_id, count in merged_word_count.items():
         if count >= min_count:
-            valid_vocabulary.append(word_id)
+            valid_word_count[word_id] = count
+    if max_vocab_size:
+        if max_vocab_size < len(valid_word_count):
+            valid_vocabulary = list(sorted(valid_word_count, key=valid_word_count.get, reverse=True))[:max_vocab_size]
+        else:
+            valid_vocabulary = list(valid_word_count.keys())
+    else:
+        valid_vocabulary = list(valid_word_count.keys())
+
     common.write_simple_list_to_file(output_path, valid_vocabulary)
     return valid_vocabulary
 
 
 def get_counted_edges_worker(edges_files_paths, valid_vocabulary_path, output_folder):
-    def read_valid_vocabulary(file_path=valid_vocabulary_path):
-        result = []
-        with open(file_path) as f:
-            for line in f:
-                line_element = line.rstrip('\n')
-                result.append(line_element)
-        return result
-
     def counters_yielder():
         def read_edges_file_with_respect_to_valid_vocabulary(file_path, valid_vocabulary_list):
             d = []
@@ -335,7 +336,7 @@ def get_counted_edges_worker(edges_files_paths, valid_vocabulary_path, output_fo
             yield Counter(dict(Counter(
                 read_edges_file_with_respect_to_valid_vocabulary(file_path=file, valid_vocabulary_list=valid_vocabulary))))
 
-    valid_vocabulary = dict.fromkeys(read_valid_vocabulary())
+    valid_vocabulary = dict.fromkeys(read_valid_vocabulary(file_path=valid_vocabulary_path))
     total = len(edges_files_paths)
     print(total, "files to be counted.")
     count = 1
@@ -433,6 +434,15 @@ def get_files_startswith(data_folder, starting):
     return files
 
 
+def read_valid_vocabulary(file_path):
+    result = []
+    with open(file_path) as f:
+        for line in f:
+            line_element = line.rstrip('\n')
+            result.append(line_element)
+    return result
+
+
 def prepare_intermediate_data(data_folder, file_extension,
                               max_window_size,
                               process_num,
@@ -449,6 +459,11 @@ def prepare_intermediate_data(data_folder, file_extension,
         output_path=dicts_folder + 'valid_vocabulary_min_count_' + min_count + '.txt',
         min_count=int(min_count))
 
+
+def filter_edges(edges_file_path, valid_vocabulary_path):
+    # TODO NOW read_valid_vocabulary
+    for line in common.read_file_line_yielder(edges_file_path):
+        (source, target, weight) = line.split("\t")
 
 if __name__ == '__main__':
     # TESTS
@@ -488,8 +503,14 @@ if __name__ == '__main__':
     #                           file_extension='.txt',
     #                           max_window_size=3,
     #                           process_num=4)
-    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6)
+    # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6)
 
+    write_valid_vocabulary(
+        merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
+        output_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5.txt',
+        min_count=5,
+        max_vocab_size=10)
+    # filter_edges(config['graph']['edges_folder'] + "encoded_edges_count_window_size_3.txt")
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.
