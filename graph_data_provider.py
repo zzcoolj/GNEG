@@ -302,6 +302,7 @@ def merge_transferred_word_count(word_count_folder, output_folder):
 
 
 def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_vocab_size=None):
+    # TODO LATER valid_vocabulary should be a dict. No need to write as list and then read list changing to dict.
     merged_word_count = read_two_columns_file_to_build_dictionary_type_specified(file=merged_word_count_path,
                                                                                  key_type=str, value_type=int)
 
@@ -323,20 +324,21 @@ def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_v
 
 def get_counted_edges_worker(edges_files_paths, valid_vocabulary_path, output_folder):
     def counters_yielder():
-        def read_edges_file_with_respect_to_valid_vocabulary(file_path, valid_vocabulary_list):
+        def read_edges_file_with_respect_to_valid_vocabulary(file_path, valid_vocabulary_dict):
             d = []
             with open(file_path) as f:
                 for line in f:
                     (first, second) = line.rstrip('\n').split("\t")
-                    if (first in valid_vocabulary_list) and (second in valid_vocabulary_list):
+                    if (first in valid_vocabulary_dict) and (second in valid_vocabulary_dict):
                         d.append((first, second))
             return d
 
+        valid_vocabulary = dict.fromkeys(read_valid_vocabulary(file_path=valid_vocabulary_path))
         for file in edges_files_paths:
             yield Counter(dict(Counter(
-                read_edges_file_with_respect_to_valid_vocabulary(file_path=file, valid_vocabulary_list=valid_vocabulary))))
+                read_edges_file_with_respect_to_valid_vocabulary(file_path=file, valid_vocabulary_dict=valid_vocabulary))))
 
-    valid_vocabulary = dict.fromkeys(read_valid_vocabulary(file_path=valid_vocabulary_path))
+
     total = len(edges_files_paths)
     print(total, "files to be counted.")
     count = 1
@@ -460,10 +462,38 @@ def prepare_intermediate_data(data_folder, file_extension,
         min_count=int(min_count))
 
 
-def filter_edges(edges_file_path, valid_vocabulary_path):
-    # TODO NOW read_valid_vocabulary
-    for line in common.read_file_line_yielder(edges_file_path):
+def filter_edges(min_count,
+                 old_encoded_edges_count_path,
+                 max_vocab_size=config['graph']['max_vocab_size'],
+                 new_valid_vocabulary_folder=config['graph']['dicts_and_encoded_texts_folder'],
+                 merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
+                 output_folder=config['graph']['edges_folder']):
+    """
+    ATTENTION 1:
+    This function should only be used when 'encoded_edges_count_window_size_n.txt' already exists (But when calculating
+    this, 'max_vocab_size' has been set to 'None' in 'write_valid_vocabulary' function).
+    If 'max_vocab_size' has already been well set, there's no need to use this function.
+    Because 'encoded_edges_count_window_size_n.txt' has been generated with considering 'min_count' and 'max_vocab_size'
+
+    ATTENTION 2:
+    'min_count' should be no bigger than the previous one.
+    """
+    new_valid_vocabulary_path = new_valid_vocabulary_folder + 'valid_vocabulary_min_count_' + str(
+        min_count) + '_vocab_size_' + str(max_vocab_size) + '_filtered.txt'
+    write_valid_vocabulary(
+        merged_word_count_path=merged_word_count_path,
+        output_path=new_valid_vocabulary_path,
+        min_count=min_count,
+        max_vocab_size=max_vocab_size)
+
+    valid_vocabulary = dict.fromkeys(read_valid_vocabulary(file_path=new_valid_vocabulary_path))
+    filtered_edges = {}
+    for line in common.read_file_line_yielder(old_encoded_edges_count_path):
         (source, target, weight) = line.split("\t")
+        if (source in valid_vocabulary) and (target in valid_vocabulary):
+            filtered_edges[(source, target)] = weight
+    common.write_dict_to_file(output_folder + "encoded_edges_count_filtered.txt", filtered_edges, 'tuple')
+
 
 if __name__ == '__main__':
     # TESTS
@@ -505,12 +535,9 @@ if __name__ == '__main__':
     #                           process_num=4)
     # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6)
 
-    write_valid_vocabulary(
-        merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
-        output_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5.txt',
-        min_count=5,
-        max_vocab_size=10)
-    # filter_edges(config['graph']['edges_folder'] + "encoded_edges_count_window_size_3.txt")
+    filter_edges(min_count=5,
+                 old_encoded_edges_count_path=config['graph']['edges_folder'] + "encoded_edges_count_window_size_3.txt",
+                 max_vocab_size=10)
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.
