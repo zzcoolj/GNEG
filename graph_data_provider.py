@@ -312,7 +312,8 @@ def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_v
             valid_word_count[word_id] = count
     if max_vocab_size:
         if int(max_vocab_size) < len(valid_word_count):
-            valid_vocabulary = list(sorted(valid_word_count, key=valid_word_count.get, reverse=True))[:max_vocab_size]
+            valid_vocabulary = list(sorted(valid_word_count, key=valid_word_count.get, reverse=True))[
+                               :int(max_vocab_size)]
         else:
             valid_vocabulary = list(valid_word_count.keys())
     else:
