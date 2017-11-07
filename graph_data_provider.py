@@ -479,7 +479,7 @@ def filter_edges(min_count,
     'min_count' should be no bigger than the previous one.
     """
     new_valid_vocabulary_path = new_valid_vocabulary_folder + 'valid_vocabulary_min_count_' + str(
-        min_count) + '_vocab_size_' + str(max_vocab_size) + '_filtered.txt'
+        min_count) + '_vocab_size_' + str(max_vocab_size) + '.txt'
     write_valid_vocabulary(
         merged_word_count_path=merged_word_count_path,
         output_path=new_valid_vocabulary_path,
