@@ -303,6 +303,7 @@ def merge_transferred_word_count(word_count_folder, output_folder):
 
 def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_vocab_size=None):
     # TODO LATER valid_vocabulary should be a dict. No need to write as list and then read list changing to dict.
+    # TODO LATER maybe it's not the fastest way to sort dict.
     merged_word_count = read_two_columns_file_to_build_dictionary_type_specified(file=merged_word_count_path,
                                                                                  key_type=str, value_type=int)
 
