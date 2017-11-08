@@ -75,12 +75,14 @@ def get_shortest_path_lengths_between_all_nodes(g):
 
 
 def f1():
+    print('f1 start')
     start_time = time.time()
     nx.read_gpickle("output/intermediate data/graph/graph.gpickle")
     print('pickle:' + str(common.count_time(start_time)))
 
 
 def f2():
+    print('f2 start')
     start_time = time.time()
     nx.read_weighted_edgelist('output/intermediate data/edges/encoded_edges_count_filtered.txt',
                               create_using=nx.DiGraph(), nodetype=int)
@@ -95,7 +97,7 @@ if __name__ == '__main__':
     # print(get_longest_shortest_path_nodes(g, 14, 4))
 
     p = Process(target=f1())
-    q = Process(target=f2())
     p.start()
+    q = Process(target=f2())
     q.start()
 
