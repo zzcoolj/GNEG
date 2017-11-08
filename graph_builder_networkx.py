@@ -95,5 +95,7 @@ if __name__ == '__main__':
     # print(get_longest_shortest_path_nodes(g, 14, 4))
 
     p = Process(target=f1())
-    p = Process(target=f2())
+    q = Process(target=f2())
+    p.start()
+    q.start()
 
