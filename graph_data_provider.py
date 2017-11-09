@@ -311,7 +311,7 @@ def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_v
     for word_id, count in merged_word_count.items():
         if count >= min_count:
             valid_word_count[word_id] = count
-    if max_vocab_size:
+    if max_vocab_size and (max_vocab_size != 'None'):
         if int(max_vocab_size) < len(valid_word_count):
             valid_vocabulary = list(sorted(valid_word_count, key=valid_word_count.get, reverse=True))[
                                :int(max_vocab_size)]
@@ -465,7 +465,7 @@ def prepare_intermediate_data(data_folder, file_extension,
     multiprocessing_write_transferred_edges_files_and_transferred_word_count(dicts_folder, edges_folder,
                                                                              max_window_size, process_num)
     merge_transferred_word_count(word_count_folder=dicts_folder, output_folder=dicts_folder)
-    if max_vocab_size == 'None':
+    if (max_vocab_size == 'None') or (not max_vocab_size):
         valid_vocabulary_name = dicts_folder + 'valid_vocabulary_min_count_' + min_count + '.txt'
     else:
         valid_vocabulary_name = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '_vocab_size_' + str(
@@ -548,12 +548,20 @@ if __name__ == '__main__':
     # prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
     #                           file_extension='.txt',
     #                           max_window_size=3,
-    #                           process_num=4)
-    # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6)
+    #                           process_num=4,
+    #                           max_vocab_size='None')
+    # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6, max_vocab_size='None')
 
-    filter_edges(min_count=5,
-                 old_encoded_edges_count_path=config['graph']['graph_folder'] + "encoded_edges_count_window_size_3.txt",
-                 max_vocab_size=10)
+    # filter_edges(min_count=5,
+    #              old_encoded_edges_count_path=config['graph']['graph_folder'] + "encoded_edges_count_window_size_3.txt",
+    #              max_vocab_size=10)
+
+    prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+                              file_extension='.txt',
+                              max_window_size=3,
+                              process_num=4,
+                              max_vocab_size=10)
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6, max_vocab_size=10)
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.
