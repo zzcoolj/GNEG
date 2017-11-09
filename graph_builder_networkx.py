@@ -2,10 +2,12 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from multiprocessing import Process
 import time
+import numpy as np
 import configparser
 import sys
 sys.path.insert(0, '../common/')
 import common
+import multi_processing
 
 
 config = configparser.ConfigParser()
@@ -18,7 +20,7 @@ class NXGraph:
             self.graph = nx.read_gpickle(path)
         elif path.endswith('.txt'):
             self.graph = self.create_graph_with_weighted_edges(path, directed=True)
-            nx.write_gpickle(self.graph, config['graph']['graph_folder']+gpickle_name)
+            nx.write_gpickle(self.graph, multi_processing.get_file_folder(path) + '/' + gpickle_name)
 
 
 
@@ -118,29 +120,28 @@ def f3(g):
     print('f3:' + str(common.count_time(start_time)))
 
 
-def f4(g):
-    print('f4 start')
+def f5(g):
+    print('f5 start')
     start_time = time.time()
 
-    length4 = nx.floyd_warshall_numpy(g)
-    print(length4[4829033][2454469])
+    matrix = nx.floyd_warshall_numpy(g)
+    np.save(config['graph']['graph_folder'] + 'matrix.npy', matrix, fix_imports=False)
+    common.write_to_pickle(g.nodes(), config['graph']['graph_folder'] + 'nodes.pickle')
 
-    print('f4:' + str(common.count_time(start_time)))
+    print('f5:' + str(common.count_time(start_time)))
 
 
 if __name__ == '__main__':
     graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
+    # graph = NXGraph('output/intermediate data for unittest/graph/encoded_edges_count_window_size_6.txt', gpickle_name='test')
 
-    # show_detailed_information(g)
-    # print(get_longest_shortest_path_nodes(g, 14, 4))
-
-    p = Process(target=f1, args=(graph.graph,))
-    p.start()
-    q = Process(target=f2, args=(graph.graph,))
-    q.start()
-    x = Process(target=f3, args=(graph.graph,))
-    x.start()
-    z = Process(target=f4, args=(graph.graph,))
+    # p = Process(target=f1, args=(graph.graph,))
+    # p.start()
+    # q = Process(target=f2, args=(graph.graph,))
+    # q.start()
+    # x = Process(target=f3, args=(graph.graph,))
+    # x.start()
+    z = Process(target=f5, args=(graph.graph,))
     z.start()
 
 
