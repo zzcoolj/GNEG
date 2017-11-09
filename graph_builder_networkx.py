@@ -129,18 +129,18 @@ def f4(g):
 
 
 if __name__ == '__main__':
-    graph = NXGraph('output/intermediate data/graph/graph.gpickle')
+    graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
 
     # show_detailed_information(g)
     # print(get_longest_shortest_path_nodes(g, 14, 4))
 
-    p = Process(target=f1, args=(graph,))
+    p = Process(target=f1, args=(graph.graph,))
     p.start()
-    q = Process(target=f2, args=(graph,))
+    q = Process(target=f2, args=(graph.graph,))
     q.start()
-    x = Process(target=f3, args=(graph,))
+    x = Process(target=f3, args=(graph.graph,))
     x.start()
-    z = Process(target=f4, args=(graph,))
+    z = Process(target=f4, args=(graph.graph,))
     z.start()
 
 
