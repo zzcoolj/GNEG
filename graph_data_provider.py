@@ -361,7 +361,7 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                                                                 dicts_folder=config['graph'][
                                                                     'dicts_and_encoded_texts_folder'],
                                                                 edges_folder=config['graph']['edges_folder'],
-                                                                output_folder=config['graph']['edges_folder']):
+                                                                output_folder=config['graph']['graph_folder']):
     def counted_edges_from_worker_yielder(paths):
         for path in paths:
             yield Counter(common.read_pickle(path))
@@ -386,7 +386,7 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
     files_list = multi_processing.chunkify(lst=files, n=num_tasks)
     p = Pool(process_num)
     worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
-    worker_output_path = output_folder
+    worker_output_path = edges_folder
     p.starmap(get_counted_edges_worker,
               zip(files_list, repeat(worker_valid_vocabulary_path), repeat(worker_output_path)))
     p.close()
@@ -469,7 +469,7 @@ def filter_edges(min_count,
                  max_vocab_size=config['graph']['max_vocab_size'],
                  new_valid_vocabulary_folder=config['graph']['dicts_and_encoded_texts_folder'],
                  merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
-                 output_folder=config['graph']['edges_folder']):
+                 output_folder=config['graph']['graph_folder']):
     """
     ATTENTION 1:
     This function should only be used when 'encoded_edges_count_window_size_n.txt' already exists (But when calculating
@@ -493,8 +493,9 @@ def filter_edges(min_count,
     for line in common.read_file_line_yielder(old_encoded_edges_count_path):
         (source, target, weight) = line.split("\t")
         if (source in valid_vocabulary) and (target in valid_vocabulary):
-            filtered_edges[(source, target)] = weight
+            filtered_edges[(source, target)] = int(weight)
     common.write_dict_to_file(output_folder + "encoded_edges_count_filtered.txt", filtered_edges, 'tuple')
+    return filtered_edges
 
 
 if __name__ == '__main__':
@@ -538,7 +539,7 @@ if __name__ == '__main__':
     # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6)
 
     filter_edges(min_count=5,
-                 old_encoded_edges_count_path=config['graph']['edges_folder'] + "encoded_edges_count_window_size_3.txt",
+                 old_encoded_edges_count_path=config['graph']['graph_folder'] + "encoded_edges_count_window_size_3.txt",
                  max_vocab_size=10)
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
