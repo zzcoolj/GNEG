@@ -301,7 +301,7 @@ def merge_transferred_word_count(word_count_folder, output_folder):
     return dict(c)
 
 
-def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_vocab_size=None):
+def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_vocab_size):
     # TODO LATER valid_vocabulary should be a dict. No need to write as list and then read list changing to dict.
     # TODO LATER maybe it's not the fastest way to sort dict.
     merged_word_count = read_two_columns_file_to_build_dictionary_type_specified(file=merged_word_count_path,
@@ -361,7 +361,8 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                                                                 dicts_folder=config['graph'][
                                                                     'dicts_and_encoded_texts_folder'],
                                                                 edges_folder=config['graph']['edges_folder'],
-                                                                output_folder=config['graph']['graph_folder']):
+                                                                output_folder=config['graph']['graph_folder'],
+                                                                max_vocab_size=config['graph']['max_vocab_size']):
     def counted_edges_from_worker_yielder(paths):
         for path in paths:
             yield Counter(common.read_pickle(path))
@@ -385,7 +386,12 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
         num_tasks = process_num
     files_list = multi_processing.chunkify(lst=files, n=num_tasks)
     p = Pool(process_num)
-    worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
+    if (max_vocab_size == 'None') or (not max_vocab_size):
+        worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
+    else:
+        worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(
+            min_count) + '_vocab_size_' + str(
+            max_vocab_size) + '.txt'
     worker_output_path = edges_folder
     p.starmap(get_counted_edges_worker,
               zip(files_list, repeat(worker_valid_vocabulary_path), repeat(worker_output_path)))
@@ -452,16 +458,23 @@ def prepare_intermediate_data(data_folder, file_extension,
                               process_num,
                               dicts_folder=config['graph']['dicts_and_encoded_texts_folder'],
                               edges_folder=config['graph']['edges_folder'],
-                              min_count=config['graph']['min_count']):
+                              min_count=config['graph']['min_count'],
+                              max_vocab_size=config['graph']['max_vocab_size']):
     multiprocessing_write_local_encoded_text_and_local_dict(data_folder, file_extension, dicts_folder, process_num)
     merge_local_dict(dict_folder=dicts_folder, output_folder=dicts_folder)
     multiprocessing_write_transferred_edges_files_and_transferred_word_count(dicts_folder, edges_folder,
                                                                              max_window_size, process_num)
     merge_transferred_word_count(word_count_folder=dicts_folder, output_folder=dicts_folder)
+    if max_vocab_size == 'None':
+        valid_vocabulary_name = dicts_folder + 'valid_vocabulary_min_count_' + min_count + '.txt'
+    else:
+        valid_vocabulary_name = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '_vocab_size_' + str(
+            max_vocab_size) + '.txt'
     write_valid_vocabulary(
         merged_word_count_path=dicts_folder + 'word_count_all.txt',
-        output_path=dicts_folder + 'valid_vocabulary_min_count_' + min_count + '.txt',
-        min_count=int(min_count))
+        output_path=valid_vocabulary_name,
+        min_count=int(min_count),
+        max_vocab_size=max_vocab_size)
 
 
 def filter_edges(min_count,

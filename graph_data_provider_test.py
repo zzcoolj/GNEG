@@ -51,35 +51,45 @@ class TestGraphDataProvider(unittest.TestCase):
         result = gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                             output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
                                                 self.min_count) + '.txt',
-                                            min_count=self.min_count)
+                                            min_count=self.min_count,
+                                            max_vocab_size=None)
         self.assertEqual(len(result), 6)
 
         result = gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                             output_path=self.dicts_folder + 'valid_vocabulary_min_count_1.txt',
-                                            min_count=1)
+                                            min_count=1,
+                                            max_vocab_size=None)
         self.assertEqual(len(result), 94)
 
         result = gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                             output_path=self.dicts_folder + 'valid_vocabulary_min_count_3.txt',
-                                            min_count=3)
-        self.assertEqual(len(result), 6 + 3)
-        # id2word = self.get_id2word()
-        # print([id2word[int(i)] for i in result])
+                                            min_count=3,
+                                            max_vocab_size=None)
+        self.assertEqual(len(result), 9)
+
+        result = gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
+                                            output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
+                                                self.min_count) + '_vocab_size_' + str(self.max_vocab_size) + '.txt',
+                                            min_count=self.min_count,
+                                            max_vocab_size=self.max_vocab_size)
+        self.assertEqual(len(result), self.max_vocab_size)
 
     def test_multiprocessing_merge_edges_count_of_a_specific_window_size(self):
         gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                    output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
                                        self.min_count) + '.txt',
-                                   min_count=self.min_count)
+                                   min_count=self.min_count,
+                                   max_vocab_size=None)
         result = gdp.multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=5,
                                                                                  min_count=self.min_count,
                                                                                  dicts_folder=self.dicts_folder,
                                                                                  edges_folder=self.edges_folder,
-                                                                                 output_folder=self.graph_folder)
+                                                                                 output_folder=self.graph_folder,
+                                                                                 max_vocab_size=None)
         word2id = gdp.read_two_columns_file_to_build_dictionary_type_specified(
             file=self.dicts_folder + 'dict_merged.txt', key_type=str,
             value_type=int)
-        print()
+
         self.assertEqual(result[(str(word2id['and']), str(word2id[',']))], 2)
         self.assertEqual(result[(str(word2id['and']), str(word2id['.']))], 2)
         self.assertEqual(result[(str(word2id['and']), str(word2id['the']))], 1)
@@ -107,16 +117,44 @@ class TestGraphDataProvider(unittest.TestCase):
 
         self.assertEqual(len(result), 20 + 3)  # 3 self loops
 
+        gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
+                                   output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
+                                       self.min_count) + '_vocab_size_' + str(
+                                       self.max_vocab_size) + '.txt',
+                                   min_count=self.min_count,
+                                   max_vocab_size=self.max_vocab_size)
+        result = gdp.multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=5,
+                                                                                 min_count=self.min_count,
+                                                                                 dicts_folder=self.dicts_folder,
+                                                                                 edges_folder=self.edges_folder,
+                                                                                 output_folder=self.graph_folder,
+                                                                                 max_vocab_size=self.max_vocab_size)
+        word2id = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+            file=self.dicts_folder + 'dict_merged.txt', key_type=str,
+            value_type=int)
+
+        self.assertEqual(result[(str(word2id['and']), str(word2id['the']))], 1)
+
+        self.assertEqual(result[(str(word2id['the']), str(word2id['of']))], 6)
+        self.assertEqual(result[(str(word2id['the']), str(word2id['and']))], 3)
+
+        self.assertEqual(result[(str(word2id['of']), str(word2id['the']))], 2)
+        self.assertEqual(result[(str(word2id['of']), str(word2id['and']))], 3)
+
+        self.assertEqual(len(result), 5 + 2)  # 2 self loops
+
     def test_filter_edges(self):
         gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                    output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
                                        self.min_count) + '.txt',
-                                   min_count=self.min_count)
+                                   min_count=self.min_count,
+                                   max_vocab_size=None)
         gdp.multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=50, process_num=5,
                                                                         min_count=self.min_count,
                                                                         dicts_folder=self.dicts_folder,
                                                                         edges_folder=self.edges_folder,
-                                                                        output_folder=self.graph_folder)
+                                                                        output_folder=self.graph_folder,
+                                                                        max_vocab_size=None)
         filtered_edges = gdp.filter_edges(min_count=self.min_count,
                                           old_encoded_edges_count_path=
                                           self.graph_folder + 'encoded_edges_count_window_size_6.txt',
