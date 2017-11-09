@@ -62,6 +62,7 @@ class NXGraph:
 
 
     def get_longest_shortest_path_nodes(self, g, source, n):
+        # TODO change
         shortest_path_dict = nx.shortest_path_length(g, source, weight='weight')
         # print(shortest_path_dict)
         sorted_nodes = list(sorted(shortest_path_dict, key=shortest_path_dict.get, reverse=True))
@@ -133,13 +134,13 @@ if __name__ == '__main__':
     # show_detailed_information(g)
     # print(get_longest_shortest_path_nodes(g, 14, 4))
 
-    p = Process(target=f1, args=graph)
+    p = Process(target=f1, args=(graph,))
     p.start()
-    q = Process(target=f2, args=graph)
+    q = Process(target=f2, args=(graph,))
     q.start()
-    x = Process(target=f3, args=graph)
+    x = Process(target=f3, args=(graph,))
     x.start()
-    z = Process(target=f4, args=graph)
+    z = Process(target=f4, args=(graph,))
     z.start()
 
 
