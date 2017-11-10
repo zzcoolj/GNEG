@@ -93,10 +93,10 @@ if __name__ == '__main__':
     matrix = np.load(config['graph']['graph_folder'] + 'matrix.npy')
     start = time.time()
     print('start')
-    shortest_20_indices = np.argpartition(matrix, 5)[:5]
+    shortest_20_indices = np.argpartition(matrix, 5)[:,5]
     print(shortest_20_indices[0])
     print(matrix[0][shortest_20_indices][0])
-    largest_20_indices = np.argpartition(matrix, -5)[-5:]
+    largest_20_indices = np.argpartition(matrix, -5)[:,-5]
     print(largest_20_indices[0])
     print(matrix[0][largest_20_indices][0])
     print(max(matrix[0]))
