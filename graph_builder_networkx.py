@@ -76,7 +76,8 @@ class NXGraph:
         np.save(output_folder + 'matrix.npy', matrix, fix_imports=False)
         common.write_to_pickle(self.graph.nodes(), output_folder + 'nodes.pickle')
 
-    def get_longest_shortest_path_nodes(self, n, data_folder=config['graph']['graph_folder']):
+    @staticmethod
+    def get_longest_shortest_path_nodes(n, data_folder=config['graph']['graph_folder']):
         # TODO NOW Deal with inf
         matrix = np.load(data_folder + 'matrix.npy')
         nodes = common.read_pickle(data_folder + 'nodes.pickle')
@@ -92,7 +93,8 @@ class NXGraph:
             result_nodes[i] = np.array(nodes)[cleaned_largest_indices[i]]
         return result_nodes
 
-    def get_shortest_shortest_path_nodes(self, n, data_folder=config['graph']['graph_folder']):
+    @staticmethod
+    def get_shortest_shortest_path_nodes(n, data_folder=config['graph']['graph_folder']):
         # TODO NOW Deal with inf
         matrix = np.load(data_folder + 'matrix.npy')
         nodes = common.read_pickle(data_folder + 'nodes.pickle')
@@ -110,7 +112,7 @@ class NXGraph:
 
 
 if __name__ == '__main__':
-    graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
+    # graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
     # graph = NXGraph('output/intermediate data for unittest/graph/encoded_edges_count_window_size_6.txt', gpickle_name='test')
-    graph.get_longest_shortest_path_nodes(n=21)
+    NXGraph.get_longest_shortest_path_nodes(n=21)
 
