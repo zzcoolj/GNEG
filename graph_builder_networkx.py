@@ -62,86 +62,36 @@ class NXGraph:
     def show_detailed_information(self):
         print("#nodes:", self.graph.number_of_nodes(), "#edges:", self.graph.number_of_edges())
 
+    def get_shortest_path_lengths_between_all_nodes(self):
+        """
+        From test, these three algorithms below take more than 20 hours (processes have been killed after 20 hours) to
+        calculate.
+        'floyd_warshall_numpy' takes around 100 minutes to get the result.
+        """
+        # length1 = dict(nx.all_pairs_dijkstra_path_length(g))
+        # length2 = dict(nx.all_pairs_bellman_ford_path_length(g))
+        # length3 = nx.johnson(g, weight='weight')
+        # for node in [0, 1, 2, 3, 4]:
+        #     print('1 - {}: {}'.format(node, length2[1][node]))
+
+        matrix = nx.floyd_warshall_numpy(self.graph)
+        np.save(config['graph']['graph_folder'] + 'matrix.npy', matrix, fix_imports=False)
+        common.write_to_pickle(g.nodes(), config['graph']['graph_folder'] + 'nodes.pickle')
 
     def get_longest_shortest_path_nodes(self, g, source, n):
         # TODO change
-        shortest_path_dict = nx.shortest_path_length(g, source, weight='weight')
-        # print(shortest_path_dict)
-        sorted_nodes = list(sorted(shortest_path_dict, key=shortest_path_dict.get, reverse=True))
-        return sorted_nodes[:n]
+        pass
 
-    def get_shortest_path_lengths_between_all_nodes(self, g):
-
-        length1 = dict(nx.all_pairs_dijkstra_path_length(g))
-        for node in [0, 1, 2, 3, 4]:
-            print('1 - {}: {}'.format(node, length1[1][node]))
-
-        length2 = dict(nx.all_pairs_bellman_ford_path_length(g))
-        for node in [0, 1, 2, 3, 4]:
-            print('1 - {}: {}'.format(node, length2[1][node]))
-
-        ''' From doc
-        For dense graphs, this may be faster than the Floyd–Warshall algorithm.
-        '''
-        length3 = nx.johnson(g, weight='weight')
-        for node in [0, 1, 2, 3, 4]:
-            print('1 - {}: {}'.format(node, length2[1][node]))
-
-        length4 = nx.floyd_warshall_numpy(g)
-
-
-def f1(g):
-    print('f1 start')
-    start_time = time.time()
-
-    length1 = dict(nx.all_pairs_dijkstra_path_length(g))
-    print(length1[4829033][2454469])
-
-    print('f1:' + str(common.count_time(start_time)))
-
-
-def f2(g):
-    print('f2 start')
-    start_time = time.time()
-
-    length2 = dict(nx.all_pairs_bellman_ford_path_length(g))
-    print(length2[4829033][2454469])
-
-    print('f2:' + str(common.count_time(start_time)))
-
-
-def f3(g):
-    print('f3 start')
-    start_time = time.time()
-
-    length3 = nx.johnson(g, weight='weight')
-    print(length3[4829033][2454469])
-
-    print('f3:' + str(common.count_time(start_time)))
-
-
-def f5(g):
-    print('f5 start')
-    start_time = time.time()
-
-    matrix = nx.floyd_warshall_numpy(g)
-    np.save(config['graph']['graph_folder'] + 'matrix.npy', matrix, fix_imports=False)
-    common.write_to_pickle(g.nodes(), config['graph']['graph_folder'] + 'nodes.pickle')
-
-    print('f5:' + str(common.count_time(start_time)))
+        # sorted_nodes = list(sorted(shortest_path_dict, key=shortest_path_dict.get, reverse=True))
+        # return sorted_nodes[:n]
 
 
 if __name__ == '__main__':
-    graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
+    # graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
     # graph = NXGraph('output/intermediate data for unittest/graph/encoded_edges_count_window_size_6.txt', gpickle_name='test')
 
-    # p = Process(target=f1, args=(graph.graph,))
-    # p.start()
-    # q = Process(target=f2, args=(graph.graph,))
-    # q.start()
-    # x = Process(target=f3, args=(graph.graph,))
-    # x.start()
-    z = Process(target=f5, args=(graph.graph,))
-    z.start()
-
-
+    matrix = np.load(config['graph']['graph_folder'] + 'matrix.npy')
+    start = time.time()
+    print('start')
+    print(np.argpartition(matrix, 20))
+    print(common.count_time(start))
