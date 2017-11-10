@@ -1,7 +1,5 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from multiprocessing import Process
-import time
 import numpy as np
 import configparser
 import sys
@@ -79,23 +77,40 @@ class NXGraph:
         common.write_to_pickle(self.graph.nodes(), output_folder + 'nodes.pickle')
 
     def get_longest_shortest_path_nodes(self, n, data_folder=config['graph']['graph_folder']):
+        # TODO NOW Deal with inf
         matrix = np.load(data_folder + 'matrix.npy')
         nodes = common.read_pickle(data_folder + 'nodes.pickle')
-        print(matrix)
-        print(nodes)
-        # shortest_20_indices = np.argpartition(matrix, 5)[:, :5]
-        # print(shortest_20_indices[0])
-        # print(matrix[0][shortest_20_indices][0])
-        largest_20_indices = np.argpartition(matrix, -n)[:, -n:]
-        for i in range(6):
-            print('line ' + str(i))
-            print(np.array(nodes)[largest_20_indices[i]])
-            print(matrix[i][largest_20_indices][i])
-            print()
+        largest_indices = np.argpartition(matrix, -n)[:, -n:]
+        cleaned_largest_indices = np.empty([largest_indices.shape[0], n-1], dtype=int)
+        result_nodes = np.empty([largest_indices.shape[0], n-1], dtype=int)
+        for i in range(matrix.shape[1]):
+            index_to_remove = np.where(largest_indices[i]==i)
+            if index_to_remove[0].size == 0:
+                cleaned_largest_indices[i] = largest_indices[i][1:]
+            else:
+                cleaned_largest_indices[i] = np.delete(largest_indices[i], index_to_remove)
+            result_nodes[i] = np.array(nodes)[cleaned_largest_indices[i]]
+        return result_nodes
+
+    def get_shortest_shortest_path_nodes(self, n, data_folder=config['graph']['graph_folder']):
+        # TODO NOW Deal with inf
+        matrix = np.load(data_folder + 'matrix.npy')
+        nodes = common.read_pickle(data_folder + 'nodes.pickle')
+        shortest_indices = np.argpartition(matrix, n)[:, :n]
+        cleaned_shortest_indices = np.empty([shortest_indices.shape[0], n - 1], dtype=int)
+        result_nodes = np.empty([shortest_indices.shape[0], n - 1], dtype=int)
+        for i in range(matrix.shape[1]):
+            index_to_remove = np.where(shortest_indices[i] == i)
+            if index_to_remove[0].size == 0:
+                cleaned_shortest_indices[i] = shortest_indices[i][:n-1]
+            else:
+                cleaned_shortest_indices[i] = np.delete(shortest_indices[i], index_to_remove)
+            result_nodes[i] = np.array(nodes)[cleaned_shortest_indices[i]]
+        return result_nodes
 
 
 if __name__ == '__main__':
-    # graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
+    graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
     # graph = NXGraph('output/intermediate data for unittest/graph/encoded_edges_count_window_size_6.txt', gpickle_name='test')
-    pass
+    graph.get_longest_shortest_path_nodes(n=21)
 
