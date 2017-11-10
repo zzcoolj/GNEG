@@ -93,5 +93,10 @@ if __name__ == '__main__':
     matrix = np.load(config['graph']['graph_folder'] + 'matrix.npy')
     start = time.time()
     print('start')
-    print(np.argpartition(matrix, 20))
+    shortest_20_indices = np.argpartition(matrix, 20)[:20]
+    print(shortest_20_indices)
+    print(matrix[shortest_20_indices])
+    largest_20_indices = np.argpartition(matrix, -20)[-20:]
+    print(largest_20_indices)
+    print(matrix[largest_20_indices])
     print(common.count_time(start))
