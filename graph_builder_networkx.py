@@ -114,5 +114,6 @@ class NXGraph:
 if __name__ == '__main__':
     # graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
     # graph = NXGraph('output/intermediate data for unittest/graph/encoded_edges_count_window_size_6.txt', gpickle_name='test')
-    NXGraph.get_longest_shortest_path_nodes(n=21)
+    print(NXGraph.get_longest_shortest_path_nodes(n=21))
+    print(NXGraph.get_shortest_shortest_path_nodes(n=21))
 
