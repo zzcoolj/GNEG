@@ -62,7 +62,7 @@ class NXGraph:
     def show_detailed_information(self):
         print("#nodes:", self.graph.number_of_nodes(), "#edges:", self.graph.number_of_edges())
 
-    def get_shortest_path_lengths_between_all_nodes(self):
+    def get_shortest_path_lengths_between_all_nodes(self, output_folder=config['graph']['graph_folder']):
         """
         From test, these three algorithms below take more than 20 hours (processes have been killed after 20 hours) to
         calculate.
@@ -75,29 +75,27 @@ class NXGraph:
         #     print('1 - {}: {}'.format(node, length2[1][node]))
 
         matrix = nx.floyd_warshall_numpy(self.graph)
-        np.save(config['graph']['graph_folder'] + 'matrix.npy', matrix, fix_imports=False)
-        common.write_to_pickle(g.nodes(), config['graph']['graph_folder'] + 'nodes.pickle')
+        np.save(output_folder + 'matrix.npy', matrix, fix_imports=False)
+        common.write_to_pickle(self.graph.nodes(), output_folder + 'nodes.pickle')
 
-    def get_longest_shortest_path_nodes(self, g, source, n):
-        # TODO change
-        pass
-
-        # sorted_nodes = list(sorted(shortest_path_dict, key=shortest_path_dict.get, reverse=True))
-        # return sorted_nodes[:n]
+    def get_longest_shortest_path_nodes(self, n, data_folder=config['graph']['graph_folder']):
+        matrix = np.load(data_folder + 'matrix.npy')
+        nodes = common.read_pickle(data_folder + 'nodes.pickle')
+        print(matrix)
+        print(nodes)
+        # shortest_20_indices = np.argpartition(matrix, 5)[:, :5]
+        # print(shortest_20_indices[0])
+        # print(matrix[0][shortest_20_indices][0])
+        largest_20_indices = np.argpartition(matrix, -n)[:, -n:]
+        for i in range(6):
+            print('line ' + str(i))
+            print(np.array(nodes)[largest_20_indices[i]])
+            print(matrix[i][largest_20_indices][i])
+            print()
 
 
 if __name__ == '__main__':
     # graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
     # graph = NXGraph('output/intermediate data for unittest/graph/encoded_edges_count_window_size_6.txt', gpickle_name='test')
+    pass
 
-    matrix = np.load(config['graph']['graph_folder'] + 'matrix.npy')
-    start = time.time()
-    print('start')
-    shortest_20_indices = np.argpartition(matrix, 5)[:, :5]
-    print(shortest_20_indices[0])
-    print(matrix[0][shortest_20_indices][0])
-    largest_20_indices = np.argpartition(matrix, -5)[:, -5:]
-    print(largest_20_indices[0])
-    print(matrix[0][largest_20_indices][0])
-    print(max(matrix[0]))
-    print(common.count_time(start))
