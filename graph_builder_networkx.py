@@ -94,9 +94,9 @@ if __name__ == '__main__':
     start = time.time()
     print('start')
     shortest_20_indices = np.argpartition(matrix, 20)[:20]
-    print(shortest_20_indices)
-    print(matrix[shortest_20_indices])
+    print(shortest_20_indices[0])
+    print(matrix[shortest_20_indices][0])
     largest_20_indices = np.argpartition(matrix, -20)[-20:]
-    print(largest_20_indices)
-    print(matrix[largest_20_indices])
+    print(largest_20_indices[0])
+    print(matrix[largest_20_indices][0])
     print(common.count_time(start))
