@@ -134,8 +134,11 @@ try:
     # from gensim.models.word2vec_inner import train_batch_sg, train_batch_cbow
     # from gensim.models.word2vec_inner import score_sentence_sg, score_sentence_cbow
     # from gensim.models.word2vec_inner import FAST_VERSION, MAX_WORDS_IN_BATCH
-    raise ImportError
+    # raise ImportError
 
+    from word2vec_inner_modified import train_batch_sg, train_batch_cbow
+    from word2vec_inner_modified import score_sentence_sg, score_sentence_cbow
+    from word2vec_inner_modified import FAST_VERSION, MAX_WORDS_IN_BATCH
 except ImportError:
     # failed... fall back to plain numpy (20-80x slower training than the above)
     FAST_VERSION = -1
@@ -519,6 +522,13 @@ class Word2Vec(utils.SaveLoad):
         self.model_trimmed_post_training = False
         self.compute_loss = compute_loss
         self.running_training_loss = 0
+        # TODO NOW remove code below
+        for_test_dict = {}
+        for_test_dict[1] = 3
+        for_test_dict[2] = 2
+        for_test_dict[3] = 1
+        self.for_test = for_test_dict
+
         if sentences is not None:
             if isinstance(sentences, GeneratorType):
                 raise TypeError("You can't pass a generator as the sentences argument. Try an iterator.")
@@ -535,6 +545,7 @@ class Word2Vec(utils.SaveLoad):
         self.wv = KeyedVectors()
 
     def make_cum_table(self, power=0.75, domain=2 ** 31 - 1):
+        # TODO NOW add graph nw table inside
         """
         Create a cumulative-distribution table using stored vocabulary word counts for
         drawing random words in the negative-sampling training routines.
