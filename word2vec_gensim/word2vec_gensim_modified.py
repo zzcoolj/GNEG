@@ -545,7 +545,6 @@ class Word2Vec(utils.SaveLoad):
         self.wv = KeyedVectors()
 
     def make_cum_table(self, power=0.75, domain=2 ** 31 - 1):
-        # TODO NOW add graph nw table inside
         """
         Create a cumulative-distribution table using stored vocabulary word counts for
         drawing random words in the negative-sampling training routines.
@@ -570,6 +569,10 @@ class Word2Vec(utils.SaveLoad):
             self.cum_table[word_index] = round(cumulative / train_words_pow * domain)
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
+
+    def load_graph_based_negative_sample_table(self):
+        # TODO NOW After this function done, put this function as make_cum_table
+        
 
     def create_binary_tree(self):
         """

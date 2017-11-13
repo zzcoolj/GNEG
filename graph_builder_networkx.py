@@ -20,8 +20,6 @@ class NXGraph:
             self.graph = self.create_graph_with_weighted_edges(path, directed=True)
             nx.write_gpickle(self.graph, multi_processing.get_file_folder(path) + '/' + gpickle_name)
 
-
-
     @staticmethod
     def create_graph_with_weighted_edges(edges_file, directed):
         if directed:
@@ -77,43 +75,66 @@ class NXGraph:
         common.write_to_pickle(self.graph.nodes(), output_folder + 'nodes.pickle')
 
     @staticmethod
-    def get_longest_shortest_path_nodes(n, data_folder=config['graph']['graph_folder']):
+    def get_selected_shortest_path_nodes(n, selected_mode, data_folder=config['graph']['graph_folder']):
         # TODO NOW Deal with inf
-        matrix = np.load(data_folder + 'matrix.npy')
+        n += 1  # add one more potential results, in case results have self loop node.
+        matrix = np.load(data_folder + 'matrix.npy')  # matrix's values are indices of nodes list, not nodes indices
         nodes = common.read_pickle(data_folder + 'nodes.pickle')
-        largest_indices = np.argpartition(matrix, -n)[:, -n:]
-        cleaned_largest_indices = np.empty([largest_indices.shape[0], n-1], dtype=int)
-        result_nodes = np.empty([largest_indices.shape[0], n-1], dtype=int)
-        for i in range(matrix.shape[1]):
-            index_to_remove = np.where(largest_indices[i]==i)
-            if index_to_remove[0].size == 0:
-                cleaned_largest_indices[i] = largest_indices[i][1:]
+        nodes_list = list(nodes)
+        if selected_mode == 'min':
+            selected_indices = np.argpartition(matrix, n)[:, :n]
+        elif selected_mode == 'max':
+            selected_indices = np.argpartition(matrix, -n)[:, -n:]
+        cleaned_selected_indices = np.empty([selected_indices.shape[0], n - 1], dtype=int)
+        # result_nodes = np.empty([selected_indices.shape[0], n - 1], dtype=int)
+        shortest_path_nodes_dict = {}
+        for i in range(matrix.shape[1]):  # shape[0] = shape[1]
+            # e.g. for the first row (i=0), find the index in selected_indices where the value equals 0 (self loop)
+            self_loop_index = np.where(selected_indices[i] == i)
+            if self_loop_index[0].size == 0:  # no self loop
+                shortest_path = matrix[i][selected_indices[i]]
+                selected_index_shortest_path_length_dict = dict(zip(selected_indices[i], shortest_path))
+                sorted_indices = sorted(selected_index_shortest_path_length_dict,
+                                        key=selected_index_shortest_path_length_dict.get)
+                if selected_mode == 'min':
+                    cleaned_selected_indices[i] = sorted_indices[:n - 1]
+                elif selected_mode == 'max':
+                    cleaned_selected_indices[i] = sorted_indices[1:]
             else:
-                cleaned_largest_indices[i] = np.delete(largest_indices[i], index_to_remove)
-            result_nodes[i] = np.array(nodes)[cleaned_largest_indices[i]]
-        return result_nodes
+                cleaned_selected_indices[i] = np.delete(selected_indices[i], self_loop_index)
+            # translate values to nodes indices, and the row's order follows the order of nodes
+            shortest_path_nodes_dict[nodes_list[i]] = np.array(nodes)[cleaned_selected_indices[i]].tolist()
+        common.write_to_pickle(shortest_path_nodes_dict, data_folder+'shortest_path_nodes_dict.pickle')
+        return shortest_path_nodes_dict
 
     @staticmethod
-    def get_shortest_shortest_path_nodes(n, data_folder=config['graph']['graph_folder']):
-        # TODO NOW Deal with inf
-        matrix = np.load(data_folder + 'matrix.npy')
-        nodes = common.read_pickle(data_folder + 'nodes.pickle')
-        shortest_indices = np.argpartition(matrix, n)[:, :n]
-        cleaned_shortest_indices = np.empty([shortest_indices.shape[0], n - 1], dtype=int)
-        result_nodes = np.empty([shortest_indices.shape[0], n - 1], dtype=int)
-        for i in range(matrix.shape[1]):
-            index_to_remove = np.where(shortest_indices[i] == i)
-            if index_to_remove[0].size == 0:
-                cleaned_shortest_indices[i] = shortest_indices[i][:n-1]
-            else:
-                cleaned_shortest_indices[i] = np.delete(shortest_indices[i], index_to_remove)
-            result_nodes[i] = np.array(nodes)[cleaned_shortest_indices[i]]
-        return result_nodes
+    def translate_shortest_path_nodes_dict(shortest_path_nodes_dict, index2word_path):
+        index2word = read_two_columns_file_to_build_dictionary_type_specified(file=index2word_path, value_type=str,
+                                                                              key_type=int)
+        translated_shortest_path_nodes_dict = {}
+        for key, value in shortest_path_nodes_dict.items():
+            translated_shortest_path_nodes_dict[index2word[key]] = [index2word[node_id] for node_id in value]
+        return translated_shortest_path_nodes_dict
+
+
+def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, value_type):
+    """ATTENTION
+    This function is different from what in graph_data_provider.
+    Here, key is id and token is value, while in graph_data_provider, token is key and id is value.
+    """
+    d = {}
+    with open(file, encoding='utf-8') as f:
+        for line in f:
+            (key, val) = line.rstrip('\n').split("\t")
+            d[key_type(val)] = value_type(key)
+        return d
 
 
 if __name__ == '__main__':
     # graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
-    # graph = NXGraph('output/intermediate data for unittest/graph/encoded_edges_count_window_size_6.txt', gpickle_name='test')
-    print(NXGraph.get_longest_shortest_path_nodes(n=21))
-    print(NXGraph.get_shortest_shortest_path_nodes(n=21))
+    # print(NXGraph.get_selected_shortest_path_nodes(n=20, selected_mode='min'))
+    translate_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
+        NXGraph.get_selected_shortest_path_nodes(20, selected_mode='min', data_folder=config['graph']['graph_folder']),
+        config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt')
+    print(translate_shortest_path_nodes_dict)
 
