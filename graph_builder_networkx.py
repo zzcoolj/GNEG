@@ -136,5 +136,5 @@ if __name__ == '__main__':
     translate_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
         NXGraph.get_selected_shortest_path_nodes(20, selected_mode='min', data_folder=config['graph']['graph_folder']),
         config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt')
-    print(translate_shortest_path_nodes_dict)
+    print('finish')
 
