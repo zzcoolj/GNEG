@@ -108,12 +108,14 @@ class NXGraph:
         return shortest_path_nodes_dict
 
     @staticmethod
-    def translate_shortest_path_nodes_dict(shortest_path_nodes_dict, index2word_path):
+    def translate_shortest_path_nodes_dict(shortest_path_nodes_dict, index2word_path, output_folder):
         index2word = read_two_columns_file_to_build_dictionary_type_specified(file=index2word_path, value_type=str,
                                                                               key_type=int)
         translated_shortest_path_nodes_dict = {}
         for key, value in shortest_path_nodes_dict.items():
             translated_shortest_path_nodes_dict[index2word[key]] = [index2word[node_id] for node_id in value]
+        common.write_to_pickle(translated_shortest_path_nodes_dict,
+                               output_folder + 'translated_shortest_path_nodes_dict.pickle')
         return translated_shortest_path_nodes_dict
 
 
@@ -131,10 +133,13 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, val
 
 
 if __name__ == '__main__':
-    # graph = NXGraph(config['graph']['graph_folder']+'graph.gpickle')
+    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3.txt',
+                    gpickle_name='graph.gpickle')
+    graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
     # print(NXGraph.get_selected_shortest_path_nodes(n=20, selected_mode='min'))
-    translate_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
-        NXGraph.get_selected_shortest_path_nodes(20, selected_mode='min', data_folder=config['graph']['graph_folder']),
-        config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt')
-    print('finish')
+    translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
+        NXGraph.get_selected_shortest_path_nodes(8, selected_mode='min', data_folder=config['graph']['graph_folder']),
+        config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
+        output_folder=config['graph']['graph_folder'])
+    print(translated_shortest_path_nodes_dict)
 

@@ -126,6 +126,12 @@ from six import iteritems, itervalues, string_types
 from six.moves import xrange
 from types import GeneratorType
 from scipy import stats
+import configparser
+import sys
+sys.path.insert(0, '../common/')
+import common
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 logger = logging.getLogger(__name__)
 
@@ -495,6 +501,8 @@ class Word2Vec(utils.SaveLoad):
         self.initialize_word_vectors()
         self.sg = int(sg)
         self.cum_table = None  # for negative sampling
+        # TODO NOW
+        self.ns_dict = None  # for negative sampling
         self.vector_size = int(size)
         self.layer1_size = int(size)
         if size % 4 != 0:
@@ -522,12 +530,6 @@ class Word2Vec(utils.SaveLoad):
         self.model_trimmed_post_training = False
         self.compute_loss = compute_loss
         self.running_training_loss = 0
-        # TODO NOW remove code below
-        for_test_dict = {}
-        for_test_dict[1] = 3
-        for_test_dict[2] = 2
-        for_test_dict[3] = 1
-        self.for_test = for_test_dict
 
         if sentences is not None:
             if isinstance(sentences, GeneratorType):
@@ -570,9 +572,17 @@ class Word2Vec(utils.SaveLoad):
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
 
-    def load_graph_based_negative_sample_table(self):
+    def load_graph_based_negative_sample_table(self, shortest_path_folder=config['graph']['graph_folder']):
         # TODO NOW After this function done, put this function as make_cum_table
-        
+        # TODO test this function
+        shortest_path_nodes_dict = common.read_pickle(
+            shortest_path_folder + 'translated_shortest_path_nodes_dict.pickle')
+        ns_dict = {}
+        for target_node, ns_nodes in shortest_path_nodes_dict.items():
+            target_node_id = self.wv.vocab[target_node].index
+            ns_nodes_ids = [self.wv.vocab[ns_node].index for ns_node in ns_nodes]
+            ns_dict[target_node_id] = ns_nodes_ids
+        self.ns_dict = ns_dict
 
     def create_binary_tree(self):
         """
@@ -781,6 +791,8 @@ class Word2Vec(utils.SaveLoad):
         if self.negative:
             # build the table for drawing random words (for negative sampling)
             self.make_cum_table()
+            # TODO NOW NOW NOW change
+            self.load_graph_based_negative_sample_table(shortest_path_folder='output/intermediate data for unittest/graph/')
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)
             # this word is only ever input – never predicted – so count, huffman-point, etc doesn't matter
