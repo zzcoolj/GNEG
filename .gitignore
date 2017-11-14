@@ -1,8 +1,8 @@
 data/
 output/
 LICENSE.txt
-word2vec_gensim/*.so
-word2vec_gensim/*.c
+*.so
+*.c
 
 *~
 .DS_Store

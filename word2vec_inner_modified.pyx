@@ -226,7 +226,7 @@ cdef void fast_sentence_cbow_hs(
 
 cdef unsigned long long fast_sentence_cbow_neg(
     const int negative, np.uint32_t *cum_table, unsigned long long cum_table_len, int codelens[MAX_SENTENCE_LEN],
-    const np.uint32_t ns_list[NS_LIST_LENGTH],
+    const np.uint32_t [:] ns_list,
     REAL_t *neu1,  REAL_t *syn0, REAL_t *syn1neg, const int size,
     const np.uint32_t indexes[MAX_SENTENCE_LEN], const REAL_t alpha, REAL_t *work,
     int i, int j, int k, int cbow_mean, unsigned long long next_random, REAL_t *word_locks,
@@ -256,22 +256,19 @@ cdef unsigned long long fast_sentence_cbow_neg(
 
     memset(work, 0, size * cython.sizeof(REAL_t))
 
-    # TODO NOW change negative function:
     # Generate a negative table
     for d in range(negative+1):
         if d == 0:
             target_index = word_index
             label = ONEF
-            print('word_index:', target_index)
         else:
+            # TODO NOW disabled 3 codes below change negative function:
             target_index = bisect_left(cum_table, (next_random >> 16) % cum_table[cum_table_len-1], 0, cum_table_len)
             next_random = (next_random * <unsigned long long>25214903917ULL + 11) & modulo
             if target_index == word_index:
                 continue
-            # TODO NOW NOW NOW 3 codes below is for test
-            print('ns_index:', target_index)
-            target_index = ns_list[d+1]
-            print('ns_index:', target_index)
+            # TODO NOW
+            target_index = ns_list[d-1]
             label = <REAL_t>0.0
 
         row2 = target_index * size
@@ -446,8 +443,10 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss):
     cdef unsigned long long cum_table_len
     # for sampling (negative and frequent-word downsampling)
     cdef unsigned long long next_random
-    # TODO NOW NOW NOW NOW change ns_dict to 2-dim np array
-    cdef dict ns_dict
+    # TODO NOW
+    cdef np.ndarray[np.uint32_t, ndim=2] ns_array = model.ns_array
+    cdef np.uint32_t [:,:] ns_array_view = ns_array
+    cdef np.uint32_t [:] ns_list
 
     if hs:
         syn1 = <REAL_t *>(np.PyArray_DATA(model.syn1))
@@ -456,8 +455,7 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss):
         syn1neg = <REAL_t *>(np.PyArray_DATA(model.syn1neg))
         cum_table = <np.uint32_t *>(np.PyArray_DATA(model.cum_table))
         cum_table_len = len(model.cum_table)
-        # TODO NOW
-        ns_dict = model.ns_dict
+        # TODO NOW ns_array declaration should be here
     if negative or sample:
         next_random = (2**24) * model.random.randint(0, 2**24) + model.random.randint(0, 2**24)
 
@@ -514,10 +512,9 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss):
                 if hs:
                     fast_sentence_cbow_hs(points[i], codes[i], codelens, neu1, syn0, syn1, size, indexes, _alpha, work, i, j, k, cbow_mean, word_locks, _compute_loss, &_running_training_loss)
                 if negative:
-                    # TODO NOW
+                    # TODO NOW 2 codes below
                     word_index = indexes[i]
-                    # TODO NOW NOW ns_list should like cdef np.uint32_t indexes[MAX_SENTENCE_LEN]
-                    ns_list = ns_dict[word_index]
+                    ns_list = ns_array_view[word_index]
                     next_random = fast_sentence_cbow_neg(negative, cum_table, cum_table_len, codelens, ns_list, neu1, syn0, syn1neg, size, indexes, _alpha, work, i, j, k, cbow_mean, next_random, word_locks, _compute_loss, &_running_training_loss)
 
     model.running_training_loss = _running_training_loss

@@ -105,6 +105,7 @@ from collections import defaultdict
 import threading
 import itertools
 import warnings
+import numpy as np
 
 from gensim.utils import keep_vocab_item, call_on_class_only
 from gensim.models.keyedvectors import KeyedVectors, Vocab
@@ -143,8 +144,11 @@ try:
     # raise ImportError
 
     from word2vec_inner_modified import train_batch_sg, train_batch_cbow
+    print('1')
     from word2vec_inner_modified import score_sentence_sg, score_sentence_cbow
+    print('2')
     from word2vec_inner_modified import FAST_VERSION, MAX_WORDS_IN_BATCH
+    print('3')
 except ImportError:
     # failed... fall back to plain numpy (20-80x slower training than the above)
     FAST_VERSION = -1
@@ -502,7 +506,7 @@ class Word2Vec(utils.SaveLoad):
         self.sg = int(sg)
         self.cum_table = None  # for negative sampling
         # TODO NOW
-        self.ns_dict = None  # for negative sampling
+        self.ns_array = None  # for negative sampling
         self.vector_size = int(size)
         self.layer1_size = int(size)
         if size % 4 != 0:
@@ -574,7 +578,6 @@ class Word2Vec(utils.SaveLoad):
 
     def load_graph_based_negative_sample_table(self, shortest_path_folder=config['graph']['graph_folder']):
         # TODO NOW After this function done, put this function as make_cum_table
-        # TODO test this function
         shortest_path_nodes_dict = common.read_pickle(
             shortest_path_folder + 'translated_shortest_path_nodes_dict.pickle')
         ns_dict = {}
@@ -582,7 +585,14 @@ class Word2Vec(utils.SaveLoad):
             target_node_id = self.wv.vocab[target_node].index
             ns_nodes_ids = [self.wv.vocab[ns_node].index for ns_node in ns_nodes]
             ns_dict[target_node_id] = ns_nodes_ids
-        self.ns_dict = ns_dict
+        # TODO NOW check shortest_path_nodes_dict keys are exactly same as wv.vocab keys
+        # TODO NOW check ns_2d_array has exactly the same number of keys as wv.vocab
+        # create a 2d array key from 0 to negative
+        dict_size = len(shortest_path_nodes_dict)
+        ns_2d_array = zeros((dict_size, self.negative), dtype=np.int)
+        for i in range(dict_size):
+            ns_2d_array[i] = ns_dict[i]
+        self.ns_array = ns_2d_array
 
     def create_binary_tree(self):
         """
@@ -791,8 +801,9 @@ class Word2Vec(utils.SaveLoad):
         if self.negative:
             # build the table for drawing random words (for negative sampling)
             self.make_cum_table()
-            # TODO NOW NOW NOW change
+            # TODO NOW NOW NOW change now it's just for unittest
             self.load_graph_based_negative_sample_table(shortest_path_folder='output/intermediate data for unittest/graph/')
+            # self.load_graph_based_negative_sample_table()
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)
             # this word is only ever input – never predicted – so count, huffman-point, etc doesn't matter
