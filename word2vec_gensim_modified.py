@@ -144,11 +144,8 @@ try:
     # raise ImportError
 
     from word2vec_inner_modified import train_batch_sg, train_batch_cbow
-    print('1')
     from word2vec_inner_modified import score_sentence_sg, score_sentence_cbow
-    print('2')
     from word2vec_inner_modified import FAST_VERSION, MAX_WORDS_IN_BATCH
-    print('3')
 except ImportError:
     # failed... fall back to plain numpy (20-80x slower training than the above)
     FAST_VERSION = -1
@@ -589,7 +586,7 @@ class Word2Vec(utils.SaveLoad):
         # TODO NOW check ns_2d_array has exactly the same number of keys as wv.vocab
         # create a 2d array key from 0 to negative
         dict_size = len(shortest_path_nodes_dict)
-        ns_2d_array = zeros((dict_size, self.negative), dtype=np.int)
+        ns_2d_array = zeros((dict_size, self.negative), dtype=uint32)
         for i in range(dict_size):
             ns_2d_array[i] = ns_dict[i]
         self.ns_array = ns_2d_array
