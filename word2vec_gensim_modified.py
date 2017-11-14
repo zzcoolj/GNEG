@@ -126,6 +126,8 @@ from six import iteritems, itervalues, string_types
 from six.moves import xrange
 from types import GeneratorType
 from scipy import stats
+import graph_data_provider as gdp
+import graph_builder_networkx as gbn
 import configparser
 import sys
 sys.path.insert(0, '../common/')
@@ -595,9 +597,6 @@ class Word2Vec(utils.SaveLoad):
         self.ns_array = zeros((dict_size, self.negative), dtype=uint32)
         for i in range(dict_size):
             self.ns_array[i] = ns_dict[i]
-        # TODO for test
-        print(ns_dict)
-        print(self.ns_array)
 
     def create_binary_tree(self):
         """
@@ -638,7 +637,9 @@ class Word2Vec(utils.SaveLoad):
         Each sentence must be a list of unicode strings.
 
         """
-        self.scan_vocab(sentences, progress_per=progress_per, trim_rule=trim_rule)  # initial survey
+        # TODO NOW NOW NOW use my version
+        # self.scan_vocab(sentences, progress_per=progress_per, trim_rule=trim_rule)  # initial survey
+        self.scan_vocab_from_graph_data_provider_vocabulary(sentences)  # initial survey
         self.scale_vocab(keep_raw_vocab=keep_raw_vocab, trim_rule=trim_rule,
                          update=update)  # trim by min_count & precalculate downsampling
         self.finalize_vocab(update=update)  # build tables & arrays
@@ -668,10 +669,31 @@ class Word2Vec(utils.SaveLoad):
             if self.max_vocab_size and len(vocab) > self.max_vocab_size:
                 total_words += utils.prune_vocab(vocab, min_reduce, trim_rule=trim_rule)
                 min_reduce += 1
+                print('min_reduce', min_reduce)
 
         total_words += sum(itervalues(vocab))
         logger.info("collected %i word types from a corpus of %i raw words and %i sentences",
                     len(vocab), total_words, sentence_no + 1)
+        self.corpus_count = sentence_no + 1
+        self.raw_vocab = vocab
+        print(self.max_vocab_size)
+        print(len(self.raw_vocab))
+
+    # TODO NOW NOW NOW rewrite scan_vocab function to get graph valid vocabulary directly
+    # TODO NOW NOW NOW valid_vocabulary_path should be in high level
+    def scan_vocab_from_graph_data_provider_vocabulary(self, sentences,
+                                                       index2word_path=config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
+                                                       merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
+                                                       valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt'):
+        """Do an initial scan of all words appearing in sentences."""
+        vocab = defaultdict(int)
+        index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(index2word_path)
+        merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(merged_word_count_path, key_type=str, value_type=int)
+        valid_vocabulary = dict.fromkeys(gdp.read_valid_vocabulary(valid_vocabulary_path))
+        for index in valid_vocabulary:
+            vocab[index2word[int(index)]] = merged_word_count[str(index)]
+        for sentence_no, sentence in enumerate(sentences):
+            continue
         self.corpus_count = sentence_no + 1
         self.raw_vocab = vocab
 
