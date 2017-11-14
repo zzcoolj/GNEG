@@ -558,10 +558,10 @@ if __name__ == '__main__':
 
     # prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
     #                           file_extension='.txt',
-    #                           max_window_size=3,
+    #                           max_window_size=5,
     #                           process_num=4,
     #                           max_vocab_size=10000)
-    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6, max_vocab_size=10000)
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=4, max_vocab_size=10000)
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.

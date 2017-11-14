@@ -73,6 +73,7 @@ class NXGraph:
         matrix = nx.floyd_warshall_numpy(self.graph)
         np.save(output_folder + 'matrix.npy', matrix, fix_imports=False)
         common.write_to_pickle(self.graph.nodes(), output_folder + 'nodes.pickle')
+        return self.graph.nodes, matrix
 
     @staticmethod
     def get_selected_shortest_path_nodes(n, selected_mode, data_folder=config['graph']['graph_folder']):
@@ -109,8 +110,7 @@ class NXGraph:
 
     @staticmethod
     def translate_shortest_path_nodes_dict(shortest_path_nodes_dict, index2word_path, output_folder):
-        index2word = read_two_columns_file_to_build_dictionary_type_specified(file=index2word_path, value_type=str,
-                                                                              key_type=int)
+        index2word = read_two_columns_file_to_build_dictionary_type_specified(file=index2word_path)
         translated_shortest_path_nodes_dict = {}
         for key, value in shortest_path_nodes_dict.items():
             translated_shortest_path_nodes_dict[index2word[key]] = [index2word[node_id] for node_id in value]
@@ -119,7 +119,7 @@ class NXGraph:
         return translated_shortest_path_nodes_dict
 
 
-def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, value_type):
+def read_two_columns_file_to_build_dictionary_type_specified(file, key_type=int, value_type=str):
     """ATTENTION
     This function is different from what in graph_data_provider.
     Here, key is id and token is value, while in graph_data_provider, token is key and id is value.
@@ -133,13 +133,10 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, val
 
 
 if __name__ == '__main__':
-    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3.txt',
+    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt',
                     gpickle_name='graph.gpickle')
     graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
-    # print(NXGraph.get_selected_shortest_path_nodes(n=20, selected_mode='min'))
     translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
-        NXGraph.get_selected_shortest_path_nodes(8, selected_mode='min', data_folder=config['graph']['graph_folder']),
+        NXGraph.get_selected_shortest_path_nodes(20, selected_mode='min', data_folder=config['graph']['graph_folder']),
         config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
         output_folder=config['graph']['graph_folder'])
-    print(translated_shortest_path_nodes_dict)
-

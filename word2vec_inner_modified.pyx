@@ -25,8 +25,6 @@ except ImportError:
 REAL = np.float32
 
 DEF MAX_SENTENCE_LEN = 10000
-# TODO NOW NOW set negative here, figure out how to transfer number
-DEF NS_LIST_LENGTH = 20
 
 cdef scopy_ptr scopy=<scopy_ptr>PyCObject_AsVoidPtr(fblas.scopy._cpointer)  # y = x
 cdef saxpy_ptr saxpy=<saxpy_ptr>PyCObject_AsVoidPtr(fblas.saxpy._cpointer)  # y += alpha * x
@@ -262,12 +260,12 @@ cdef unsigned long long fast_sentence_cbow_neg(
             target_index = word_index
             label = ONEF
         else:
-            # TODO NOW disabled 3 codes below change negative function:
+            # TODO NOW disabled 4 codes below change negative function:
             target_index = bisect_left(cum_table, (next_random >> 16) % cum_table[cum_table_len-1], 0, cum_table_len)
             next_random = (next_random * <unsigned long long>25214903917ULL + 11) & modulo
-            if target_index == word_index:
-                continue
-            # TODO NOW
+            # if target_index == word_index:
+            #     continue
+            # TODO NOW 1 code below
             target_index = ns_list[d-1]
             label = <REAL_t>0.0
 
@@ -443,9 +441,9 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss):
     cdef unsigned long long cum_table_len
     # for sampling (negative and frequent-word downsampling)
     cdef unsigned long long next_random
-    # TODO NOW
-    cdef np.ndarray[np.uint32_t, ndim=2] ns_array = model.ns_array
-    cdef np.uint32_t [:,:] ns_array_view = ns_array
+    # TODO NOW 3 codes below
+    cdef np.ndarray[np.uint32_t, ndim=2] ns_array
+    cdef np.uint32_t [:,:] ns_array_view
     cdef np.uint32_t [:] ns_list
 
     if hs:
@@ -455,7 +453,9 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss):
         syn1neg = <REAL_t *>(np.PyArray_DATA(model.syn1neg))
         cum_table = <np.uint32_t *>(np.PyArray_DATA(model.cum_table))
         cum_table_len = len(model.cum_table)
-        # TODO NOW ns_array declaration should be here
+        # TODO NOW 2 codes below
+        ns_array = model.ns_array
+        ns_array_view = ns_array
     if negative or sample:
         next_random = (2**24) * model.random.randint(0, 2**24) + model.random.randint(0, 2**24)
 
@@ -512,7 +512,7 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss):
                 if hs:
                     fast_sentence_cbow_hs(points[i], codes[i], codelens, neu1, syn0, syn1, size, indexes, _alpha, work, i, j, k, cbow_mean, word_locks, _compute_loss, &_running_training_loss)
                 if negative:
-                    # TODO NOW 2 codes below
+                    # TODO NOW 3 codes below
                     word_index = indexes[i]
                     ns_list = ns_array_view[word_index]
                     next_random = fast_sentence_cbow_neg(negative, cum_table, cum_table_len, codelens, ns_list, neu1, syn0, syn1neg, size, indexes, _alpha, work, i, j, k, cbow_mean, next_random, word_locks, _compute_loss, &_running_training_loss)

@@ -4,16 +4,61 @@ import graph_builder_networkx as gbn
 
 class TestGraphDataProvider(unittest.TestCase):
     graph_folder = 'output/intermediate data for unittest/graph/'
-    merged_dict_path = 'output/intermediate data for unittest/dicts_and_encoded_texts/dict_merged.txt'
+    merged_dict_path = 'output/intermediate data for unittest/graph/dict_merged_for_unittest.txt'
 
-    def test_get_shortest_shortest_path_nodes(self):
-        graph = gbn.NXGraph(self.graph_folder + 'encoded_edges_count_window_size_6_vocab_size_none.txt',
+    def test_translate_shortest_path_nodes_dict(self):
+        graph = gbn.NXGraph(self.graph_folder + 'encoded_edges_count_window_size_6_vocab_size_none_for_unittest.txt',
                             gpickle_name='graph.gpickle')
-        graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
+        nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
         translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
             gbn.NXGraph.get_selected_shortest_path_nodes(3, selected_mode='min', data_folder=self.graph_folder),
             self.merged_dict_path, output_folder=self.graph_folder)
-        print(translate_shortest_path_nodes_dict)
+        index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(file=self.merged_dict_path)
+
+        print([index2word[node] for node in nodes])
+        print(matrix)
+        print()
+        for key, value in translate_shortest_path_nodes_dict.items():
+            print(key, '\t', value)
+
+        self.assertTrue('.' in translate_shortest_path_nodes_dict['in'])
+        self.assertTrue(',' in translate_shortest_path_nodes_dict['in'])
+        self.assertTrue('and' in translate_shortest_path_nodes_dict['in'])
+
+        self.assertTrue('the' in translate_shortest_path_nodes_dict['of'])
+        self.assertTrue(',' in translate_shortest_path_nodes_dict['of'])
+        self.assertTrue('in' in translate_shortest_path_nodes_dict['of'])
+
+        self.assertFalse('the' in translate_shortest_path_nodes_dict['the'])
+        self.assertFalse(',' in translate_shortest_path_nodes_dict[','])
+        self.assertFalse('.' in translate_shortest_path_nodes_dict['.'])
+        self.assertFalse('and' in translate_shortest_path_nodes_dict['and'])
+        self.assertFalse('in' in translate_shortest_path_nodes_dict['in'])
+        self.assertFalse('of' in translate_shortest_path_nodes_dict['of'])
+
+        translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
+            gbn.NXGraph.get_selected_shortest_path_nodes(3, selected_mode='max', data_folder=self.graph_folder),
+            self.merged_dict_path, output_folder=self.graph_folder)
+
+        self.assertTrue('.' in translate_shortest_path_nodes_dict[','])
+        self.assertTrue('of' in translate_shortest_path_nodes_dict[','])
+        self.assertTrue('and' in translate_shortest_path_nodes_dict[','])
+
+        self.assertTrue('the' in translate_shortest_path_nodes_dict['in'])
+        self.assertTrue('of' in translate_shortest_path_nodes_dict['in'])
+
+        self.assertTrue('of' in translate_shortest_path_nodes_dict['the'])
+        self.assertTrue('of' in translate_shortest_path_nodes_dict['and'])
+
+        self.assertTrue('.' in translate_shortest_path_nodes_dict['of'])
+        self.assertTrue('and' in translate_shortest_path_nodes_dict['of'])
+
+        self.assertFalse('the' in translate_shortest_path_nodes_dict['the'])
+        self.assertFalse(',' in translate_shortest_path_nodes_dict[','])
+        self.assertFalse('.' in translate_shortest_path_nodes_dict['.'])
+        self.assertFalse('and' in translate_shortest_path_nodes_dict['and'])
+        self.assertFalse('in' in translate_shortest_path_nodes_dict['in'])
+        self.assertFalse('of' in translate_shortest_path_nodes_dict['of'])
 
 
 if __name__ == '__main__':
