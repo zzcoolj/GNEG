@@ -420,7 +420,10 @@ class Word2Vec(utils.SaveLoad):
     """
 
     def __init__(
-            self, sentences=None, size=100, alpha=0.025, window=5, min_count=5,
+            self, index2word_path, merged_word_count_path, valid_vocabulary_path,
+            translated_shortest_path_nodes_dict_path,
+            sentences=None,
+            size=100, alpha=0.025, window=5, min_count=5,
             max_vocab_size=None, sample=1e-3, seed=1, workers=3, min_alpha=0.0001,
             sg=0, hs=0, negative=5, cbow_mean=1, hashfxn=hash, iter=5, null_word=0,
             trim_rule=None, sorted_vocab=1, batch_words=MAX_WORDS_IN_BATCH, compute_loss=False):
@@ -532,11 +535,17 @@ class Word2Vec(utils.SaveLoad):
         self.model_trimmed_post_training = False
         self.compute_loss = compute_loss
         self.running_training_loss = 0
+        self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
 
         if sentences is not None:
             if isinstance(sentences, GeneratorType):
                 raise TypeError("You can't pass a generator as the sentences argument. Try an iterator.")
-            self.build_vocab(sentences, trim_rule=trim_rule)
+            self.build_vocab(sentences,
+                             index2word_path=index2word_path,
+                             merged_word_count_path=merged_word_count_path,
+                             valid_vocabulary_path=valid_vocabulary_path,
+                             translated_shortest_path_nodes_dict_path=translated_shortest_path_nodes_dict_path,
+                             trim_rule=trim_rule)
             self.train(sentences, total_examples=self.corpus_count, epochs=self.iter,
                        start_alpha=self.alpha, end_alpha=self.min_alpha)
         else:
@@ -574,10 +583,8 @@ class Word2Vec(utils.SaveLoad):
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
 
-    def load_graph_based_negative_sample_table(self, shortest_path_folder=config['graph']['graph_folder']):
-        # TODO NOW After this function done, put this function as make_cum_table
-        shortest_path_nodes_dict = common.read_pickle(
-            shortest_path_folder + 'translated_shortest_path_nodes_dict.pickle')
+    def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
+        shortest_path_nodes_dict = common.read_pickle(translated_shortest_path_nodes_dict_path)
         '''ATTENTION
         This function works on the assumptions below: 
         - shortest_path_nodes_dict contains exactly same tokens(format str) as in wv.vocab.
@@ -588,7 +595,7 @@ class Word2Vec(utils.SaveLoad):
             target_node_id = self.wv.vocab[target_node].index
             ns_nodes_ids = [self.wv.vocab[ns_node].index for ns_node in ns_nodes]
             ns_dict[target_node_id] = ns_nodes_ids
-        # check
+        # TODO (DONE): check
         if (len(ns_dict) != len(self.wv.vocab)) or (len(ns_dict) != len(shortest_path_nodes_dict)):
             print('ERROR: Graph vocabulary and wv vocabulary are different.')
             exit()
@@ -631,18 +638,24 @@ class Word2Vec(utils.SaveLoad):
 
             logger.info("built huffman tree with maximum node depth %i", max_depth)
 
-    def build_vocab(self, sentences, keep_raw_vocab=False, trim_rule=None, progress_per=10000, update=False):
+    def build_vocab(self, sentences,
+                    index2word_path, merged_word_count_path, valid_vocabulary_path,
+                    translated_shortest_path_nodes_dict_path,
+                    keep_raw_vocab=False, trim_rule=None, progress_per=10000, update=False):
         """
         Build vocabulary from a sequence of sentences (can be a once-only generator stream).
         Each sentence must be a list of unicode strings.
 
         """
-        # TODO NOW NOW NOW use my version
+        # TODO Remind: replace scan_vocab by my version, which uses valid vocabulary from graph.
         # self.scan_vocab(sentences, progress_per=progress_per, trim_rule=trim_rule)  # initial survey
-        self.scan_vocab_from_graph_data_provider_vocabulary(sentences)  # initial survey
+        self.scan_vocab_from_graph_data_provider_vocabulary(sentences,
+                                                            index2word_path=index2word_path,
+                                                            merged_word_count_path=merged_word_count_path,
+                                                            valid_vocabulary_path=valid_vocabulary_path)
         self.scale_vocab(keep_raw_vocab=keep_raw_vocab, trim_rule=trim_rule,
                          update=update)  # trim by min_count & precalculate downsampling
-        self.finalize_vocab(update=update)  # build tables & arrays
+        self.finalize_vocab(update=update, translated_shortest_path_nodes_dict_path=translated_shortest_path_nodes_dict_path)  # build tables & arrays
 
     def scan_vocab(self, sentences, progress_per=10000, trim_rule=None):
         """Do an initial scan of all words appearing in sentences."""
@@ -679,12 +692,10 @@ class Word2Vec(utils.SaveLoad):
         print(self.max_vocab_size)
         print(len(self.raw_vocab))
 
-    # TODO NOW NOW NOW rewrite scan_vocab function to get graph valid vocabulary directly
-    # TODO NOW NOW NOW valid_vocabulary_path should be in high level
     def scan_vocab_from_graph_data_provider_vocabulary(self, sentences,
-                                                       index2word_path=config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
-                                                       merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
-                                                       valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt'):
+                                                       index2word_path,
+                                                       merged_word_count_path,
+                                                       valid_vocabulary_path):
         """Do an initial scan of all words appearing in sentences."""
         vocab = defaultdict(int)
         index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(index2word_path)
@@ -816,7 +827,7 @@ class Word2Vec(utils.SaveLoad):
 
         return report_values
 
-    def finalize_vocab(self, update=False):
+    def finalize_vocab(self, translated_shortest_path_nodes_dict_path, update=False):
         """Build tables and model weights based on final vocabulary settings."""
         if not self.wv.index2word:
             self.scale_vocab()
@@ -830,7 +841,7 @@ class Word2Vec(utils.SaveLoad):
             self.make_cum_table()
             # TODO NOW change here for unittest
             # self.load_graph_based_negative_sample_table(shortest_path_folder='output/intermediate data for unittest/graph/')
-            self.load_graph_based_negative_sample_table()
+            self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
             # self.load_graph_based_negative_sample_table()
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)
@@ -1512,6 +1523,8 @@ class Word2Vec(utils.SaveLoad):
             delattr(model, 'table')  # discard in favor of cum_table
         if model.negative and hasattr(model.wv, 'index2word'):
             model.make_cum_table()  # rebuild cum_table from vocabulary
+            # TODO: Not sure about whether should put code below here.
+            model.load_graph_based_negative_sample_table(model.translated_shortest_path_nodes_dict_path)
         if not hasattr(model, 'corpus_count'):
             model.corpus_count = None
         for v in model.wv.vocab.values():
