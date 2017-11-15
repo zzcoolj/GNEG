@@ -128,12 +128,9 @@ from types import GeneratorType
 from scipy import stats
 import graph_data_provider as gdp
 import graph_builder_networkx as gbn
-import configparser
 import sys
 sys.path.insert(0, '../common/')
 import common
-config = configparser.ConfigParser()
-config.read('config.ini')
 
 logger = logging.getLogger(__name__)
 
@@ -603,7 +600,7 @@ class Word2Vec(utils.SaveLoad):
         dict_size = len(ns_dict)
         self.ns_array = zeros((dict_size, self.negative), dtype=uint32)
         for i in range(dict_size):
-            self.ns_array[i] = ns_dict[i]
+            self.ns_array[i] = ns_dict[i][:self.negative]
 
     def create_binary_tree(self):
         """
@@ -839,8 +836,6 @@ class Word2Vec(utils.SaveLoad):
         if self.negative:
             # build the table for drawing random words (for negative sampling)
             self.make_cum_table()
-            # TODO NOW change here for unittest
-            # self.load_graph_based_negative_sample_table(shortest_path_folder='output/intermediate data for unittest/graph/')
             self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
             # self.load_graph_based_negative_sample_table()
         if self.null_word:
@@ -885,7 +880,7 @@ class Word2Vec(utils.SaveLoad):
         if self.sg:
             tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss)
         else:
-            tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss)
+            tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss, ns_mode_py=0)
         return tally, self._raw_word_count(sentences)
 
     def _raw_word_count(self, job):
