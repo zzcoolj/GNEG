@@ -2,11 +2,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 import configparser
-import sys
-sys.path.insert(0, '../common/')
-import common
 import multi_processing
-
+import common
 
 config = configparser.ConfigParser()
 config.read('config.ini')

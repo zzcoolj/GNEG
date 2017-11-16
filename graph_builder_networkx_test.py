@@ -10,16 +10,17 @@ class TestGraphDataProvider(unittest.TestCase):
         graph = gbn.NXGraph(self.graph_folder + 'encoded_edges_count_window_size_6_vocab_size_none_for_unittest.txt',
                             gpickle_name='graph.gpickle')
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
-        translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
-            gbn.NXGraph.get_selected_shortest_path_nodes(3, selected_mode='min', data_folder=self.graph_folder),
-            self.merged_dict_path, output_folder=self.graph_folder)
         index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(file=self.merged_dict_path)
-
         print([index2word[node] for node in nodes])
         print(matrix)
         print()
-        for key, value in translate_shortest_path_nodes_dict.items():
-            print(key, '\t', value)
+
+        translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
+            gbn.NXGraph.get_selected_shortest_path_nodes(3, selected_mode='min', data_folder=self.graph_folder),
+            self.merged_dict_path, output_folder=self.graph_folder)
+
+        # for key, value in translate_shortest_path_nodes_dict.items():
+        #     print(key, '\t', value)
 
         self.assertTrue('.' in translate_shortest_path_nodes_dict['in'])
         self.assertTrue(',' in translate_shortest_path_nodes_dict['in'])

@@ -511,6 +511,16 @@ def filter_edges(min_count,
     return filtered_edges
 
 
+def reciprocal_for_edges_weight(old_encoded_edges_count_path, output_folder=config['graph']['graph_folder']):
+    reciprocal_weight_edges = {}
+    for line in common.read_file_line_yielder(old_encoded_edges_count_path):
+        (source, target, weight) = line.split("\t")
+        reciprocal_weight_edges[(source, target)] = 1./int(weight)
+    output_name = multi_processing.get_file_name(old_encoded_edges_count_path).split('.txt')[0]+'_reciprocal.txt'
+    common.write_dict_to_file(output_folder + output_name, reciprocal_weight_edges, 'tuple')
+    return reciprocal_weight_edges
+
+
 if __name__ == '__main__':
     # TESTS
     # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
@@ -561,7 +571,9 @@ if __name__ == '__main__':
     #                           max_window_size=5,
     #                           process_num=4,
     #                           max_vocab_size=10000)
-    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=4, max_vocab_size=10000)
+    # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=4, max_vocab_size=10000)
+
+    reciprocal_for_edges_weight(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3_backup.txt')
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.
