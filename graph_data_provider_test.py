@@ -1,5 +1,7 @@
-"""
-ATTENTION: All results are based on setting preprocessing_word=False in config.ini.
+"""ATTENTION
+1. All results are based on setting preprocessing_word=False in config.ini.
+2. The execution order follows ASCII order of function names, so add number after 'test_' to make sure the execution
+   order.
 """
 
 import unittest
