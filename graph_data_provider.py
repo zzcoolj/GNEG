@@ -515,8 +515,10 @@ def reciprocal_for_edges_weight(old_encoded_edges_count_path, output_folder=conf
     reciprocal_weight_edges = {}
     for line in common.read_file_line_yielder(old_encoded_edges_count_path):
         (source, target, weight) = line.split("\t")
-        reciprocal_weight_edges[(source, target)] = 1./int(weight)
-    output_name = multi_processing.get_file_name(old_encoded_edges_count_path).split('.txt')[0]+'_reciprocal.txt'
+        # reciprocal_weight_edges[(source, target)] = 1./int(weight)
+        reciprocal_weight_edges[(source, target)] = 1
+    # output_name = multi_processing.get_file_name(old_encoded_edges_count_path).split('.txt')[0]+'_reciprocal.txt'
+    output_name = multi_processing.get_file_name(old_encoded_edges_count_path).split('.txt')[0]+'_allONE.txt'
     common.write_dict_to_file(output_folder + output_name, reciprocal_weight_edges, 'tuple')
     return reciprocal_weight_edges
 
