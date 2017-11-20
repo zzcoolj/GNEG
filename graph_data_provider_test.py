@@ -18,13 +18,13 @@ class TestGraphDataProvider(unittest.TestCase):
     min_count = 5
     max_vocab_size = 3
 
-    def test_merge_local_dict(self):
+    def test_1_merge_local_dict(self):
         gdp.multiprocessing_write_local_encoded_text_and_local_dict(self.data_folder, self.file_extension,
                                                                     self.dicts_folder, self.process_num)
         result = gdp.merge_local_dict(dict_folder=self.dicts_folder, output_folder=self.dicts_folder)
         self.assertEqual(len(result), 94)
 
-    def test_merge_transferred_word_count(self):
+    def test_2_merge_transferred_word_count(self):
         gdp.multiprocessing_write_transferred_edges_files_and_transferred_word_count(self.dicts_folder,
                                                                                      self.edges_folder,
                                                                                      self.max_window_size,
@@ -38,7 +38,7 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertEqual(result[merged_dict['00']], 3)
         self.assertEqual(result[merged_dict[',']], 5)
 
-    def get_id2word(self):
+    def get_3_id2word(self):
         word2id = gdp.read_two_columns_file_to_build_dictionary_type_specified(
             file=self.dicts_folder + 'dict_merged.txt', key_type=str,
             value_type=int)
@@ -47,7 +47,7 @@ class TestGraphDataProvider(unittest.TestCase):
             id2word[id] = word
         return id2word
 
-    def test_write_valid_vocabulary(self):
+    def test_4_write_valid_vocabulary(self):
         result = gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                             output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
                                                 self.min_count) + '.txt',
@@ -74,7 +74,7 @@ class TestGraphDataProvider(unittest.TestCase):
                                             max_vocab_size=self.max_vocab_size)
         self.assertEqual(len(result), self.max_vocab_size)
 
-    def test_multiprocessing_merge_edges_count_of_a_specific_window_size(self):
+    def test_5_multiprocessing_merge_edges_count_of_a_specific_window_size(self):
         # max_vocab_size is None
         gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                    output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
@@ -145,7 +145,7 @@ class TestGraphDataProvider(unittest.TestCase):
 
         self.assertEqual(len(result), 5 + 2)  # 2 self loops
 
-    def test_filter_edges(self):
+    def test_6_filter_edges(self):
         gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                    output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
                                        self.min_count) + '.txt',
@@ -179,7 +179,7 @@ class TestGraphDataProvider(unittest.TestCase):
 
         self.assertEqual(len(filtered_edges), 5 + 2)  # 2 self loops
 
-    def test_merge_encoded_edges_count_for_undirected_graph(self):
+    def test_7_merge_encoded_edges_count_for_undirected_graph(self):
         gdp.write_valid_vocabulary(merged_word_count_path=self.dicts_folder + 'word_count_all.txt',
                                    output_path=self.dicts_folder + 'valid_vocabulary_min_count_' + str(
                                        self.min_count) + '.txt',
@@ -217,6 +217,7 @@ class TestGraphDataProvider(unittest.TestCase):
             elif (str(word2id[word2]), str(word2id[word1])) in undirected:
                 self.assertEqual(sum_count, undirected[(str(word2id[word2]), str(word2id[word1]))])
             else:
+                print('No direct edge between ' + word1 + ' and ' + word2)
                 self.assertEqual(sum_count, 0)
 
         equal_test('and', ',')

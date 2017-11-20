@@ -4,22 +4,17 @@ import graph_builder_networkx as gbn
 
 class TestGraphDataProvider(unittest.TestCase):
     graph_folder = 'output/intermediate data for unittest/graph/'
-    merged_dict_path = 'output/intermediate data for unittest/graph/dict_merged_for_unittest.txt'
+    merged_dict_path = 'output/intermediate data for unittest/graph/keep/dict_merged_for_unittest.txt'
 
     def test_translate_shortest_path_nodes_dict(self):
         # Directed graph
-        graph = gbn.NXGraph(self.graph_folder + 'encoded_edges_count_window_size_6_vocab_size_none_for_unittest.txt',
+        graph = gbn.NXGraph(self.graph_folder + 'keep/encoded_edges_count_window_size_6_vocab_size_none_for_unittest.txt',
                             gpickle_name='graph.gpickle',
                             directed=True)
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
         index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(file=self.merged_dict_path)
         print([index2word[node] for node in nodes])
         print(matrix)
-        # TODO NOW
-        print(graph.graph[66][86])
-        print(graph.graph[66][66])
-        print(graph.graph[66][66])
-        print(graph.graph[86][86])
         print()
 
         translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
@@ -69,15 +64,14 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertFalse('of' in translate_shortest_path_nodes_dict['of'])
 
         # Undirected
-        graph = gbn.NXGraph(self.graph_folder + 'encoded_edges_count_window_size_6_vocab_size_none_for_unittest.txt',
+        graph = gbn.NXGraph(self.graph_folder + 'encoded_edges_count_window_size_6_undirected.txt',
                             gpickle_name='graph.gpickle')
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
-        index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(file=self.merged_dict_path)
+        index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(file=self.graph_folder+ 'dict_merged.txt')
         print([index2word[node] for node in nodes])
         print(matrix)
-        print(graph.graph[66][30])
-        print(graph.graph[86][66])
         print()
+
 
 if __name__ == '__main__':
     unittest.main()

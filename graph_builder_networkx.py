@@ -69,6 +69,12 @@ class NXGraph:
         # for node in [0, 1, 2, 3, 4]:
         #     print('1 - {}: {}'.format(node, length2[1][node]))
 
+        """ ATTENTION
+        'floyd_warshall_numpy' has already considered situations below:
+        1. If there's no path between source and target node, matrix will put 'inf'
+        2. No matter how much the weight is between node and node itself(self loop), the shortest path will always be 0.
+        """
+
         matrix = nx.floyd_warshall_numpy(self.graph)
         np.save(output_folder + 'matrix.npy', matrix, fix_imports=False)
         common.write_to_pickle(self.graph.nodes(), output_folder + 'nodes.pickle')
