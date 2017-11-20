@@ -880,7 +880,7 @@ class Word2Vec(utils.SaveLoad):
         if self.sg:
             tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss)
         else:
-            tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss, ns_mode_py=0)
+            tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss, ns_mode_py=1)
         return tally, self._raw_word_count(sentences)
 
     def _raw_word_count(self, job):

@@ -132,7 +132,7 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type=int,
 
 
 if __name__ == '__main__':
-    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_vocab_size_10000_reciprocal.txt',
+    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_all_one.txt',
                     gpickle_name='graph.gpickle')
     graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
     # translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
