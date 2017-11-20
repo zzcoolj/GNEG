@@ -15,6 +15,11 @@ class TestGraphDataProvider(unittest.TestCase):
         index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(file=self.merged_dict_path)
         print([index2word[node] for node in nodes])
         print(matrix)
+        # TODO NOW
+        print(graph.graph[66][86])
+        print(graph.graph[66][66])
+        print(graph.graph[66][66])
+        print(graph.graph[86][86])
         print()
 
         translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
@@ -71,7 +76,7 @@ class TestGraphDataProvider(unittest.TestCase):
         print([index2word[node] for node in nodes])
         print(matrix)
         print(graph.graph[66][30])
-        print(graph.graph[30][66])
+        print(graph.graph[86][66])
         print()
 
 if __name__ == '__main__':
