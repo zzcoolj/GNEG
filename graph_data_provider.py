@@ -589,8 +589,8 @@ if __name__ == '__main__':
     #                           max_vocab_size=10000)
     # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=4, max_vocab_size=10000)
 
-    # reciprocal_for_edges_weight(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
-    merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_undirected.txt')
+    reciprocal_for_edges_weight(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
+    # merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_undirected.txt')
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.
