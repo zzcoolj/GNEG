@@ -11,4 +11,5 @@ nltk.data.path = ['/vol/datailes/tools/nlp/nltk_data/2016']
 # graph_data_provider.multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=50)
 # graph_data_provider.filter_edges(min_count=5,
 #                                  old_encoded_edges_count_path="output/intermediate data/graph/encoded_edges_count_window_size_5.txt")
-graph_data_provider.reciprocal_for_edges_weight('output/intermediate data/graph/encoded_edges_count_window_size_5_vocab_size_10000.txt')
+# graph_data_provider.reciprocal_for_edges_weight('output/intermediate data/graph/encoded_edges_count_window_size_5_vocab_size_10000.txt')
+graph_data_provider.merge_encoded_edges_count_for_undirected_graph('output/intermediate data/graph/encoded_edges_count_window_size_5_vocab_size_10000.txt')

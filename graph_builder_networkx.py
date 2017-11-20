@@ -12,11 +12,11 @@ config.read('config.ini')
 
 
 class NXGraph:
-    def __init__(self, path, gpickle_name=None):
+    def __init__(self, path, gpickle_name=None, directed=config.getboolean("graph", "directed")):
         if path.endswith('.gpickle'):
             self.graph = nx.read_gpickle(path)
         elif path.endswith('.txt'):
-            self.graph = self.create_graph_with_weighted_edges(path, directed=True)
+            self.graph = self.create_graph_with_weighted_edges(path, directed=directed)
             nx.write_gpickle(self.graph, multi_processing.get_file_folder(path) + '/' + gpickle_name)
 
     @staticmethod
@@ -104,7 +104,7 @@ class NXGraph:
                 cleaned_selected_indices[i] = np.delete(selected_indices[i], self_loop_index)
             # translate values to nodes indices, and the row's order follows the order of nodes
             shortest_path_nodes_dict[nodes_list[i]] = np.array(nodes)[cleaned_selected_indices[i]].tolist()
-        common.write_to_pickle(shortest_path_nodes_dict, data_folder+'shortest_path_nodes_dict.pickle')
+        # common.write_to_pickle(shortest_path_nodes_dict, data_folder+'shortest_path_nodes_dict.pickle')
         return shortest_path_nodes_dict
 
     @staticmethod
@@ -132,10 +132,10 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type=int,
 
 
 if __name__ == '__main__':
-    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_all_one.txt',
-                    gpickle_name='graph.gpickle')
-    graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
-    # translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
-    #     NXGraph.get_selected_shortest_path_nodes(20, selected_mode='min', data_folder=config['graph']['graph_folder']),
-    #     config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
-    #     output_folder=config['graph']['graph_folder'])
+    # graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_all_one.txt',
+    #                 gpickle_name='graph.gpickle')
+    # graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
+    translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
+        NXGraph.get_selected_shortest_path_nodes(20, selected_mode='min', data_folder=config['graph']['graph_folder']),
+        config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
+        output_folder=config['graph']['graph_folder'])
