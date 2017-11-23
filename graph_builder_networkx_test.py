@@ -9,13 +9,12 @@ class TestGraphDataProvider(unittest.TestCase):
     merged_dict_undirected_path = 'output/intermediate data for unittest/graph/keep/dict_merged_undirected_for_unittest.txt'
     encoded_edges_count_undirected_path = 'output/intermediate data for unittest/graph/keep/encoded_edges_count_window_size_6_vocab_size_none_undirected_for_unittest.txt'
 
-    def test_translate_shortest_path_nodes_dict(self):
+    def test_1_translate_shortest_path_nodes_dict(self):
         # Directed graph
-        graph = gbn.NXGraph(self.encoded_edges_count_path,
-                            gpickle_name='graph.gpickle',
-                            directed=True)
+        graph = gbn.NXGraph(self.encoded_edges_count_path, gpickle_name='graph.gpickle', directed=True)
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
-        index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(file=self.merged_dict_path)
+        index2word = gbn.get_index2word(file=self.merged_dict_path)
+        print('directed graph')
         print([index2word[node] for node in nodes])
         print(matrix)
         print()
@@ -67,13 +66,42 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertFalse('of' in translate_shortest_path_nodes_dict['of'])
 
         # Undirected
-        graph = gbn.NXGraph(self.encoded_edges_count_undirected_path,
-                            gpickle_name='graph.gpickle')
+        graph = gbn.NXGraph(self.encoded_edges_count_undirected_path, gpickle_name='graph.gpickle')
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
-        index2word = gbn.read_two_columns_file_to_build_dictionary_type_specified(file=self.merged_dict_undirected_path)
+        index2word = gbn.get_index2word(file=self.merged_dict_undirected_path)
+        print('undirected graph')
         print([index2word[node] for node in nodes])
         print(matrix)
         print()
+        translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
+            gbn.NXGraph.get_selected_shortest_path_nodes(3, selected_mode='max', data_folder=self.graph_folder),
+            self.merged_dict_undirected_path, output_folder=self.graph_folder)
+        self.assertTrue('the' in translate_shortest_path_nodes_dict['and'])
+        self.assertTrue(',' in translate_shortest_path_nodes_dict['and'])
+
+        self.assertTrue('of' in translate_shortest_path_nodes_dict['.'])
+        self.assertTrue(',' in translate_shortest_path_nodes_dict['.'])
+
+        self.assertTrue('the' in translate_shortest_path_nodes_dict['in'])
+
+        self.assertTrue('and' in translate_shortest_path_nodes_dict['the'])
+        self.assertTrue('of' in translate_shortest_path_nodes_dict['the'])
+
+        self.assertTrue('the' in translate_shortest_path_nodes_dict['of'])
+        self.assertTrue('and' in translate_shortest_path_nodes_dict['of'])
+        self.assertTrue('.' in translate_shortest_path_nodes_dict['of'])
+
+        self.assertTrue('and' in translate_shortest_path_nodes_dict[','])
+        self.assertTrue('the' in translate_shortest_path_nodes_dict[','])
+        self.assertTrue('.' in translate_shortest_path_nodes_dict[','])
+
+    def test_2_negative_samples_detail(self):
+        gbn.NXGraph.negative_samples_detail(
+            translated_shortest_path_nodes_dict_path=self.graph_folder+'translated_shortest_path_nodes_dict.pickle',
+            merged_dict_path=self.graph_folder+'keep/dict_merged_undirected_for_unittest.txt',
+            matrix_path=self.graph_folder+'matrix.npy',
+            nodes_path=self.graph_folder+'nodes.pickle',
+            words_list=['the', 'of'])
 
 
 if __name__ == '__main__':

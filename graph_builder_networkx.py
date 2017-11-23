@@ -6,6 +6,7 @@ import sys
 sys.path.insert(0, '../common/')
 import common
 import multi_processing
+import graph_data_provider as gdp
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -83,16 +84,27 @@ class NXGraph:
     @staticmethod
     def get_selected_shortest_path_nodes(n, selected_mode, data_folder=config['graph']['graph_folder']):
         # TODO NOW Deal with inf
+        """e.g.
+        nodes -> a list of word indices (here word index is there index in merged dict.)
+        [index2word[node] for node in nodes] -> ['the', '.', ',', 'and', 'in', 'of']
+        matrix -> matrix's lines and rows follow the order of nodes, the value in each cell is the shortest path length.
+            [[  0.   2.   2.   2.   1.   6.]
+             [ inf   0.  inf  inf  inf  inf]
+             [  1.   2.   0.   2.   1.   7.]
+             [  1.   2.   2.   0.   2.   7.]
+             [  2.   1.   1.   1.   0.   8.]
+             [  2.   3.   1.   3.   2.   0.]]
+        """
         n += 1  # add one more potential results, in case results have self loop node.
-        matrix = np.load(data_folder + 'matrix.npy')  # matrix's values are indices of nodes list, not nodes indices
+        matrix = np.load(data_folder + 'matrix.npy')
         nodes = common.read_pickle(data_folder + 'nodes.pickle')
         nodes_list = list(nodes)
         if selected_mode == 'min':
             selected_indices = np.argpartition(matrix, n)[:, :n]
         elif selected_mode == 'max':
             selected_indices = np.argpartition(matrix, -n)[:, -n:]
+        # indices here means the indices of nodes list, not the value(word index) inside nodes list.
         cleaned_selected_indices = np.empty([selected_indices.shape[0], n - 1], dtype=int)
-        # result_nodes = np.empty([selected_indices.shape[0], n - 1], dtype=int)
         shortest_path_nodes_dict = {}
         for i in range(matrix.shape[1]):  # shape[0] = shape[1]
             # e.g. for the first row (i=0), find the index in selected_indices where the value equals 0 (self loop)
@@ -108,14 +120,15 @@ class NXGraph:
                     cleaned_selected_indices[i] = sorted_indices[1:]
             else:
                 cleaned_selected_indices[i] = np.delete(selected_indices[i], self_loop_index)
-            # translate values to nodes indices, and the row's order follows the order of nodes
+            # translate nodes list indices to words indices (nodes list values),
+            # and the row's order follows the order of nodes
             shortest_path_nodes_dict[nodes_list[i]] = np.array(nodes)[cleaned_selected_indices[i]].tolist()
         # common.write_to_pickle(shortest_path_nodes_dict, data_folder+'shortest_path_nodes_dict.pickle')
         return shortest_path_nodes_dict
 
     @staticmethod
     def translate_shortest_path_nodes_dict(shortest_path_nodes_dict, index2word_path, output_folder):
-        index2word = read_two_columns_file_to_build_dictionary_type_specified(file=index2word_path)
+        index2word = get_index2word(file=index2word_path)
         translated_shortest_path_nodes_dict = {}
         for key, value in shortest_path_nodes_dict.items():
             translated_shortest_path_nodes_dict[index2word[key]] = [index2word[node_id] for node_id in value]
@@ -123,8 +136,27 @@ class NXGraph:
                                output_folder + 'translated_shortest_path_nodes_dict.pickle')
         return translated_shortest_path_nodes_dict
 
+    @staticmethod
+    def negative_samples_detail(translated_shortest_path_nodes_dict_path, merged_dict_path, matrix_path, nodes_path,
+                                words_list):
+        translated_shortest_path_nodes_dict = common.read_pickle(translated_shortest_path_nodes_dict_path)
+        word2index = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+            file=merged_dict_path, key_type=str, value_type=int)
+        matrix = np.load(matrix_path)
+        nodes = list(common.read_pickle(nodes_path))
+        for word in words_list:
+            print('For word:', word)
+            word_index = word2index[word]
+            matrix_x = nodes.index(word_index)
+            ns_words = translated_shortest_path_nodes_dict[word]
+            for ns_word in ns_words:
+                ns_word_index = word2index[ns_word]
+                matrix_y = nodes.index(ns_word_index)
+                matrix_cell_value = matrix[matrix_x][matrix_y]
+                print(' ', ns_word, matrix_cell_value)
 
-def read_two_columns_file_to_build_dictionary_type_specified(file, key_type=int, value_type=str):
+
+def get_index2word(file, key_type=int, value_type=str):
     """ATTENTION
     This function is different from what in graph_data_provider.
     Here, key is id and token is value, while in graph_data_provider, token is key and id is value.
@@ -138,10 +170,10 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type=int,
 
 
 if __name__ == '__main__':
-    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_undirected_allONE.txt',
-                    gpickle_name='graph.gpickle')
-    graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
-    # translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
-    #     NXGraph.get_selected_shortest_path_nodes(20, selected_mode='min', data_folder=config['graph']['graph_folder']),
-    #     config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
-    #     output_folder=config['graph']['graph_folder'])
+    # graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_undirected_allONE.txt',
+    #                 gpickle_name='graph.gpickle')
+    # graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
+    translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
+        NXGraph.get_selected_shortest_path_nodes(20, selected_mode='max', data_folder=config['graph']['graph_folder']),
+        config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
+        output_folder=config['graph']['graph_folder'])
