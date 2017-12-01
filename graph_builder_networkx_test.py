@@ -1,5 +1,7 @@
 import unittest
 import graph_builder_networkx as gbn
+import networkx as nx
+import graph_data_provider as gdp
 
 
 class TestGraphDataProvider(unittest.TestCase):
@@ -12,9 +14,9 @@ class TestGraphDataProvider(unittest.TestCase):
     def test_1_translate_shortest_path_nodes_dict(self):
         # Directed graph
         graph = gbn.NXGraph(self.encoded_edges_count_path, gpickle_name='graph.gpickle', directed=True)
+        graph.show_detailed_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
         index2word = gbn.get_index2word(file=self.merged_dict_path)
-        print('directed graph')
         print([index2word[node] for node in nodes])
         print(matrix)
         print()
@@ -67,9 +69,9 @@ class TestGraphDataProvider(unittest.TestCase):
 
         # Undirected
         graph = gbn.NXGraph(self.encoded_edges_count_undirected_path, gpickle_name='graph.gpickle')
+        graph.show_detailed_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
         index2word = gbn.get_index2word(file=self.merged_dict_undirected_path)
-        print('undirected graph')
         print([index2word[node] for node in nodes])
         print(matrix)
         print()
@@ -94,6 +96,15 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue('and' in translate_shortest_path_nodes_dict[','])
         self.assertTrue('the' in translate_shortest_path_nodes_dict[','])
         self.assertTrue('.' in translate_shortest_path_nodes_dict[','])
+
+        word2index = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+            file=self.merged_dict_undirected_path, key_type=str, value_type=int)
+        print([index2word[index] for index in nx.maximal_independent_set(graph.graph, [word2index[',']])])
+        print(nx.current_flow_betweenness_centrality(graph.graph, weight='weight'))
+        print(nx.adjacency_matrix(graph.graph))
+        H = graph.graph.to_directed()
+        print(nx.adjacency_matrix(H))
+        print(nx.adjacency_matrix(nx.stochastic_graph(H, 'weight')))
 
     def test_2_negative_samples_detail(self):
         gbn.NXGraph.negative_samples_detail(

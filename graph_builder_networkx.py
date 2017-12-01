@@ -56,7 +56,27 @@ class NXGraph:
         plt.show()
 
     def show_detailed_information(self):
-        print("#nodes:", self.graph.number_of_nodes(), "#edges:", self.graph.number_of_edges())
+        number_of_edges = self.graph.number_of_edges()
+        number_of_selfloops = self.graph.number_of_selfloops()
+        number_of_nodes = self.graph.number_of_nodes()
+        if nx.is_directed(self.graph):
+            print('The graph is directed.')
+            connected_edges_proportion = round(
+                (number_of_edges - number_of_selfloops) / (number_of_nodes * (number_of_nodes - 1)) * 100, 2)
+        else:
+            print('The graph is undirected.')
+            connected_edges_proportion = round(
+                (number_of_edges - number_of_selfloops) / ((number_of_nodes * (number_of_nodes - 1)) / 2) * 100, 2)
+        print("#nodes:", number_of_nodes, "#edges:",  number_of_edges, "#selfloops:", number_of_selfloops)
+        print(str(connected_edges_proportion) + '% of the node pairs are connected via edges.')
+        # TODO Code below takes long time to calculate for big graphs.
+        print('Average shortest path length (weight=None):', str(round(nx.average_shortest_path_length(self.graph), 2)))
+        # TODO LATER: average_clustering has not implemented for undirected graph yet.
+        if not nx.is_directed(self.graph):
+            # For unweighted graphs, the clustering of a node
+            # is the fraction of possible triangles through that node that exist
+            print('The clustering coefficient for the graph is ' + str(
+                round(nx.average_clustering(self.graph, weight=None), 2)))
 
     def get_shortest_path_lengths_between_all_nodes(self, output_folder=config['graph']['graph_folder']):
         """
@@ -170,10 +190,12 @@ def get_index2word(file, key_type=int, value_type=str):
 
 
 if __name__ == '__main__':
-    # graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_undirected_allONE.txt',
-    #                 gpickle_name='graph.gpickle')
+    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt',
+                    gpickle_name='graph.gpickle')
+    graph.show_detailed_information()
+
     # graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
-    translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
-        NXGraph.get_selected_shortest_path_nodes(20, selected_mode='max', data_folder=config['graph']['graph_folder']),
-        config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
-        output_folder=config['graph']['graph_folder'])
+    # translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
+    #     NXGraph.get_selected_shortest_path_nodes(20, selected_mode='max', data_folder=config['graph']['graph_folder']),
+    #     config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
+    #     output_folder=config['graph']['graph_folder'])
