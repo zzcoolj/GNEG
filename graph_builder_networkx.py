@@ -55,7 +55,7 @@ class NXGraph:
 
         plt.show()
 
-    def show_detailed_information(self):
+    def show_graph_information(self):
         number_of_edges = self.graph.number_of_edges()
         number_of_selfloops = self.graph.number_of_selfloops()
         number_of_nodes = self.graph.number_of_nodes()
@@ -69,8 +69,8 @@ class NXGraph:
                 (number_of_edges - number_of_selfloops) / ((number_of_nodes * (number_of_nodes - 1)) / 2) * 100, 2)
         print("#nodes:", number_of_nodes, "#edges:",  number_of_edges, "#selfloops:", number_of_selfloops)
         print(str(connected_edges_proportion) + '% of the node pairs are connected via edges.')
-        # TODO Code below takes long time to calculate for big graphs.
-        print('Average shortest path length (weight=None):', str(round(nx.average_shortest_path_length(self.graph), 2)))
+        # TODO LATER: Code below takes long time to calculate for big graphs.
+        # print('Average shortest path length (weight=None):', str(round(nx.average_shortest_path_length(self.graph), 2)))
         # TODO LATER: average_clustering has not implemented for undirected graph yet.
         if not nx.is_directed(self.graph):
             # For unweighted graphs, the clustering of a node
@@ -103,7 +103,6 @@ class NXGraph:
 
     @staticmethod
     def get_selected_shortest_path_nodes(n, selected_mode, data_folder=config['graph']['graph_folder']):
-        # TODO NOW Deal with inf
         """e.g.
         nodes -> a list of word indices (here word index is there index in merged dict.)
         [index2word[node] for node in nodes] -> ['the', '.', ',', 'and', 'in', 'of']
@@ -192,7 +191,7 @@ def get_index2word(file, key_type=int, value_type=str):
 if __name__ == '__main__':
     graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt',
                     gpickle_name='graph.gpickle')
-    graph.show_detailed_information()
+    graph.show_graph_information()
 
     # graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
     # translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
