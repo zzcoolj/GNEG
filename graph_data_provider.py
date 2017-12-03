@@ -56,7 +56,7 @@ def write_encoded_text_and_local_dict_for_xml(file_path, output_folder):
 
                 # Remove numbers
                 if word.isnumeric():
-                    # TODO Maybe distinguish some meaningful numbers, like year
+                    # TODO LATER Maybe distinguish some meaningful numbers, like year
                     continue
 
                 # Remove punctuations
@@ -109,7 +109,7 @@ def write_encoded_text_and_local_dict_for_txt(file_path, output_folder):
             for word in common.tokenize_text_into_words(sent, "WordPunct"):
                 # Remove numbers
                 if config.getboolean("input data", "remove_numbers") and word.isnumeric():
-                    # TODO Maybe distinguish some meaningful numbers, like year
+                    # TODO LATER Maybe distinguish some meaningful numbers, like year
                     continue
                 # Remove punctuations
                 # if all(j.isdigit() or j in puncs for j in word):
@@ -267,8 +267,6 @@ def get_transferred_edges_files_and_transferred_word_count(local_dict_file_path,
             transfered_encoded_sent.append(transfer_dict[encoded_word])
         transferred_encoded_text.append(transfered_encoded_sent)
 
-    # TODO Have to write the transferred_encoded_text?
-
     file_name = multi_processing.get_file_name(local_dict_file_path).replace("dict_", "")
     # Word count
     word_count(transferred_encoded_text, file_name)
@@ -302,7 +300,7 @@ def merge_transferred_word_count(word_count_folder, output_folder):
 
 
 def write_valid_vocabulary(merged_word_count_path, output_path, min_count, max_vocab_size):
-    # TODO LATER valid_vocabulary should be a dict. No need to write as list and then read list changing to dict.
+    # TODO valid_vocabulary should be a dict. No need to write as list and then read list changing to dict.
     # TODO LATER maybe it's not the fastest way to sort dict.
     merged_word_count = read_two_columns_file_to_build_dictionary_type_specified(file=merged_word_count_path,
                                                                                  key_type=str, value_type=int)
@@ -421,7 +419,7 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
             files[i] = files_of_specific_distance
 
     # Generate counted edges of different window sizes in a stepwise way.
-    # TODO LATER Add an option, don't calculate all counted edges of different window size again, reuse the result which already existed.
+    # TODO Add an option, don't calculate all counted edges of different window size again, reuse the result which already existed.
     counted_edges_of_specific_window_size = {}
     for i in range(2, window_size + 1):
         counted_edges_of_distance_i = get_counted_edges(files[i])
@@ -436,69 +434,6 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                                   counted_edges_of_specific_window_size[i], 'tuple')
 
     return counted_edges_of_specific_window_size[window_size]
-
-
-# def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, process_num,
-#                                                                 min_count=config['graph']['min_count'],
-#                                                                 dicts_folder=config['graph'][
-#                                                                     'dicts_and_encoded_texts_folder'],
-#                                                                 edges_folder=config['graph']['edges_folder'],
-#                                                                 output_folder=config['graph']['graph_folder'],
-#                                                                 max_vocab_size=config['graph']['max_vocab_size']):
-#     def counted_edges_from_worker_yielder(paths):
-#         for path in paths:
-#             yield Counter(common.read_pickle(path))
-#
-#     # Get all target edges files' paths to be merged and counted.
-#     files = []
-#     for i in range(2, window_size + 1):
-#         files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_distance_{0}.txt".format(i))
-#         if not files_to_add:
-#             print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
-#                 i - 1) + '.')
-#             window_size = i - 1
-#             break
-#         else:
-#             files.extend(files_to_add)
-#
-#     # Each thread processes several target edges files and save their counted_edges.
-#     files_size = len(files)
-#     num_tasks = files_size // int(config['graph']['safe_files_number_per_processor'])
-#     if num_tasks < process_num:
-#         num_tasks = process_num
-#     files_list = multi_processing.chunkify(lst=files, n=num_tasks)
-#     p = Pool(process_num)
-#     if (max_vocab_size == 'None') or (not max_vocab_size):
-#         worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
-#     else:
-#         worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(
-#             min_count) + '_vocab_size_' + str(
-#             max_vocab_size) + '.txt'
-#     worker_output_path = edges_folder
-#     p.starmap(get_counted_edges_worker,
-#               zip(files_list, repeat(worker_valid_vocabulary_path), repeat(worker_output_path)))
-#     p.close()
-#     p.join()
-#     print('All sub-processes done.')
-#
-#     # Merge all counted_edges from workers and get the final result.
-#     counted_edges_paths = multi_processing.get_files_endswith(data_folder=edges_folder, file_extension='.pickle')
-#     count = 1
-#     counted_edges = Counter(dict())
-#     for c in counted_edges_from_worker_yielder(paths=counted_edges_paths):
-#         counted_edges += c
-#         print('%i/%i files processed.' % (count, len(files_list)), end='\r', flush=True)
-#         count += 1
-#     common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
-#                               counted_edges, 'tuple')
-#
-#     # Remove all counted_edges from workers.
-#     for file_path in counted_edges_paths:
-#         print('Remove file %s' % file_path)
-#         os.remove(file_path)
-#
-#     return counted_edges
-
 
 
 def write_dict_to_file(file_path, dictionary):
@@ -656,13 +591,24 @@ if __name__ == '__main__':
     # multiprocessing_merge_edges_count_of_a_specific_window_size(edges_folder='data/edges/', window_size=4, output_folder='data/')
 
     # txt
-    # TODO NOW NOW NOW If keep result from prepare_intermediate_data, run multiprocess... several times will get same result; but prepare_i will get different results.
+    # TODO NOW check the guess below
+    '''
+    If intermediate data remains unchanged, running multiprocessing_merge_edges_count_of_a_specific_window_size several
+    times won't change the result: only the line order in the encoded edges file changed.
+    
+    If intermediate data changed, running multiprocessing_merge_edges_count_of_a_specific_window_size won't get the same
+    result, even the number of lines in encoded edges file changes. It's normal that the value of lines changes because
+    of the different merged_dict (the id for the same token changes each time). But it's abnormal that #lines changes.
+    The guess is that, #lines won't change if we set max_vocab_size to None. But it changes when we set it to a 
+    specific value (e.g. 10000). Because if we order the tokens by their frequency, around that value's position, there
+    are more than one token which has the same frequency. Each time, the "last" several valid tokens are different.
+    '''
     # prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
     #                           file_extension='.txt',
     #                           max_window_size=5,
     #                           process_num=4,
     #                           max_vocab_size=10000)
-    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=6, process_num=4, max_vocab_size=10000)
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=2, process_num=4, max_vocab_size=10000)
 
     # filter_edges(min_count=5,
     #              old_encoded_edges_count_path=config['graph']['graph_folder'] + "encoded_edges_count_window_size_5.txt",
