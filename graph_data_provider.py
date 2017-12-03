@@ -241,7 +241,7 @@ def get_transferred_edges_files_and_transferred_word_count(local_dict_file_path,
             output_folder += '/'
         for i in range(2, max_window_size + 1):
             common.write_list_to_file(
-                output_folder + file_basename + "_encoded_edges_window_size_{0}.txt".format(i), edges[i])
+                output_folder + file_basename + "_encoded_edges_distance_{0}.txt".format(i), edges[i])
 
     print('Processing file %s (%s)...' % (local_dict_file_path, multi_processing.get_pid()))
 
@@ -367,55 +367,74 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
         for path in paths:
             yield Counter(common.read_pickle(path))
 
+    def get_counted_edges(files, process_num=process_num):
+        # Each thread processes several target edges files and save their counted_edges.
+        files_size = len(files)
+        num_tasks = files_size // int(config['graph']['safe_files_number_per_processor'])
+        if num_tasks < process_num:
+            num_tasks = process_num
+        if files_size <= num_tasks:  # extreme case: #files less than #tasks => use only one processor to handle all.
+            num_tasks = 1
+            process_num = 1
+        files_list = multi_processing.chunkify(lst=files, n=num_tasks)
+        p = Pool(process_num)
+        if (max_vocab_size == 'None') or (not max_vocab_size):
+            worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
+        else:
+            worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(
+                min_count) + '_vocab_size_' + str(
+                max_vocab_size) + '.txt'
+        worker_output_path = edges_folder
+        p.starmap(get_counted_edges_worker,
+                  zip(files_list, repeat(worker_valid_vocabulary_path), repeat(worker_output_path)))
+        p.close()
+        p.join()
+        print('All sub-processes done.')
+
+        # Merge all counted_edges from workers and get the final result.
+        counted_edges_paths = multi_processing.get_files_endswith(data_folder=edges_folder, file_extension='.pickle')
+        count = 1
+        counted_edges = Counter(dict())
+        for c in counted_edges_from_worker_yielder(paths=counted_edges_paths):
+            counted_edges += c
+            print('%i/%i files processed.' % (count, len(files_list)), end='\r', flush=True)
+            count += 1
+
+        # Remove all counted_edges from workers.
+        for file_path in counted_edges_paths:
+            print('Remove file %s' % file_path)
+            os.remove(file_path)
+
+        return counted_edges
+
     # Get all target edges files' paths to be merged and counted.
-    files = []
+    files = {}
     for i in range(2, window_size + 1):
-        files_to_add = multi_processing.get_files_endswith(edges_folder, "_encoded_edges_window_size_{0}.txt".format(i))
-        if not files_to_add:
+        files_of_specific_distance = multi_processing.get_files_endswith(edges_folder,
+                                                                         "_encoded_edges_distance_{0}.txt".format(i))
+        if not files_of_specific_distance:
             print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
                 i - 1) + '.')
             window_size = i - 1
             break
         else:
-            files.extend(files_to_add)
+            files[i] = files_of_specific_distance
+    print(files)
 
-    # Each thread processes several target edges files and save their counted_edges.
-    files_size = len(files)
-    num_tasks = files_size // int(config['graph']['safe_files_number_per_processor'])
-    if num_tasks < process_num:
-        num_tasks = process_num
-    files_list = multi_processing.chunkify(lst=files, n=num_tasks)
-    p = Pool(process_num)
-    if (max_vocab_size == 'None') or (not max_vocab_size):
-        worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
-    else:
-        worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(
-            min_count) + '_vocab_size_' + str(
-            max_vocab_size) + '.txt'
-    worker_output_path = edges_folder
-    p.starmap(get_counted_edges_worker,
-              zip(files_list, repeat(worker_valid_vocabulary_path), repeat(worker_output_path)))
-    p.close()
-    p.join()
-    print('All sub-processes done.')
+    counted_edges_of_specific_window_size = {}
+    for i in range(2, window_size + 1):
+        counted_edges_of_distance_i = get_counted_edges(files[i])
+        if i == 2:
+            # counted edges of window size 2 = counted edges of distance 2
+            counted_edges_of_specific_window_size[2] = counted_edges_of_distance_i
+        else:
+            # counted edges of window size n (n>=3) = counted edges of window size n-1 + counted edges of distance n
+            counted_edges_of_specific_window_size[i] = counted_edges_of_specific_window_size[i-1] \
+                                                       + counted_edges_of_distance_i
+        common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(i) + ".txt",
+                                  counted_edges_of_specific_window_size[i], 'tuple')
 
-    # Merge all counted_edges from workers and get the final result.
-    counted_edges_paths = multi_processing.get_files_endswith(data_folder=edges_folder, file_extension='.pickle')
-    count = 1
-    counted_edges = Counter(dict())
-    for c in counted_edges_from_worker_yielder(paths=counted_edges_paths):
-        counted_edges += c
-        print('%i/%i files processed.' % (count, len(files_list)), end='\r', flush=True)
-        count += 1
-    common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(window_size) + ".txt",
-                              counted_edges, 'tuple')
-
-    # Remove all counted_edges from workers.
-    for file_path in counted_edges_paths:
-        print('Remove file %s' % file_path)
-        os.remove(file_path)
-
-    return counted_edges
+    return counted_edges_of_specific_window_size[window_size]
 
 
 def write_dict_to_file(file_path, dictionary):
@@ -578,7 +597,7 @@ if __name__ == '__main__':
     #                           max_window_size=3,
     #                           process_num=4,
     #                           max_vocab_size='None')
-    # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=6, max_vocab_size='None')
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=4, max_vocab_size='None')
 
     # filter_edges(min_count=5,
     #              old_encoded_edges_count_path=config['graph']['graph_folder'] + "encoded_edges_count_window_size_3.txt",
@@ -591,7 +610,7 @@ if __name__ == '__main__':
     #                           max_vocab_size=10000)
     # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=5, process_num=4, max_vocab_size=10000)
 
-    reciprocal_for_edges_weight(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
+    # reciprocal_for_edges_weight(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
     # merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_undirected.txt')
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
