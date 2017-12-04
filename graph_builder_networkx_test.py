@@ -1,8 +1,7 @@
 import unittest
 import graph_builder_networkx as gbn
 import networkx as nx
-import graph_data_provider as gdp
-
+import numpy as np
 
 class TestGraphDataProvider(unittest.TestCase):
     graph_folder = 'output/intermediate data for unittest/graph/'
@@ -107,7 +106,10 @@ class TestGraphDataProvider(unittest.TestCase):
 
         graph = gbn.NXGraph(self.encoded_edges_count_undirected_path, gpickle_name='graph.gpickle')
         print(nx.to_numpy_matrix(graph.graph))
-        print(nx.to_numpy_matrix(graph.stochastic_graph_for_undirected_graph()))
+        stochastic_graph = graph.stochastic_graph_for_undirected_graph()
+        stochastic_graph_matrix = nx.to_numpy_matrix(stochastic_graph)
+        print(stochastic_graph_matrix)
+        print(np.matmul(stochastic_graph_matrix, stochastic_graph_matrix))
 
 if __name__ == '__main__':
     unittest.main()
