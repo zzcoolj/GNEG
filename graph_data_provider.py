@@ -543,6 +543,14 @@ def reciprocal_for_edges_weight(old_encoded_edges_count_path, output_folder=conf
 
 def merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path,
                                                    output_folder=config['graph']['graph_folder']):
+    """e.g.
+    In old encoded edges count file:
+        17  57  8
+        ...
+        57  17  2
+    return:
+        17  57  10 or 57   17  10 (only one of them will appear in the file.)
+    """
     merged_weight_edges = {}
     for line in common.read_file_line_yielder(old_encoded_edges_count_path):
         (source, target, weight) = line.split("\t")
