@@ -603,12 +603,12 @@ if __name__ == '__main__':
     specific value (e.g. 10000). Because if we order the tokens by their frequency, around that value's position, there
     are more than one token which has the same frequency. Each time, the "last" several valid tokens are different.
     '''
-    # prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
-    #                           file_extension='.txt',
-    #                           max_window_size=5,
-    #                           process_num=4,
-    #                           max_vocab_size=10000)
-    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=2, process_num=4, max_vocab_size=10000)
+    prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+                              file_extension='.txt',
+                              max_window_size=10,
+                              process_num=4,
+                              max_vocab_size=10000)
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=4, max_vocab_size=10000)
 
     # filter_edges(min_count=5,
     #              old_encoded_edges_count_path=config['graph']['graph_folder'] + "encoded_edges_count_window_size_5.txt",
