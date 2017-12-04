@@ -97,11 +97,6 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue('the' in translate_shortest_path_nodes_dict[','])
         self.assertTrue('.' in translate_shortest_path_nodes_dict[','])
 
-        word2index = gdp.read_two_columns_file_to_build_dictionary_type_specified(
-            file=self.merged_dict_undirected_path, key_type=str, value_type=int)
-        print(nx.current_flow_betweenness_centrality(graph.graph, weight='weight'))
-        print(nx.edge_betweenness_centrality(graph.graph, weight='weight'))
-
     def test_2_negative_samples_detail(self):
         gbn.NXGraph.negative_samples_detail(
             translated_shortest_path_nodes_dict_path=self.graph_folder+'translated_shortest_path_nodes_dict.pickle',
@@ -110,6 +105,9 @@ class TestGraphDataProvider(unittest.TestCase):
             nodes_path=self.graph_folder+'nodes.pickle',
             words_list=['the', 'of'])
 
+        graph = gbn.NXGraph(self.encoded_edges_count_undirected_path, gpickle_name='graph.gpickle')
+        print(nx.to_numpy_matrix(graph.graph))
+        print(nx.to_numpy_matrix(graph.stochastic_graph_for_undirected_graph()))
 
 if __name__ == '__main__':
     unittest.main()

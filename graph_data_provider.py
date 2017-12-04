@@ -290,6 +290,7 @@ def multiprocessing_write_transferred_edges_files_and_transferred_word_count(loc
 
 
 def merge_transferred_word_count(word_count_folder, output_folder):
+    # TODO LATER too slow, improve this part
     files = get_files_startswith(word_count_folder, "word_count_")
     c = Counter()
     for file in files:

@@ -176,6 +176,17 @@ class NXGraph:
                 matrix_cell_value = matrix[matrix_x][matrix_y]
                 print(' ', ns_word, matrix_cell_value)
 
+    def stochastic_graph_for_undirected_graph(self):
+        if not nx.is_directed(self.graph):
+            # remove self loop
+            self.graph.remove_edges_from(list(nx.selfloop_edges(self.graph)))
+            directed_graph = self.graph.to_directed()
+            stochastic_graph = nx.stochastic_graph(directed_graph, weight='weight')
+            return stochastic_graph
+
+
+
+
 
 def get_index2word(file, key_type=int, value_type=str):
     """ATTENTION
