@@ -7,7 +7,6 @@ import configparser
 import sys
 sys.path.insert(0, '../common/')
 import common
-import multi_processing
 import graph_data_provider as gdp
 
 config = configparser.ConfigParser()
@@ -15,49 +14,27 @@ config.read('config.ini')
 
 
 class NXGraph:
-    def __init__(self, path, gpickle_name=None, directed=config.getboolean("graph", "directed")):
+    def __init__(self, path, directed=config.getboolean("graph", "directed")):
+        # name_prefix = encoded_edges_count file's name - '.txt', encoded_edges_count file names must be unique.
+        self.name_prefix = path.split('.')[0]
         if path.endswith('.gpickle'):
+            # TODO LATER If read from a gpickle, directed does not change the directed/undirected state of the graph.
             self.graph = nx.read_gpickle(path)
         elif path.endswith('.txt'):
-            self.graph = self.create_graph_with_weighted_edges(path, directed=directed)
-            nx.write_gpickle(self.graph, multi_processing.get_file_folder(path) + '/' + gpickle_name)
-
-    @staticmethod
-    def create_graph_with_weighted_edges(edges_file, directed):
-        if directed:
-            graph = nx.read_weighted_edgelist(edges_file, create_using=nx.DiGraph(), nodetype=int)
-        else:
-            graph = nx.read_weighted_edgelist(edges_file, create_using=nx.Graph(), nodetype=int)
-        return graph
-
-    @staticmethod
-    def create_graph_with_token_list(window):
-        """ Usage
-        For test, 8 times "is"
-        create_graph_with_token_list(["This", "is", "is", "is", "is", "is", "is", "is", "is", "a"])
-        """
-        g = nx.DiGraph()
-        g.add_nodes_from(set(window))
-        window_size = len(window)
-        for start_index in range(window_size):
-            for end_index in range(start_index + 1, window_size):
-                # !!! We don't care self-loop edges
-                if not window[start_index] == window[end_index]:
-                    if g.has_edge(window[start_index], window[end_index]):
-                        g[window[start_index]][window[end_index]]['weight'] += 1
-                    else:
-                        g.add_edge(window[start_index], window[end_index], weight=1)
-        return g
+            if directed:
+                self.graph = nx.read_weighted_edgelist(path, create_using=nx.DiGraph(), nodetype=int)
+            else:
+                self.graph = nx.read_weighted_edgelist(path, create_using=nx.Graph(), nodetype=int)
+            nx.write_gpickle(self.graph, self.name_prefix + '.gpickle')
 
     def draw_graph(self):
         """
         Takes too much time with big data.
         """
         nx.draw(self.graph, with_labels=True)
-
         plt.show()
 
-    def show_graph_information(self):
+    def print_graph_information(self):
         number_of_edges = self.graph.number_of_edges()
         number_of_selfloops = self.graph.number_of_selfloops()
         number_of_nodes = self.graph.number_of_nodes()
@@ -85,26 +62,30 @@ class NXGraph:
         From test, these three algorithms below take more than 20 hours (processes have been killed after 20 hours) to
         calculate.
         'floyd_warshall_numpy' takes around 100 minutes to get the result.
-        """
+
         # length1 = dict(nx.all_pairs_dijkstra_path_length(g))
         # length2 = dict(nx.all_pairs_bellman_ford_path_length(g))
         # length3 = nx.johnson(g, weight='weight')
         # for node in [0, 1, 2, 3, 4]:
         #     print('1 - {}: {}'.format(node, length2[1][node]))
-
+        """
         """ ATTENTION
         'floyd_warshall_numpy' has already considered situations below:
         1. If there's no path between source and target node, matrix will put 'inf'
         2. No matter how much the weight is between node and node itself(self loop), the shortest path will always be 0.
         """
-
         matrix = nx.floyd_warshall_numpy(self.graph)
-        np.save(output_folder + 'matrix.npy', matrix, fix_imports=False)
-        common.write_to_pickle(self.graph.nodes(), output_folder + 'nodes.pickle')
+        np.save(output_folder + self.name_prefix + '_matrix.npy', matrix, fix_imports=False)
+        common.write_to_pickle(self.graph.nodes(), output_folder + self.name_prefix + '_nodes.pickle')
         return self.graph.nodes, matrix
 
-    @staticmethod
-    def get_selected_shortest_path_nodes(n, selected_mode, data_folder=config['graph']['graph_folder']):
+
+class NegativeSamples:
+    def __init__(self, matrix, row_column_indices_value):
+        self.matrix = matrix
+        self.row_column_indices_value = row_column_indices_value
+
+    def get_negative_samples_dictionary_from_matrix(self, n, selected_mode, data_folder=config['graph']['graph_folder']):
         """e.g.
         nodes -> a list of word indices (here word index is there index in merged dict.)
         [index2word[node] for node in nodes] -> ['the', '.', ',', 'and', 'in', 'of']
@@ -117,8 +98,8 @@ class NXGraph:
              [  2.   3.   1.   3.   2.   0.]]
         """
         n += 1  # add one more potential results, in case results have self loop node.
-        matrix = np.load(data_folder + 'matrix.npy')
-        nodes = common.read_pickle(data_folder + 'nodes.pickle')
+        matrix = np.load(data_folder + self.name_prefix + '_matrix.npy')
+        nodes = common.read_pickle(data_folder + self.name_prefix + '_nodes.pickle')
         nodes_list = list(nodes)
         if selected_mode == 'min':
             selected_indices = np.argpartition(matrix, n)[:, :n]
@@ -176,13 +157,22 @@ class NXGraph:
                 matrix_cell_value = matrix[matrix_x][matrix_y]
                 print(' ', ns_word, matrix_cell_value)
 
-    def stochastic_graph_for_undirected_graph(self):
+    def stochastic_matrix_for_undirected_graph(self):
         if not nx.is_directed(self.graph):
             # remove self loop
             self.graph.remove_edges_from(list(nx.selfloop_edges(self.graph)))
             directed_graph = self.graph.to_directed()
             stochastic_graph = nx.stochastic_graph(directed_graph, weight='weight')
-            return stochastic_graph
+            return nx.to_numpy_matrix(stochastic_graph)
+
+    @staticmethod
+    def t_step_random_walk(t, transition_matrix):
+        result = transition_matrix
+        while t > 1:
+            result = np.matmul(result, transition_matrix)
+            t -= 1
+        return result
+
 
 
 
@@ -201,13 +191,35 @@ def get_index2word(file, key_type=int, value_type=str):
         return d
 
 
+def create_graph_with_token_list(window):
+    """ATTENTION
+    This function has no relation with this project.
+    It's just for easily create a small graph of words used for demonstration.
+    """
+    ''' Usage
+    For test, 8 times "is"
+    create_graph_with_token_list(["This", "is", "is", "is", "is", "is", "is", "is", "is", "a"])
+    '''
+    g = nx.DiGraph()
+    g.add_nodes_from(set(window))
+    window_size = len(window)
+    for start_index in range(window_size):
+        for end_index in range(start_index + 1, window_size):
+            # !!! We don't care self-loop edges
+            if not window[start_index] == window[end_index]:
+                if g.has_edge(window[start_index], window[end_index]):
+                    g[window[start_index]][window[end_index]]['weight'] += 1
+                else:
+                    g.add_edge(window[start_index], window[end_index], weight=1)
+    return g
+
+
 if __name__ == '__main__':
-    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt',
-                    gpickle_name='graph.gpickle')
-    graph.show_graph_information()
+    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
+    graph.print_graph_information()
 
     # graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
     # translated_shortest_path_nodes_dict = NXGraph.translate_shortest_path_nodes_dict(
-    #     NXGraph.get_selected_shortest_path_nodes(20, selected_mode='max', data_folder=config['graph']['graph_folder']),
+    #     NXGraph.get_negative_samples_dictionary_from_matrix(20, selected_mode='max', data_folder=config['graph']['graph_folder']),
     #     config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
     #     output_folder=config['graph']['graph_folder'])

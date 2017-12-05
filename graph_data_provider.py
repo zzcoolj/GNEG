@@ -431,6 +431,7 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
             # counted edges of window size n (n>=3) = counted edges of window size n-1 + counted edges of distance n
             counted_edges_of_specific_window_size[i] = counted_edges_of_specific_window_size[i-1] \
                                                        + counted_edges_of_distance_i
+            # TODO NOW remove counted_edges_of_specific_window_size[i-1] to save memory
         common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(i) + ".txt",
                                   counted_edges_of_specific_window_size[i], 'tuple')
 

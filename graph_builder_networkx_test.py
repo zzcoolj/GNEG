@@ -12,8 +12,8 @@ class TestGraphDataProvider(unittest.TestCase):
 
     def test_1_translate_shortest_path_nodes_dict(self):
         # Directed graph
-        graph = gbn.NXGraph(self.encoded_edges_count_path, gpickle_name='graph.gpickle', directed=True)
-        graph.show_graph_information()
+        graph = gbn.NXGraph(self.encoded_edges_count_path, directed=True)
+        graph.print_graph_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
         index2word = gbn.get_index2word(file=self.merged_dict_path)
         print([index2word[node] for node in nodes])
@@ -21,7 +21,7 @@ class TestGraphDataProvider(unittest.TestCase):
         print()
 
         translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
-            gbn.NXGraph.get_selected_shortest_path_nodes(3, selected_mode='min', data_folder=self.graph_folder),
+            gbn.NXGraph.get_negative_samples_dictionary_from_matrix(3, selected_mode='min', data_folder=self.graph_folder),
             self.merged_dict_path, output_folder=self.graph_folder)
 
         # for key, value in translate_shortest_path_nodes_dict.items():
@@ -43,7 +43,7 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertFalse('of' in translate_shortest_path_nodes_dict['of'])
 
         translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
-            gbn.NXGraph.get_selected_shortest_path_nodes(3, selected_mode='max', data_folder=self.graph_folder),
+            gbn.NXGraph.get_negative_samples_dictionary_from_matrix(3, selected_mode='max', data_folder=self.graph_folder),
             self.merged_dict_path, output_folder=self.graph_folder)
 
         self.assertTrue('.' in translate_shortest_path_nodes_dict[','])
@@ -67,15 +67,15 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertFalse('of' in translate_shortest_path_nodes_dict['of'])
 
         # Undirected
-        graph = gbn.NXGraph(self.encoded_edges_count_undirected_path, gpickle_name='graph.gpickle')
-        graph.show_graph_information()
+        graph = gbn.NXGraph(self.encoded_edges_count_undirected_path, directed=False)
+        graph.print_graph_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
         index2word = gbn.get_index2word(file=self.merged_dict_undirected_path)
         print([index2word[node] for node in nodes])
         print(matrix)
         print()
         translate_shortest_path_nodes_dict = gbn.NXGraph.translate_shortest_path_nodes_dict(
-            gbn.NXGraph.get_selected_shortest_path_nodes(3, selected_mode='max', data_folder=self.graph_folder),
+            gbn.NXGraph.get_negative_samples_dictionary_from_matrix(3, selected_mode='max', data_folder=self.graph_folder),
             self.merged_dict_undirected_path, output_folder=self.graph_folder)
         self.assertTrue('the' in translate_shortest_path_nodes_dict['and'])
         self.assertTrue(',' in translate_shortest_path_nodes_dict['and'])
@@ -104,12 +104,15 @@ class TestGraphDataProvider(unittest.TestCase):
             nodes_path=self.graph_folder+'nodes.pickle',
             words_list=['the', 'of'])
 
-        graph = gbn.NXGraph(self.encoded_edges_count_undirected_path, gpickle_name='graph.gpickle')
+        graph = gbn.NXGraph(self.encoded_edges_count_undirected_path, directed=False)
         print(nx.to_numpy_matrix(graph.graph))
-        stochastic_graph = graph.stochastic_graph_for_undirected_graph()
-        stochastic_graph_matrix = nx.to_numpy_matrix(stochastic_graph)
+        stochastic_graph_matrix = graph.stochastic_matrix_for_undirected_graph()
         print(stochastic_graph_matrix)
+        print(gbn.NXGraph.t_step_random_walk(1, stochastic_graph_matrix))
         print(np.matmul(stochastic_graph_matrix, stochastic_graph_matrix))
+        print(gbn.NXGraph.t_step_random_walk(2, stochastic_graph_matrix))
+        print(gbn.NXGraph.t_step_random_walk(3, stochastic_graph_matrix))
+
 
 if __name__ == '__main__':
     unittest.main()
