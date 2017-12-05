@@ -8,7 +8,7 @@ nltk.data.path = ['/vol/datailes/tools/nlp/nltk_data/2016']
 #     file_extension='.txt',
 #     max_window_size=10,
 #     process_num=50)
-graph_data_provider.multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=50)
+graph_data_provider.multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=50, already_existed_window_size=7)
 
 # # get undirected edges count for all file
 # for i in range(2, 11):

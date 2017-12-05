@@ -361,7 +361,8 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                                                                     'dicts_and_encoded_texts_folder'],
                                                                 edges_folder=config['graph']['edges_folder'],
                                                                 output_folder=config['graph']['graph_folder'],
-                                                                max_vocab_size=config['graph']['max_vocab_size']):
+                                                                max_vocab_size=config['graph']['max_vocab_size'],
+                                                                already_existed_window_size=None):
     def counted_edges_from_worker_yielder(paths):
         for path in paths:
             yield Counter(common.read_pickle(path))
@@ -420,22 +421,32 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
             files[i] = files_of_specific_distance
 
     # Generate counted edges of different window sizes in a stepwise way.
-    # TODO Add an option, don't calculate all counted edges of different window size again, reuse the result which already existed.
-    counted_edges_of_specific_window_size = {}
-    for i in range(2, window_size + 1):
+    if not already_existed_window_size:
+        # No encoded edges count already existed, calculate them from distance 2 to distance size.
+        counted_edges_of_specific_window_size = None
+        start_distance = 2
+    else:
+        already_existed_counted_edges_path = output_folder + "encoded_edges_count_window_size_" \
+                                             + str(already_existed_window_size) + ".txt"
+        d = {}
+        with open(already_existed_counted_edges_path) as f:
+            for line in f:
+                (first, second, count) = line.rstrip('\n').split("\t")
+                d[(first, second)] = int(count)
+        counted_edges_of_specific_window_size = Counter(d)
+        start_distance = already_existed_window_size + 1
+    for i in range(start_distance, window_size + 1):
         counted_edges_of_distance_i = get_counted_edges(files[i])
         if i == 2:
             # counted edges of window size 2 = counted edges of distance 2
-            counted_edges_of_specific_window_size[2] = counted_edges_of_distance_i
+            counted_edges_of_specific_window_size = counted_edges_of_distance_i
         else:
             # counted edges of window size n (n>=3) = counted edges of window size n-1 + counted edges of distance n
-            counted_edges_of_specific_window_size[i] = counted_edges_of_specific_window_size[i-1] \
-                                                       + counted_edges_of_distance_i
-            # TODO NOW remove counted_edges_of_specific_window_size[i-1] to save memory
+            counted_edges_of_specific_window_size += counted_edges_of_distance_i
         common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(i) + ".txt",
-                                  counted_edges_of_specific_window_size[i], 'tuple')
+                                  counted_edges_of_specific_window_size, 'tuple')
 
-    return counted_edges_of_specific_window_size[window_size]
+    return counted_edges_of_specific_window_size
 
 
 def write_dict_to_file(file_path, dictionary):
@@ -613,12 +624,12 @@ if __name__ == '__main__':
     specific value (e.g. 10000). Because if we order the tokens by their frequency, around that value's position, there
     are more than one token which has the same frequency. Each time, the "last" several valid tokens are different.
     '''
-    prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
-                              file_extension='.txt',
-                              max_window_size=10,
-                              process_num=4,
-                              max_vocab_size=10000)
-    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=4, max_vocab_size=10000)
+    # prepare_intermediate_data(data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep/',
+    #                           file_extension='.txt',
+    #                           max_window_size=10,
+    #                           process_num=4,
+    #                           max_vocab_size=10000)
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=4, max_vocab_size=10000, already_existed_window_size=7)
 
     # filter_edges(min_count=5,
     #              old_encoded_edges_count_path=config['graph']['graph_folder'] + "encoded_edges_count_window_size_5.txt",
