@@ -1,5 +1,6 @@
 import unittest
 import graph_builder_networkx as gbn
+import numpy as np
 
 
 class TestGraphDataProvider(unittest.TestCase):
@@ -15,13 +16,8 @@ class TestGraphDataProvider(unittest.TestCase):
                                                           output_folder=self.graph_folder)
         graph.print_graph_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
-
-        index2word = gbn.get_index2word(file=self.merged_dict_path)
-        print([index2word[node] for node in nodes])
-        print(matrix)
-        print()
-
         ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes, merged_dict_path=self.merged_dict_path)
+        ns.print_matrix_and_token_order()
         translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='min',
                                                                                        output_folder=self.graph_folder)
 
@@ -69,13 +65,9 @@ class TestGraphDataProvider(unittest.TestCase):
         graph.print_graph_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
 
-        index2word = gbn.get_index2word(file=self.merged_dict_undirected_path)
-        print([index2word[node] for node in nodes])
-        print(matrix)
-        print()
-
         ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path)
+        ns.print_matrix_and_token_order()
         translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='max',
                                                                                        output_folder=self.graph_folder)
         self.assertTrue('the' in translate_shortest_path_nodes_dict['and'])
@@ -111,17 +103,36 @@ class TestGraphDataProvider(unittest.TestCase):
         graph = gbn.NXGraph.from_encoded_edges_count_file(self.encoded_edges_count_undirected_path, directed=False,
                                                           output_folder=self.graph_folder)
         graph.print_graph_information()
+
+        # t=1 step random walk
         nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=1)
-
-        index2word = gbn.get_index2word(file=self.merged_dict_undirected_path)
-        print([index2word[node] for node in nodes])
-        print(matrix)
-        print()
-
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes, merged_dict_path=self.merged_dict_undirected_path)
+        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+                                 merged_dict_path=self.merged_dict_undirected_path)
+        ns.print_matrix_and_token_order()
+        # check weight based transition probability
+        self.assertTrue(ns.get_matrix_value_by_token_xy('.', 'the') == 2/(2+2+3+1))
+        self.assertTrue(ns.get_matrix_value_by_token_xy('and', 'the') == 4/(2+1+4+3+4))
+        self.assertTrue(ns.get_matrix_value_by_token_xy('the', ',') == 3/(3+4+2+6+8))
+        self.assertTrue(ns.get_matrix_value_by_token_xy(',', '.') == 0)
+        self.assertTrue(ns.get_matrix_value_by_token_xy('in', ',') == 2/(2+2+6+1+1))
+        # TODO check below
         translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='min',
                                                                                        output_folder=self.graph_folder)
-        print(translate_shortest_path_nodes_dict)
+
+        # t=2 steps random walk
+        nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=2)
+        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+                                 merged_dict_path=self.merged_dict_undirected_path)
+        ns.print_matrix_and_token_order()
+
+        # t=3 steps random walk
+        nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=3)
+        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+                                 merged_dict_path=self.merged_dict_undirected_path)
+        ns.print_matrix_and_token_order()
+        # check the sum of each line in matrix equals to 1
+        for i in range(0, matrix.shape[0]):
+            self.assertTrue(np.sum(matrix[i]) == 1.0)
 
 
 

@@ -46,6 +46,7 @@ class NXGraph:
         plt.show()
 
     def print_graph_information(self):
+        print('\n###################### Graph Information ######################')
         number_of_edges = self.graph.number_of_edges()
         number_of_selfloops = nx.number_of_selfloops(self.graph)
         number_of_nodes = self.graph.number_of_nodes()
@@ -67,6 +68,7 @@ class NXGraph:
             # is the fraction of possible triangles through that node that exist
             print('The clustering coefficient for the graph is ' + str(
                 round(nx.average_clustering(self.graph, weight=None), 2)))
+        print('###############################################################\n')
 
     def get_shortest_path_lengths_between_all_nodes(self, output_folder=config['graph']['graph_folder']):
         """
@@ -120,6 +122,22 @@ class NegativeSamples:
         self.row_column_indices_value = row_column_indices_value
         self.merged_dict_path = merged_dict_path
         self.translated_negative_samples_dict = None
+
+    def print_matrix_and_token_order(self):
+        index2word = gdp.get_index2word(file=self.merged_dict_path)
+        print('\n******************* Matrix & tokens order *******************')
+        print([index2word[index] for index in self.row_column_indices_value])
+        print(self.matrix)
+        print('*************************************************************\n')
+
+    def get_matrix_value_by_token_xy(self, token_x, token_y):
+        # Does not need translated ns dict to be calculated.
+        word2index = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+            file=self.merged_dict_path, key_type=str, value_type=int)
+        nodes = list(self.row_column_indices_value)
+        matrix_x = nodes.index(word2index[token_x])
+        matrix_y = nodes.index(word2index[token_y])
+        return self.matrix[matrix_x][matrix_y]
 
     def __get_negative_samples_dict_from_matrix(self, n, selected_mode):
         """e.g.
@@ -177,6 +195,7 @@ class NegativeSamples:
         self.translated_negative_samples_dict = common.read_pickle(path)
 
     def print_tokens_negative_samples_and_their_value_in_matrix(self, tokens_list):
+        # TODO use get_matrix_value_by_token_xy function.
         if not self.translated_negative_samples_dict:
             sys.exit('translated_negative_samples_dict not found.')
         word2index = gdp.read_two_columns_file_to_build_dictionary_type_specified(
