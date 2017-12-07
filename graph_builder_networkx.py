@@ -15,19 +15,28 @@ config.read('config.ini')
 
 
 class NXGraph:
-    def __init__(self, path, directed=config.getboolean("graph", "directed"),
-                 output_folder=config['graph']['graph_folder']):
-        # name_prefix = encoded_edges_count file's name - '.txt', encoded_edges_count file names must be unique.
-        self.name_prefix = multi_processing.get_file_name(path).split('.')[0]
-        if path.endswith('.gpickle'):
-            # TODO LATER If read from a gpickle, directed does not change the directed/undirected state of the graph.
-            self.graph = nx.read_gpickle(path)
-        elif path.endswith('.txt'):
-            if directed:
-                self.graph = nx.read_weighted_edgelist(path, create_using=nx.DiGraph(), nodetype=int)
-            else:
-                self.graph = nx.read_weighted_edgelist(path, create_using=nx.Graph(), nodetype=int)
-            nx.write_gpickle(self.graph, output_folder + self.name_prefix + '.gpickle')
+    def __init__(self, graph, name_prefix, directed):
+        # name_prefix = encoded_edges_count file's name - '.txt' => encoded_edges_count file names must be unique.
+        self.name_prefix = name_prefix
+        self.graph = graph
+        self.directed = directed
+
+    @classmethod
+    def from_gpickle(cls, path):
+        name_prefix = multi_processing.get_file_name(path).split('.')[0]
+        graph = nx.read_gpickle(path)
+        return cls(graph, name_prefix, nx.is_directed(graph))
+
+    @classmethod
+    def from_encoded_edges_count_file(cls, path, directed=config.getboolean("graph", "directed"),
+                                      output_folder=config['graph']['graph_folder']):
+        name_prefix = multi_processing.get_file_name(path).split('.')[0]
+        if directed:
+            graph = nx.read_weighted_edgelist(path, create_using=nx.DiGraph(), nodetype=int)
+        else:
+            graph = nx.read_weighted_edgelist(path, create_using=nx.Graph(), nodetype=int)
+        nx.write_gpickle(graph, output_folder + name_prefix + '.gpickle')
+        return cls(graph, name_prefix, directed)
 
     def draw_graph(self):
         """
@@ -80,25 +89,25 @@ class NXGraph:
         # ATTENTION: after saving, NumPy matrix has been changed to 2darray.
         np.save(output_folder + self.name_prefix + '_matrix.npy', matrix, fix_imports=False)
         common.write_to_pickle(self.graph.nodes(), output_folder + self.name_prefix + '_nodes.pickle')
-        # TODO LATER Do I really need to save matrix and nodes?
         return self.graph.nodes(), matrix
 
-    # TODO NOW work on this
-    def stochastic_matrix_for_undirected_graph(self):
-        if not nx.is_directed(self.graph):
-            # remove self loop
-            self.graph.remove_edges_from(list(nx.selfloop_edges(self.graph)))
-            directed_graph = self.graph.to_directed()
+    def get_t_step_random_walk_stochastic_matrix(self, t):
+        def get_stochastic_matrix():
+            self.graph.remove_edges_from(list(nx.selfloop_edges(self.graph)))  # remove self loop
+            if self.directed:
+                directed_graph = self.graph
+            else:
+                directed_graph = self.graph.to_directed()
+            # this function only works with directed graph
             stochastic_graph = nx.stochastic_graph(directed_graph, weight='weight')
             return nx.to_numpy_matrix(stochastic_graph)
 
-    @staticmethod
-    def t_step_random_walk(t, transition_matrix):
+        transition_matrix = get_stochastic_matrix()
         result = transition_matrix
         while t > 1:
             result = np.matmul(result, transition_matrix)
             t -= 1
-        return result
+        return self.graph.nodes(), result
 
 
 # matrix = np.load(data_folder + self.name_prefix + '_matrix.npy')
@@ -155,12 +164,12 @@ class NegativeSamples:
         return negative_samples_dict
 
     def write_translated_negative_samples_dict(self, n, selected_mode, output_folder):
-        index2word = get_index2word(file=self.merged_dict_path)
+        index2word = gdp.get_index2word(file=self.merged_dict_path)
         translated_negative_samples_dict = {}
         for key, value in self.__get_negative_samples_dict_from_matrix(n, selected_mode).items():
             translated_negative_samples_dict[index2word[key]] = [index2word[node_id] for node_id in value]
         common.write_to_pickle(translated_negative_samples_dict,
-                               output_folder + 'translated_shortest_path_nodes_dict.pickle')
+                               output_folder + 'translated_negative_samples_dict.pickle')
         self.translated_negative_samples_dict = translated_negative_samples_dict
         return translated_negative_samples_dict
 
@@ -185,48 +194,9 @@ class NegativeSamples:
                 print(' ', ns_word, matrix_cell_value)
 
 
-
-
-
-def get_index2word(file, key_type=int, value_type=str):
-    """ATTENTION
-    This function is different from what in graph_data_provider.
-    Here, key is id and token is value, while in graph_data_provider, token is key and id is value.
-    """
-    d = {}
-    with open(file, encoding='utf-8') as f:
-        for line in f:
-            (key, val) = line.rstrip('\n').split("\t")
-            d[key_type(val)] = value_type(key)
-        return d
-
-
-def create_graph_with_token_list(window):
-    """ATTENTION
-    This function has no relation with this project.
-    It's just for easily create a small graph of words used for demonstration.
-    """
-    ''' Usage
-    For test, 8 times "is"
-    create_graph_with_token_list(["This", "is", "is", "is", "is", "is", "is", "is", "is", "a"])
-    '''
-    g = nx.DiGraph()
-    g.add_nodes_from(set(window))
-    window_size = len(window)
-    for start_index in range(window_size):
-        for end_index in range(start_index + 1, window_size):
-            # !!! We don't care self-loop edges
-            if not window[start_index] == window[end_index]:
-                if g.has_edge(window[start_index], window[end_index]):
-                    g[window[start_index]][window[end_index]]['weight'] += 1
-                else:
-                    g.add_edge(window[start_index], window[end_index], weight=1)
-    return g
-
-
 if __name__ == '__main__':
-    graph = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
-    graph.print_graph_information()
+    g = NXGraph(config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
+    g.print_graph_information()
 
     # graph.get_shortest_path_lengths_between_all_nodes(output_folder=config['graph']['graph_folder'])
     # translated_shortest_path_nodes_dict = NXGraph.write_translated_negative_samples_dict(

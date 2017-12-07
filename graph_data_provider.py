@@ -464,6 +464,19 @@ def read_two_columns_file_to_build_dictionary_type_specified(file, key_type, val
         return d
 
 
+def get_index2word(file, key_type=int, value_type=str):
+    """ATTENTION
+    This function is different from what in graph_data_provider.
+    Here, key is id and token is value, while in graph_data_provider, token is key and id is value.
+    """
+    d = {}
+    with open(file, encoding='utf-8') as f:
+        for line in f:
+            (key, val) = line.rstrip('\n').split("\t")
+            d[key_type(val)] = value_type(key)
+        return d
+
+
 def get_files_startswith(data_folder, starting):
     # Reason to add the third condition to verify files' names are not equal to 'word_count_all.txt': In case before
     # executing the code, dicts_and_encoded_texts_folder folder already has 'word_count_all.txt' file, this function

@@ -695,7 +695,7 @@ class Word2Vec(utils.SaveLoad):
                                                        valid_vocabulary_path):
         """Do an initial scan of all words appearing in sentences."""
         vocab = defaultdict(int)
-        index2word = gbn.get_index2word(index2word_path)
+        index2word = gdp.get_index2word(index2word_path)
         merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(merged_word_count_path, key_type=str, value_type=int)
         valid_vocabulary = dict.fromkeys(gdp.read_valid_vocabulary(valid_vocabulary_path))
         for index in valid_vocabulary:
