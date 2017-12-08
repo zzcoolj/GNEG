@@ -118,7 +118,7 @@ class NXGraph:
 
 class NegativeSamples:
     def __init__(self, matrix, row_column_indices_value, merged_dict_path):
-        self.matrix = np.asarray(matrix)
+        self.matrix = np.asarray(matrix)  # ATTENTION: change NumPy matrix type to NumPy ndarray.
         self.row_column_indices_value = row_column_indices_value
         self.merged_dict_path = merged_dict_path
         self.translated_negative_samples_dict = None
@@ -186,6 +186,7 @@ class NegativeSamples:
         translated_negative_samples_dict = {}
         for key, value in self.__get_negative_samples_dict_from_matrix(n, selected_mode).items():
             translated_negative_samples_dict[index2word[key]] = [index2word[node_id] for node_id in value]
+        # TODO NOW file name should be unique, not always the same.
         common.write_to_pickle(translated_negative_samples_dict,
                                output_folder + 'translated_negative_samples_dict.pickle')
         self.translated_negative_samples_dict = translated_negative_samples_dict

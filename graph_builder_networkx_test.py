@@ -105,8 +105,8 @@ class TestGraphDataProvider(unittest.TestCase):
         graph.print_graph_information()
 
         # t=1 step random walk
-        nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=1)
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+        nodes, matrix1 = graph.get_t_step_random_walk_stochastic_matrix(t=1)
+        ns = gbn.NegativeSamples(matrix=matrix1, row_column_indices_value=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path)
         ns.print_matrix_and_token_order()
         # check weight based transition probability
@@ -118,22 +118,30 @@ class TestGraphDataProvider(unittest.TestCase):
         # TODO check below
         translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='min',
                                                                                        output_folder=self.graph_folder)
-
         # t=2 steps random walk
-        nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=2)
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+        nodes, matrix2 = graph.get_t_step_random_walk_stochastic_matrix(t=2)
+        ns = gbn.NegativeSamples(matrix=matrix2, row_column_indices_value=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path)
         ns.print_matrix_and_token_order()
+        # check the calculation of cell value.
+        value_sum = 0
+        for i in range(6):
+            value_sum += matrix1[3, i] * matrix1[i, 5]
+        self.assertTrue(value_sum == matrix2[3, 5])
 
         # t=3 steps random walk
-        nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=3)
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+        nodes, matrix3 = graph.get_t_step_random_walk_stochastic_matrix(t=3)
+        ns = gbn.NegativeSamples(matrix=matrix3, row_column_indices_value=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path)
         ns.print_matrix_and_token_order()
         # check the sum of each line in matrix equals to 1
-        for i in range(0, matrix.shape[0]):
-            self.assertTrue(np.sum(matrix[i]) == 1.0)
-
+        for i in range(0, matrix3.shape[0]):
+            self.assertTrue(np.sum(matrix3[i]) == 1.0)
+        # check the calculation of cell value.
+        value_sum = 0
+        for i in range(6):
+            value_sum += matrix2[3, i] * matrix1[i, 5]  # matrix1 is the transition matrix
+        self.assertTrue(value_sum == matrix3[3, 5])
 
 
 if __name__ == '__main__':
