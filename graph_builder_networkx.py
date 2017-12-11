@@ -211,8 +211,9 @@ class NegativeSamples:
 
 if __name__ == '__main__':
     graph = NXGraph.from_encoded_edges_count_file(
-        config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt', directed=False)
+        config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5_undirected.txt', directed=False)
     nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=3)
     ns = NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
-                         merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'],
+                         merged_dict_path=config['graph']['dicts_and_encoded_texts_folder']+'dict_merged.txt',
                          name_prefix=graph.name_prefix)
+    ns.write_translated_negative_samples_dict(n=20, selected_mode='min', output_folder=config['graph']['graph_folder'])
