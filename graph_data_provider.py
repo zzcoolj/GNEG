@@ -592,10 +592,6 @@ def merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path,
 
 
 if __name__ == '__main__':
-    # TESTS
-    # write_edges_of_different_window_size([[0, 11, 12, 13, 14, 15, 3, 16, 17], [1, 2, 3]], 5)
-
-
     # # One core test (local dictionaries ready)
     # # xml
     # write_encoded_text_and_local_dict_for_xml("data/test_input_data/test_for_graph_builder_igraph_multiprocessing.xml", 'data/dicts_and_encoded_texts/', "./DOC/TEXT/P")
@@ -642,14 +638,8 @@ if __name__ == '__main__':
     #                           max_window_size=10,
     #                           process_num=4,
     #                           max_vocab_size=10000)
-    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=4, max_vocab_size=10000, already_existed_window_size=7)
-
-    # filter_edges(min_count=5,
-    #              old_encoded_edges_count_path=config['graph']['graph_folder'] + "encoded_edges_count_window_size_5.txt",
-    #              max_vocab_size=10000)
-
-    # reciprocal_for_edges_weight(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
-    # merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
+    # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=4, max_vocab_size=10000, already_existed_window_size=7)
+    merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.
