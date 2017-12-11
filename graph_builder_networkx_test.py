@@ -16,7 +16,8 @@ class TestGraphDataProvider(unittest.TestCase):
                                                           output_folder=self.graph_folder)
         graph.print_graph_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes, merged_dict_path=self.merged_dict_path)
+        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes, merged_dict_path=self.merged_dict_path,
+                                 name_prefix=graph.name_prefix)
         ns.print_matrix_and_token_order()
         translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='min',
                                                                                        output_folder=self.graph_folder)
@@ -66,7 +67,8 @@ class TestGraphDataProvider(unittest.TestCase):
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
 
         ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
-                                 merged_dict_path=self.merged_dict_undirected_path)
+                                 merged_dict_path=self.merged_dict_undirected_path,
+                                 name_prefix=graph.name_prefix)
         ns.print_matrix_and_token_order()
         translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='max',
                                                                                        output_folder=self.graph_folder)
@@ -94,7 +96,8 @@ class TestGraphDataProvider(unittest.TestCase):
                                                           output_folder=self.graph_folder)
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
         ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
-                                 merged_dict_path=self.merged_dict_undirected_path)
+                                 merged_dict_path=self.merged_dict_undirected_path,
+                                 name_prefix=graph.name_prefix)
         ns.write_translated_negative_samples_dict(n=3, selected_mode='max', output_folder=self.graph_folder)
         ns.print_tokens_negative_samples_and_their_value_in_matrix(['the', 'of'])
 
@@ -107,7 +110,8 @@ class TestGraphDataProvider(unittest.TestCase):
         # t=1 step random walk
         nodes, matrix1 = graph.get_t_step_random_walk_stochastic_matrix(t=1)
         ns = gbn.NegativeSamples(matrix=matrix1, row_column_indices_value=nodes,
-                                 merged_dict_path=self.merged_dict_undirected_path)
+                                 merged_dict_path=self.merged_dict_undirected_path,
+                                 name_prefix=graph.name_prefix)
         ns.print_matrix_and_token_order()
         # check weight based transition probability
         self.assertTrue(ns.get_matrix_value_by_token_xy('.', 'the') == 2/(2+2+3+1))
@@ -115,13 +119,12 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue(ns.get_matrix_value_by_token_xy('the', ',') == 3/(3+4+2+6+8))
         self.assertTrue(ns.get_matrix_value_by_token_xy(',', '.') == 0)
         self.assertTrue(ns.get_matrix_value_by_token_xy('in', ',') == 2/(2+2+6+1+1))
-        # TODO check below
-        translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='min',
-                                                                                       output_folder=self.graph_folder)
+
         # t=2 steps random walk
         nodes, matrix2 = graph.get_t_step_random_walk_stochastic_matrix(t=2)
         ns = gbn.NegativeSamples(matrix=matrix2, row_column_indices_value=nodes,
-                                 merged_dict_path=self.merged_dict_undirected_path)
+                                 merged_dict_path=self.merged_dict_undirected_path,
+                                 name_prefix=graph.name_prefix)
         ns.print_matrix_and_token_order()
         # check the calculation of cell value.
         value_sum = 0
@@ -132,7 +135,8 @@ class TestGraphDataProvider(unittest.TestCase):
         # t=3 steps random walk
         nodes, matrix3 = graph.get_t_step_random_walk_stochastic_matrix(t=3)
         ns = gbn.NegativeSamples(matrix=matrix3, row_column_indices_value=nodes,
-                                 merged_dict_path=self.merged_dict_undirected_path)
+                                 merged_dict_path=self.merged_dict_undirected_path,
+                                 name_prefix=graph.name_prefix)
         ns.print_matrix_and_token_order()
         # check the sum of each line in matrix equals to 1
         for i in range(0, matrix3.shape[0]):
@@ -142,6 +146,10 @@ class TestGraphDataProvider(unittest.TestCase):
         for i in range(6):
             value_sum += matrix2[3, i] * matrix1[i, 5]  # matrix1 is the transition matrix
         self.assertTrue(value_sum == matrix3[3, 5])
+        # TODO LATER check below
+        translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='min',
+                                                                                       output_folder=self.graph_folder)
+        print(translate_shortest_path_nodes_dict)
 
 
 if __name__ == '__main__':

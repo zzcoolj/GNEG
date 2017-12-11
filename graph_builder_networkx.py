@@ -70,6 +70,10 @@ class NXGraph:
                 round(nx.average_clustering(self.graph, weight=None), 2)))
         print('###############################################################\n')
 
+    def log_edges_count(self):
+        # TODO
+        pass
+
     def get_shortest_path_lengths_between_all_nodes(self, output_folder=config['graph']['graph_folder']):
         """
         From test, these three algorithms below take more than 20 hours (processes have been killed after 20 hours) to
@@ -117,7 +121,8 @@ class NXGraph:
 
 
 class NegativeSamples:
-    def __init__(self, matrix, row_column_indices_value, merged_dict_path):
+    def __init__(self, matrix, row_column_indices_value, merged_dict_path, name_prefix):
+        self.name_prefix = name_prefix
         self.matrix = np.asarray(matrix)  # ATTENTION: change NumPy matrix type to NumPy ndarray.
         self.row_column_indices_value = row_column_indices_value
         self.merged_dict_path = merged_dict_path
@@ -186,9 +191,8 @@ class NegativeSamples:
         translated_negative_samples_dict = {}
         for key, value in self.__get_negative_samples_dict_from_matrix(n, selected_mode).items():
             translated_negative_samples_dict[index2word[key]] = [index2word[node_id] for node_id in value]
-        # TODO NOW file name should be unique, not always the same.
         common.write_to_pickle(translated_negative_samples_dict,
-                               output_folder + 'translated_negative_samples_dict.pickle')
+                               output_folder + self.name_prefix + '_translated_ns_dict.pickle')
         self.translated_negative_samples_dict = translated_negative_samples_dict
         return translated_negative_samples_dict
 
@@ -196,22 +200,13 @@ class NegativeSamples:
         self.translated_negative_samples_dict = common.read_pickle(path)
 
     def print_tokens_negative_samples_and_their_value_in_matrix(self, tokens_list):
-        # TODO use get_matrix_value_by_token_xy function.
         if not self.translated_negative_samples_dict:
             sys.exit('translated_negative_samples_dict not found.')
-        word2index = gdp.read_two_columns_file_to_build_dictionary_type_specified(
-            file=self.merged_dict_path, key_type=str, value_type=int)
-        nodes = list(self.row_column_indices_value)
         for word in tokens_list:
-            print('For word:', word)
-            word_index = word2index[word]
-            matrix_x = nodes.index(word_index)
+            print('==>', word)
             ns_words = self.translated_negative_samples_dict[word]
             for ns_word in ns_words:
-                ns_word_index = word2index[ns_word]
-                matrix_y = nodes.index(ns_word_index)
-                matrix_cell_value = self.matrix[matrix_x][matrix_y]
-                print(' ', ns_word, matrix_cell_value)
+                print('\t', ns_word, '\t', self.get_matrix_value_by_token_xy(token_x=word, token_y=ns_word))
 
 
 if __name__ == '__main__':
