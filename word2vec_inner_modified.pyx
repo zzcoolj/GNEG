@@ -144,7 +144,7 @@ cdef unsigned long long fast_sentence_sg_neg_graph_based(
             next_random = (next_random * <unsigned long long>25214903917ULL + 11) & modulo
             target_index = ns_list[d-1]
             if target_index == word_index:
-                # TODO check used or not?
+                # Extremely important: not using same word as ns sample.
                 continue
             label = <REAL_t>0.0
 
@@ -314,7 +314,7 @@ cdef unsigned long long fast_sentence_cbow_neg_graph_based(
             next_random = (next_random * <unsigned long long>25214903917ULL + 11) & modulo
             target_index = ns_list[d-1]
             if target_index == word_index:
-                # TODO check used or not?
+                # Extremely important: not using same word as ns sample.
                 continue
             label = <REAL_t>0.0
 

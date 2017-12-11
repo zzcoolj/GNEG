@@ -1,4 +1,7 @@
-# To build, run python setup.py build_ext --inplace.
+"""
+To build, active the right conda environment and then run command:
+python setup.py build_ext --inplace.
+"""
 
 from distutils.core import setup
 from Cython.Build import cythonize
