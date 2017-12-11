@@ -418,9 +418,9 @@ cdef unsigned long long fast_sentence_cbow_neg(
     return next_random
 
 
-def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_py=0):
+def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx):
     """
-    :param ns_mode_py:  0: original, using cum_table; 1: using graph-based ns_table
+    :param ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
     """
     cdef int hs = model.hs
     cdef int negative = model.negative
@@ -460,7 +460,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_py=0):
     # for receive graph-based negative sample array
     cdef np.uint32_t [:,:] ns_array_view
     cdef np.uint32_t [:] ns_list
-    cdef int ns_mode = ns_mode_py
+    cdef int ns_mode = ns_mode_pyx
 
     if hs:
         syn1 = <REAL_t *>(np.PyArray_DATA(model.syn1))
@@ -542,9 +542,9 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_py=0):
     return effective_words
 
 
-def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss, ns_mode_py=0):
+def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss, ns_mode_pyx):
     """
-    :param ns_mode_py:  0: original, using cum_table; 1: using graph-based ns_table
+    :param ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
     """
     '''ATTENTION
     sentences is not all sentences in the training corpus, each job process one sentences. And the job is already well
@@ -590,7 +590,7 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss, ns_mod
     # for receive graph-based negative sample array
     cdef np.uint32_t [:,:] ns_array_view
     cdef np.uint32_t [:] ns_list
-    cdef int ns_mode = ns_mode_py
+    cdef int ns_mode = ns_mode_pyx
 
     if hs:
         syn1 = <REAL_t *>(np.PyArray_DATA(model.syn1))

@@ -93,6 +93,7 @@ class NXGraph:
         """
         matrix = nx.floyd_warshall_numpy(self.graph)  # ATTENTION: return type is NumPy matrix not NumPy ndarray.
         # ATTENTION: after saving, NumPy matrix has been changed to 2darray.
+        # TODO NOW Decide save or not
         np.save(output_folder + self.name_prefix + '_matrix.npy', matrix, fix_imports=False)
         common.write_to_pickle(self.graph.nodes(), output_folder + self.name_prefix + '_nodes.pickle')
         return self.graph.nodes(), matrix

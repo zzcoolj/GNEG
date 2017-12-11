@@ -418,7 +418,7 @@ class Word2Vec(utils.SaveLoad):
 
     def __init__(
             self, index2word_path, merged_word_count_path, valid_vocabulary_path,
-            translated_shortest_path_nodes_dict_path,
+            translated_shortest_path_nodes_dict_path, ns_mode_pyx,
             sentences=None,
             size=100, alpha=0.025, window=5, min_count=5,
             max_vocab_size=None, sample=1e-3, seed=1, workers=3, min_alpha=0.0001,
@@ -533,6 +533,7 @@ class Word2Vec(utils.SaveLoad):
         self.compute_loss = compute_loss
         self.running_training_loss = 0
         self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
+        self.ns_mode_pyx = ns_mode_pyx  # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
 
         if sentences is not None:
             if isinstance(sentences, GeneratorType):
@@ -592,7 +593,6 @@ class Word2Vec(utils.SaveLoad):
             target_node_id = self.wv.vocab[target_node].index
             ns_nodes_ids = [self.wv.vocab[ns_node].index for ns_node in ns_nodes]
             ns_dict[target_node_id] = ns_nodes_ids
-        # TODO (DONE): check
         if (len(ns_dict) != len(self.wv.vocab)) or (len(ns_dict) != len(shortest_path_nodes_dict)):
             print('ERROR: Graph vocabulary and wv vocabulary are different.')
             exit()
@@ -878,9 +878,11 @@ class Word2Vec(utils.SaveLoad):
         work, neu1 = inits
         tally = 0
         if self.sg:
-            tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss)
+            # Code below only works for word2vec_inner_modified.pyx, cause python version does not has ns_mode_pyx
+            tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx)
         else:
-            tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss, ns_mode_py=1)
+            # Code below only works for word2vec_inner_modified.pyx, cause python version does not has ns_mode_pyx
+            tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx)
         return tally, self._raw_word_count(sentences)
 
     def _raw_word_count(self, job):
