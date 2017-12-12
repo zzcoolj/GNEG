@@ -250,6 +250,7 @@ class FromEncodedEdgesCountToTranslatedNSDict:
         graph = NXGraph.from_encoded_edges_count_file(
             self.encoded_edges_count_file_folder + encoded_edges_count_file_name, directed=directed)
         nodes, matrix_dict = graph.get_1_to_t_step_random_walk_stochastic_matrix(t=t_max)
+
         for t, matrix in matrix_dict.items():  # for all t
             ns = NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
                                  merged_dict_path=self.merged_dict_path,
@@ -279,5 +280,5 @@ if __name__ == '__main__':
     # bridge.one_to_many_rw(encoded_edges_count_file_name='encoded_edges_count_window_size_5_undirected.txt',
     #                       directed=False, t_max=1, negative=20)
 
-    bridge.many_to_many_rw(encoded_edges_count_file_names=['encoded_edges_count_window_size_5_undirected.txt'],
-                           directed=False, t_max=1, negative=20)
+    bridge.many_to_many_rw(encoded_edges_count_file_names=['encoded_edges_count_window_size_2_undirected.txt'],
+                           directed=False, t_max=5, negative=20)

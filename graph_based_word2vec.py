@@ -3,6 +3,9 @@ from word2vec_gensim_modified import Word2Vec
 import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
+import sys
+sys.path.insert(0, '../common/')
+import multi_processing
 
 
 # WikiSentences class modified based on the code from https://rare-technologies.com/word2vec-tutorial/
@@ -64,9 +67,12 @@ class GridSearch(object):
         print(word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab'))
         del model
 
-    def grid_search_rw(self):
-        # self.one_search(ns_path=None)  # baseline: original word2vec: encoded_edges_count file are not used.
-        self.one_search(ns_path='output/intermediate data/graph/encoded_edges_count_window_size_5_undirected_translated_ns_dict_sp.pickle')
+    def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
+        self.one_search(ns_path=None)  # baseline: original word2vec: encoded_edges_count file are not used.
+        files = multi_processing.get_files_endswith(data_folder=ns_folder, file_extension='.pickle')
+        for file in files:
+            # TODO NOW multiprocessing
+            self.one_search(ns_path=file)
 
 
 if __name__ == '__main__':
@@ -79,4 +85,4 @@ if __name__ == '__main__':
                     valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
                     workers=4, sg=sg, negative=20)
 
-    gs.grid_search_rw()
+    gs.grid_search()
