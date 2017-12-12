@@ -835,8 +835,10 @@ class Word2Vec(utils.SaveLoad):
             self.create_binary_tree()
         if self.negative:
             # build the table for drawing random words (for negative sampling)
-            self.make_cum_table()
-            self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
+            if self.ns_mode_pyx == 0:
+                self.make_cum_table()
+            else:
+                self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
             # self.load_graph_based_negative_sample_table()
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)

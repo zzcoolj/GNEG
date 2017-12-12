@@ -36,12 +36,26 @@ class GridSearch(object):
         self.workers = workers  # number of threads use for one word2vec calculation.
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
 
-        # directed/undirected
         # selected_mode='max'/'min'
         # ns_mode_pyx=1/0  # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
         # t=1-5
 
-    def one_search_rw(self, encoded_edges_count_file_path, directed, t, selected_mode, ns_mode_pyx):
+    def one_search_original(self):
+        sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
+        model = Word2Vec(sentences=sentences,
+                         index2word_path=self.index2word_path,
+                         merged_word_count_path=self.merged_word_count_path,
+                         valid_vocabulary_path=self.valid_vocabulary_path,
+                         translated_shortest_path_nodes_dict_path=None,
+                         ns_mode_pyx=0,
+                         size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
+                         negative=self.negative)
+        word_vectors = model.wv
+        # TODO NOW save wv
+        print(word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab'))
+        del model
+
+    def one_search_rw(self, encoded_edges_count_file_path, directed, t, selected_mode):
         graph = gbn.NXGraph.from_encoded_edges_count_file(path=encoded_edges_count_file_path, directed=directed)
         nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=t)
         ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes, merged_dict_path=self.index2word_path,
@@ -57,7 +71,7 @@ class GridSearch(object):
                          valid_vocabulary_path=self.valid_vocabulary_path,
                          translated_shortest_path_nodes_dict_path=self.translated_ns_dict_output_folder +
                                                                   ns.name_prefix + '_translated_ns_dict.pickle',
-                         ns_mode_pyx=ns_mode_pyx,
+                         ns_mode_pyx=1,
                          size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
                          negative=self.negative)
         word_vectors = model.wv
@@ -66,11 +80,14 @@ class GridSearch(object):
         del model
 
     def grid_search(self):
-        # baseline: original word2vec, t and selected_mode has no effect.
-        ns_mode_pyx = 0
+        # baseline: original word2vec: encoded_edges_count file are not used, t and selected_mode has no effect.
+        self.one_search_original()
+
+        directed = False
 
 
 if __name__ == '__main__':
+    # Only care about skip-gram
     gs = GridSearch(encoded_edges_count_files_folder=config['graph']['graph_folder'],
                     index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                     translated_ns_dict_output_folder=config['graph']['graph_folder'],
@@ -78,5 +95,6 @@ if __name__ == '__main__':
                     merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                     valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
                     workers=4, sg=1, negative=20)
+    gs.grid_search()
 
 
