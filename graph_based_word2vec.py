@@ -22,6 +22,10 @@ class WikiSentences(object):
 
 
 class GridSearch(object):
+    """ATTENTION
+    Based on the assumption that we already have all 'write_translated_negative_samples_dict's based on different
+    parameters combination.
+    """
     def __init__(self, encoded_edges_count_files_folder, index2word_path, translated_ns_dict_output_folder,
                  training_data_folder, merged_word_count_path, valid_vocabulary_path, workers, sg,
                  negative):
@@ -36,8 +40,10 @@ class GridSearch(object):
         self.workers = workers  # number of threads use for one word2vec calculation.
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
 
-        # selected_mode='max'/'min'
+
         # ns_mode_pyx=1/0  # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
+
+        # selected_mode='max'/'min'
         # t=1-5
 
     def one_search_original(self):
@@ -79,7 +85,7 @@ class GridSearch(object):
         print(word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab'))
         del model
 
-    def grid_search(self):
+    def grid_search_rw(self):
         # baseline: original word2vec: encoded_edges_count file are not used, t and selected_mode has no effect.
         self.one_search_original()
 
@@ -95,6 +101,6 @@ if __name__ == '__main__':
                     merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                     valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
                     workers=4, sg=1, negative=20)
-    gs.grid_search()
+    gs.grid_search_rw()
 
 
