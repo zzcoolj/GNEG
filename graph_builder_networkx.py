@@ -231,9 +231,8 @@ class FromEncodedEdgesCountToTranslatedNSDict:
         self.translated_ns_dict_folder = translated_ns_dict_folder  # output folder
         self.merged_dict_path = merged_dict_path
 
-    def one_to_one_rw(self, encoded_edges_count_file_name, directed, t, negative, selected_mode):
-        graph = NXGraph.from_encoded_edges_count_file(
-            self.encoded_edges_count_file_folder + encoded_edges_count_file_name, directed=directed)
+    def one_to_one_rw(self, encoded_edges_count_file_path, directed, t, negative, selected_mode):
+        graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
         nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=t)
         ns = NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
                              merged_dict_path=self.merged_dict_path,
@@ -242,13 +241,12 @@ class FromEncodedEdgesCountToTranslatedNSDict:
                                                   output_folder=self.translated_ns_dict_folder,
                                                   name_suffix='_'+str(t)+'_'+selected_mode)
 
-    def one_to_many_rw(self, encoded_edges_count_file_name, directed, negative, t_max):
+    def one_to_many_rw(self, encoded_edges_count_file_path, directed, negative, t_max):
         """
         For one encoded_edges_count_file, get ns dict by different combinations of parameters:
             t & selected_mode
         """
-        graph = NXGraph.from_encoded_edges_count_file(
-            self.encoded_edges_count_file_folder + encoded_edges_count_file_name, directed=directed)
+        graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
         nodes, matrix_dict = graph.get_1_to_t_step_random_walk_stochastic_matrix(t=t_max)
 
         for t, matrix in matrix_dict.items():  # for all t
@@ -260,25 +258,27 @@ class FromEncodedEdgesCountToTranslatedNSDict:
                                                           output_folder=self.translated_ns_dict_folder,
                                                           name_suffix='_' + str(t) + '_' + selected_mode)
 
-    def many_to_many_rw(self, encoded_edges_count_file_names, directed, negative, t_max):
+    def many_to_many_rw(self, directed, negative, t_max, process_num):
         """
         For all encoded_edges_count_file (of different window size)
         """
-        for file_name in encoded_edges_count_file_names:
-            # TODO NOW multiprocessing
-            self.one_to_many_rw(encoded_edges_count_file_name=file_name, directed=directed, negative=negative,
-                                t_max=t_max)
+        kw = {'directed': directed, 'negative': negative, 't_max': t_max}
+        multi_processing.master(files_getter=multi_processing.get_files_endswith,
+                                data_folder=self.encoded_edges_count_file_folder,
+                                file_extension='undirected.txt',
+                                worker=self.one_to_many_rw,
+                                process_num=process_num,
+                                **kw)
 
 
 if __name__ == '__main__':
     bridge = FromEncodedEdgesCountToTranslatedNSDict(encoded_edges_count_file_folder=config['graph']['graph_folder'],
                                                      translated_ns_dict_folder=config['word2vec']['negative_samples_folder'],
                                                      merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt')
-    # bridge.one_to_one_rw(encoded_edges_count_file_name='encoded_edges_count_window_size_5_undirected.txt',
+    # bridge.one_to_one_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                      directed=False, t=1, negative=20, selected_mode='min')
-
-    # bridge.one_to_many_rw(encoded_edges_count_file_name='encoded_edges_count_window_size_5_undirected.txt',
+    #
+    # bridge.one_to_many_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                       directed=False, t_max=1, negative=20)
 
-    bridge.many_to_many_rw(encoded_edges_count_file_names=['encoded_edges_count_window_size_2_undirected.txt'],
-                           directed=False, t_max=5, negative=20)
+    bridge.many_to_many_rw(directed=False, t_max=1, negative=20, process_num=4)
