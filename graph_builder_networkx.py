@@ -98,22 +98,35 @@ class NXGraph:
         common.write_to_pickle(self.graph.nodes(), output_folder + self.name_prefix + '_nodes.pickle')
         return self.graph.nodes(), matrix
 
-    def get_t_step_random_walk_stochastic_matrix(self, t):
-        def get_stochastic_matrix():
-            self.graph.remove_edges_from(list(nx.selfloop_edges(self.graph)))  # remove self loop
-            if self.directed:
-                directed_graph = self.graph
-            else:
-                directed_graph = self.graph.to_directed()
-            # this function only works with directed graph
-            stochastic_graph = nx.stochastic_graph(directed_graph, weight='weight')
-            return nx.to_numpy_matrix(stochastic_graph)
+    def __get_stochastic_matrix(self):
+        self.graph.remove_edges_from(list(nx.selfloop_edges(self.graph)))  # remove self loop
+        if self.directed:
+            directed_graph = self.graph
+        else:
+            directed_graph = self.graph.to_directed()
+        # this function only works with directed graph
+        stochastic_graph = nx.stochastic_graph(directed_graph, weight='weight')
+        return nx.to_numpy_matrix(stochastic_graph)
 
-        transition_matrix = get_stochastic_matrix()
+    def get_t_step_random_walk_stochastic_matrix(self, t):
+        transition_matrix = self.__get_stochastic_matrix()
         result = transition_matrix
         while t > 1:
             result = np.matmul(result, transition_matrix)
             t -= 1
+        return self.graph.nodes(), result
+
+    def get_1_to_t_step_random_walk_stochastic_matrix(self, t):
+        """
+        Instead of getting a specific t step random walk result, this method gets a dict of result from 1 step random
+        walk to t step random walk. This method should be used for grid search.
+        """
+        result = {}
+        transition_matrix = self.__get_stochastic_matrix()
+        result[1] = transition_matrix
+        if t > 1:
+            for t in range(2, t+1):
+                result[t] = np.matmul(result[t-1], transition_matrix)
         return self.graph.nodes(), result
 
 
