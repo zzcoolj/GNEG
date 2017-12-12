@@ -116,18 +116,17 @@ class NXGraph:
             t -= 1
         return self.graph.nodes(), result
 
-    def get_1_to_t_step_random_walk_stochastic_matrix(self, t):
+    def one_to_t_step_random_walk_stochastic_matrix_yielder(self, t):
         """
         Instead of getting a specific t step random walk result, this method gets a dict of result from 1 step random
         walk to t step random walk. This method should be used for grid search.
         """
-        result = {}
         transition_matrix = self.__get_stochastic_matrix()
-        result[1] = transition_matrix
-        if t > 1:
-            for t in range(2, t+1):
-                result[t] = np.matmul(result[t-1], transition_matrix)
-        return self.graph.nodes(), result
+        result = transition_matrix
+        for t in range(1, t+1):
+            if t != 1:
+                result = np.matmul(result, transition_matrix)
+            yield result, t
 
 
 # matrix = np.load(data_folder + self.name_prefix + '_matrix.npy')
@@ -246,10 +245,10 @@ class FromEncodedEdgesCountToTranslatedNSDict:
         For one encoded_edges_count_file, get ns dict by different combinations of parameters:
             t & selected_mode
         """
+        print(multi_processing.get_pid(), encoded_edges_count_file_path)
         graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
-        nodes, matrix_dict = graph.get_1_to_t_step_random_walk_stochastic_matrix(t=t_max)
-
-        for t, matrix in matrix_dict.items():  # for all t
+        nodes = graph.graph.nodes()
+        for matrix, t in graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
             ns = NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
                                  merged_dict_path=self.merged_dict_path,
                                  name_prefix=graph.name_prefix)
@@ -281,4 +280,4 @@ if __name__ == '__main__':
     # bridge.one_to_many_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                       directed=False, t_max=1, negative=20)
 
-    bridge.many_to_many_rw(directed=False, t_max=1, negative=20, process_num=4)
+    bridge.many_to_many_rw(directed=False, t_max=7, negative=20, process_num=2)
