@@ -1,7 +1,6 @@
 import os
 from word2vec_gensim_modified import Word2Vec
 import configparser
-import graph_builder_networkx as gbn
 config = configparser.ConfigParser()
 config.read('config.ini')
 
@@ -26,58 +25,36 @@ class GridSearch(object):
     Based on the assumption that we already have all 'write_translated_negative_samples_dict's based on different
     parameters combination.
     """
-    def __init__(self, encoded_edges_count_files_folder, index2word_path, translated_ns_dict_output_folder,
-                 training_data_folder, merged_word_count_path, valid_vocabulary_path, workers, sg,
-                 negative):
+    def __init__(self, training_data_folder, index2word_path, merged_word_count_path, valid_vocabulary_path,
+                 workers, sg, negative):
         # common parameters
-        self.encoded_edges_count_files_folder = encoded_edges_count_files_folder
-        self.index2word_path = index2word_path  # same as merged_dict_path
-        self.negative = negative
-        self.translated_ns_dict_output_folder = translated_ns_dict_output_folder
         self.training_data_folder = training_data_folder
+        self.index2word_path = index2word_path  # same as merged_dict_path
         self.merged_word_count_path = merged_word_count_path
         self.valid_vocabulary_path = valid_vocabulary_path
         self.workers = workers  # number of threads use for one word2vec calculation.
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
+        self.negative = negative
 
-
-        # ns_mode_pyx=1/0  # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
-
-        # selected_mode='max'/'min'
-        # t=1-5
-
-    def one_search_original(self):
+    def one_search(self, ns_path):
         sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
+
+        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
+        if ns_path:
+            ns_mode_pyx = 1
+        else:
+            ns_mode_pyx = 0
+
+        """ATTENTION
+        The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to 
+        get valid words' count.
+        """
         model = Word2Vec(sentences=sentences,
                          index2word_path=self.index2word_path,
                          merged_word_count_path=self.merged_word_count_path,
                          valid_vocabulary_path=self.valid_vocabulary_path,
-                         translated_shortest_path_nodes_dict_path=None,
-                         ns_mode_pyx=0,
-                         size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
-                         negative=self.negative)
-        word_vectors = model.wv
-        # TODO NOW save wv
-        print(word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab'))
-        del model
-
-    def one_search_rw(self, encoded_edges_count_file_path, directed, t, selected_mode):
-        graph = gbn.NXGraph.from_encoded_edges_count_file(path=encoded_edges_count_file_path, directed=directed)
-        nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=t)
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes, merged_dict_path=self.index2word_path,
-                                 name_prefix=graph.name_prefix)
-        # TODO NOW name unique?
-        ns.write_translated_negative_samples_dict(n=self.negative, selected_mode=selected_mode,
-                                                  output_folder=self.translated_ns_dict_output_folder)
-
-        sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
-        model = Word2Vec(sentences=sentences,
-                         index2word_path=self.index2word_path,
-                         merged_word_count_path=self.merged_word_count_path,
-                         valid_vocabulary_path=self.valid_vocabulary_path,
-                         translated_shortest_path_nodes_dict_path=self.translated_ns_dict_output_folder +
-                                                                  ns.name_prefix + '_translated_ns_dict.pickle',
-                         ns_mode_pyx=1,
+                         translated_shortest_path_nodes_dict_path=ns_path,
+                         ns_mode_pyx=ns_mode_pyx,
                          size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
                          negative=self.negative)
         word_vectors = model.wv
@@ -86,21 +63,18 @@ class GridSearch(object):
         del model
 
     def grid_search_rw(self):
-        # baseline: original word2vec: encoded_edges_count file are not used, t and selected_mode has no effect.
-        self.one_search_original()
-
-        directed = False
+        # self.one_search(ns_path=None)  # baseline: original word2vec: encoded_edges_count file are not used.
+        self.one_search(ns_path='output/intermediate data/graph/encoded_edges_count_window_size_5_undirected_translated_ns_dict_sp.pickle')
 
 
 if __name__ == '__main__':
-    # Only care about skip-gram
-    gs = GridSearch(encoded_edges_count_files_folder=config['graph']['graph_folder'],
+    # Fixed parameters for word2vec
+    sg = 1  # Only care about skip-gram
+
+    gs = GridSearch(training_data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep',
                     index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-                    translated_ns_dict_output_folder=config['graph']['graph_folder'],
-                    training_data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep',
                     merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                     valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                    workers=4, sg=1, negative=20)
+                    workers=4, sg=sg, negative=20)
+
     gs.grid_search_rw()
-
-
