@@ -74,7 +74,7 @@ class NXGraph:
         # TODO
         pass
 
-    def get_shortest_path_lengths_between_all_nodes(self, output_folder=config['graph']['graph_folder']):
+    def get_shortest_path_lengths_between_all_nodes(self, output_folder):
         """
         From test, these three algorithms below take more than 20 hours (processes have been killed after 20 hours) to
         calculate.
@@ -271,9 +271,8 @@ class FromEncodedEdgesCountToTranslatedNSDict:
 
 if __name__ == '__main__':
     bridge = FromEncodedEdgesCountToTranslatedNSDict(encoded_edges_count_file_folder=config['graph']['graph_folder'],
-                                                     translated_ns_dict_folder=config['graph']['graph_folder'],
-                                                     merged_dict_path=config['graph']['dicts_and_encoded_texts_folder']
-                                                                      + 'dict_merged.txt')
+                                                     translated_ns_dict_folder=config['word2vec']['negative_samples_folder'],
+                                                     merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt')
     # bridge.one_to_one_rw(encoded_edges_count_file_name='encoded_edges_count_window_size_5_undirected.txt',
     #                      directed=False, t=1, negative=20, selected_mode='min')
 
