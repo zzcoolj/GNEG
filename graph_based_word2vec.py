@@ -49,6 +49,8 @@ class GridSearch(object):
         The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to 
         get valid words' count.
         """
+        # TODO LATER a valid word count function in gdp
+
         model = Word2Vec(sentences=sentences,
                          index2word_path=self.index2word_path,
                          merged_word_count_path=self.merged_word_count_path,

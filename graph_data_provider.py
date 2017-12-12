@@ -638,8 +638,13 @@ if __name__ == '__main__':
     #                           max_window_size=10,
     #                           process_num=4,
     #                           max_vocab_size=10000)
+
     # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=4, max_vocab_size=10000, already_existed_window_size=7)
-    merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_5.txt')
+
+    # get undirected edges count for all file
+    for i in range(2, 11):
+        file_path = config['graph']['graph_folder'] + 'encoded_edges_count_window_size_' + str(i) + '.txt'
+        merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path)
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.
