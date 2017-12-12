@@ -35,7 +35,7 @@ class NXGraph:
             graph = nx.read_weighted_edgelist(path, create_using=nx.DiGraph(), nodetype=int)
         else:
             graph = nx.read_weighted_edgelist(path, create_using=nx.Graph(), nodetype=int)
-        nx.write_gpickle(graph, output_folder + name_prefix + '.gpickle')
+        # nx.write_gpickle(graph, output_folder + name_prefix + '.gpickle')
         return cls(graph, name_prefix, directed)
 
     def draw_graph(self):

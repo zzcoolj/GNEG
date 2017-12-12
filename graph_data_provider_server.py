@@ -13,5 +13,5 @@ nltk.data.path = ['/vol/datailes/tools/nlp/nltk_data/2016']
 
 # get undirected edges count for all file
 for i in range(2, 11):
-    file_path = 'output/intermediate data/encoded_edges_count_window_size_' + str(i) + '.txt'
+    file_path = 'output/intermediate data/graph/encoded_edges_count_window_size_' + str(i) + '.txt'
     graph_data_provider.merge_encoded_edges_count_for_undirected_graph(file_path)
