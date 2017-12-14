@@ -75,8 +75,11 @@ class GridSearch(object):
                                                                                             words (float)
         '''
         evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
-        result = [multi_processing.get_file_name(ns_path),
-                  evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        if ns_path:
+            result = [multi_processing.get_file_name(ns_path),
+                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        else:
+            result = [ns_path, evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         print(result)
         return result
 
