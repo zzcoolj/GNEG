@@ -65,7 +65,7 @@ class GridSearch(object):
                          size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
                          negative=self.negative)
         word_vectors = model.wv
-        # TODO NOW save wv
+        # TODO LATER save wv
         del model
 
         ''' Result of evaluate_word_pairs contains 3 parts:

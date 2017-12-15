@@ -190,6 +190,7 @@ cdef unsigned long long fast_sentence_sg_neg(
             target_index = word_index
             label = ONEF
         else:
+            # Get a random value between 0 and cum_table[cum_table_len-1], then find the index of this value.
             target_index = bisect_left(cum_table, (next_random >> 16) % cum_table[cum_table_len-1], 0, cum_table_len)
             next_random = (next_random * <unsigned long long>25214903917ULL + 11) & modulo
             if target_index == word_index:
