@@ -421,7 +421,7 @@ cdef unsigned long long fast_sentence_cbow_neg(
     return next_random
 
 
-def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, potential_ns_len):
+def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, potential_ns_len_pyx):
     """
     :param ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
     """
@@ -458,7 +458,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
     cdef np.uint32_t *cum_table
     cdef unsigned long long cum_table_len  # 64-bit unsigned integer
     # for graph based skip-gram negative sampling
-    cdef unsigned long long potential_ns_len = potential_ns_len
+    cdef unsigned long long potential_ns_len = potential_ns_len_pyx
     # for sampling (negative and frequent-word downsampling)
     cdef unsigned long long next_random
 

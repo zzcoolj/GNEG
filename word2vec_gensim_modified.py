@@ -883,7 +883,7 @@ class Word2Vec(utils.SaveLoad):
         if self.sg:
             # Code below only works for word2vec_inner_modified.pyx, cause python version does not has ns_mode_pyx
             tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx,
-                                    potential_ns_len=self.potential_ns_len)
+                                    potential_ns_len_pyx=self.potential_ns_len)
         else:
             # Code below only works for word2vec_inner_modified.pyx, cause python version does not has ns_mode_pyx
             tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx)
