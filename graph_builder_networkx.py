@@ -240,7 +240,7 @@ class FromEncodedEdgesCountToTranslatedNSDict:
                                                   output_folder=self.translated_ns_dict_folder,
                                                   name_suffix='_'+str(t)+'_'+selected_mode)
 
-    def one_to_many_rw(self, encoded_edges_count_file_path, directed, negative, t_max):
+    def one_to_many_rw(self, encoded_edges_count_file_path, directed, potential_ns_len, t_max):
         """
         For one encoded_edges_count_file, get ns dict by different combinations of parameters:
             t & selected_mode
@@ -253,15 +253,15 @@ class FromEncodedEdgesCountToTranslatedNSDict:
                                  merged_dict_path=self.merged_dict_path,
                                  name_prefix=graph.name_prefix)
             for selected_mode in ['max', 'min']:
-                ns.write_translated_negative_samples_dict(n=negative, selected_mode=selected_mode,
+                ns.write_translated_negative_samples_dict(n=potential_ns_len, selected_mode=selected_mode,
                                                           output_folder=self.translated_ns_dict_folder,
                                                           name_suffix='_' + str(t) + '_' + selected_mode)
 
-    def many_to_many_rw(self, directed, negative, t_max, process_num):
+    def many_to_many_rw(self, directed, potential_ns_len, t_max, process_num):
         """
         For all encoded_edges_count_file (of different window size)
         """
-        kw = {'directed': directed, 'negative': negative, 't_max': t_max}
+        kw = {'directed': directed, 'potential_ns_len': potential_ns_len, 't_max': t_max}
         multi_processing.master(files_getter=multi_processing.get_files_endswith,
                                 data_folder=self.encoded_edges_count_file_folder,
                                 file_extension='undirected.txt',
@@ -280,4 +280,4 @@ if __name__ == '__main__':
     # bridge.one_to_many_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                       directed=False, t_max=1, negative=20)
 
-    bridge.many_to_many_rw(directed=False, t_max=7, negative=20, process_num=2)
+    bridge.many_to_many_rw(directed=False, t_max=7, potential_ns_len=200, process_num=2)

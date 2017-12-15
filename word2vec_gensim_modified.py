@@ -418,7 +418,7 @@ class Word2Vec(utils.SaveLoad):
 
     def __init__(
             self, index2word_path, merged_word_count_path, valid_vocabulary_path,
-            translated_shortest_path_nodes_dict_path, ns_mode_pyx,
+            translated_shortest_path_nodes_dict_path, ns_mode_pyx, potential_ns_len,
             sentences=None,
             size=100, alpha=0.025, window=5, min_count=5,
             max_vocab_size=None, sample=1e-3, seed=1, workers=3, min_alpha=0.0001,
@@ -534,6 +534,7 @@ class Word2Vec(utils.SaveLoad):
         self.running_training_loss = 0
         self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
         self.ns_mode_pyx = ns_mode_pyx  # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
+        self.potential_ns_len = potential_ns_len
 
         if sentences is not None:
             if isinstance(sentences, GeneratorType):
@@ -881,7 +882,8 @@ class Word2Vec(utils.SaveLoad):
         tally = 0
         if self.sg:
             # Code below only works for word2vec_inner_modified.pyx, cause python version does not has ns_mode_pyx
-            tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx)
+            tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx,
+                                    potential_ns_len=self.potential_ns_len)
         else:
             # Code below only works for word2vec_inner_modified.pyx, cause python version does not has ns_mode_pyx
             tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx)

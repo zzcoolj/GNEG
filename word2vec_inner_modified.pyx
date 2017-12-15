@@ -119,7 +119,7 @@ cdef inline unsigned long long random_int32(unsigned long long *next_random) nog
     return this_random
 
 cdef unsigned long long fast_sentence_sg_neg_graph_based(
-    const int negative,
+    const int negative, unsigned long long potential_ns_len,
     const np.uint32_t [:] ns_list,
     REAL_t *syn0, REAL_t *syn1neg, const int size, const np.uint32_t word_index,
     const np.uint32_t word2_index, const REAL_t alpha, REAL_t *work,
@@ -141,8 +141,10 @@ cdef unsigned long long fast_sentence_sg_neg_graph_based(
             target_index = word_index
             label = ONEF
         else:
+            # TODO NOW check it works well or not
+            target_index = ns_list[(next_random >> 16) % potential_ns_len]
             next_random = (next_random * <unsigned long long>25214903917ULL + 11) & modulo
-            target_index = ns_list[d-1]
+            # target_index = ns_list[d-1]
             if target_index == word_index:
                 # Extremely important: not using same word as ns sample.
                 continue
@@ -419,7 +421,7 @@ cdef unsigned long long fast_sentence_cbow_neg(
     return next_random
 
 
-def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx):
+def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, potential_ns_len):
     """
     :param ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
     """
@@ -454,7 +456,9 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx):
     # For negative sampling
     cdef REAL_t *syn1neg
     cdef np.uint32_t *cum_table
-    cdef unsigned long long cum_table_len
+    cdef unsigned long long cum_table_len  # 64-bit unsigned integer
+    # for graph based skip-gram negative sampling
+    cdef unsigned long long potential_ns_len = potential_ns_len
     # for sampling (negative and frequent-word downsampling)
     cdef unsigned long long next_random
 
@@ -535,7 +539,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx):
                         if ns_mode:
                             word_index = indexes[i]
                             ns_list = ns_array_view[word_index]  # This line cause two warnings 'warning: code will never be executed [-Wunreachable-code]'
-                            next_random = fast_sentence_sg_neg_graph_based(negative, ns_list, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
+                            next_random = fast_sentence_sg_neg_graph_based(negative, potential_ns_len, ns_list, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
                         else:
                             next_random = fast_sentence_sg_neg(negative, cum_table, cum_table_len, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
 
