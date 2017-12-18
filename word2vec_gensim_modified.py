@@ -557,6 +557,7 @@ class Word2Vec(utils.SaveLoad):
         self.wv = KeyedVectors()
 
     def make_cum_table(self, power=0.75, domain=2 ** 31 - 1):
+        # TODO NOW NOW NOW
         """
         Create a cumulative-distribution table using stored vocabulary word counts for
         drawing random words in the negative-sampling training routines.

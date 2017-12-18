@@ -93,7 +93,7 @@ class GridSearch(object):
 
     def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
         evaluation_result = self.one_search(ns_path=None)  # baseline: original word2vec
-        df = pd.DataFrame(columns=['NS file', 'Graph window size', 'Directed/Undirected', 'Negative', 'Max/Min',
+        df = pd.DataFrame(columns=['NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'Max/Min',
                                    'Pearson correlation', 'Pearson pvalue', 'Spearman correlation',
                                    'Spearman pvalue', 'Ration of pairs with OOV'])
         df.loc[0] = evaluation_result
@@ -101,7 +101,7 @@ class GridSearch(object):
         i = 1
         files = multi_processing.get_files_endswith(data_folder=ns_folder, file_extension='.pickle')
         for file in files:
-            evaluation_result= self.one_search(ns_path=file)
+            evaluation_result = self.one_search(ns_path=file)
             df.loc[i] = evaluation_result
             i += 1
 
@@ -118,6 +118,6 @@ if __name__ == '__main__':
                     index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                     merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                     valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                    workers=5, sg=sg, negative=20, potential_ns_len=1000)
+                    workers=5, sg=sg, negative=20, potential_ns_len=200)
 
-    gs.grid_search()
+    gs.grid_search(ns_folder='output/intermediate data/negative_samples_potential_ns_len_200/')
