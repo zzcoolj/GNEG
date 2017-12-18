@@ -1,6 +1,6 @@
 """
 To build, active the right conda environment and then run command:
-python setup.py build_ext --inplace.
+python setup.py build_ext --inplace
 """
 
 from distutils.core import setup

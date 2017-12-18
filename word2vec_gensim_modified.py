@@ -583,12 +583,30 @@ class Word2Vec(utils.SaveLoad):
             assert self.cum_table[-1] == domain
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
-        shortest_path_nodes_dict = common.read_pickle(translated_shortest_path_nodes_dict_path)
-        '''ATTENTION
-        This function works on the assumptions below: 
+        """ATTENTION
+        This function works on the assumptions below:
         - shortest_path_nodes_dict contains exactly same tokens(format str) as in wv.vocab.
         - wv.vocab.index is from 0 to (vocab_size-1), e.g. 0 to 9999 when vocab_size is 10000.
-        '''
+        """
+        """ATTENTION 2
+        1. For the same translated_shortest_path_nodes_dict_path, wv.vocab and wv.index2word change each time.
+        Even ids are different each time, if we translate them into tokens, we will get same result.
+        Verification code below (run several times to check result):
+        
+        print(self.wv.vocab['the'].index)
+        print(self.ns_array[self.wv.vocab['the'].index])
+        print([self.wv.index2word[i] for i in self.ns_array[self.wv.vocab['the'].index]])
+
+        print(self.wv.vocab['upwards'].index)
+        print(self.wv.index2word[self.wv.vocab['upwards'].index])
+        
+        2. Why wv.vocab and wv.index2word change each time?
+        My guess is wv are ordered from the most frequent to the vocabulary-size-th frequent (e.g. 10000th). 
+        So wv.index2word[0] is always 'the', but for the tokens not so frequent, their ranks slightly change. 
+        Because there will be several tokens have the same frequency.
+        """
+        shortest_path_nodes_dict = common.read_pickle(translated_shortest_path_nodes_dict_path)
+
         ns_dict = {}
         for target_node, ns_nodes in shortest_path_nodes_dict.items():
             target_node_id = self.wv.vocab[target_node].index
@@ -597,11 +615,11 @@ class Word2Vec(utils.SaveLoad):
         if (len(ns_dict) != len(self.wv.vocab)) or (len(ns_dict) != len(shortest_path_nodes_dict)):
             print('ERROR: Graph vocabulary and wv vocabulary are different.')
             exit()
-        # transform ns_dict to an array in order 0 to (ns_dict_length - 1)
+        # transform ns_dict to an array following wv.vocab order from 0 to (ns_dict_length - 1)
         dict_size = len(ns_dict)
-        self.ns_array = zeros((dict_size, self.negative), dtype=uint32)
+        self.ns_array = zeros((dict_size, self.potential_ns_len), dtype=uint32)
         for i in range(dict_size):
-            self.ns_array[i] = ns_dict[i][:self.negative]
+            self.ns_array[i] = ns_dict[i][:self.potential_ns_len]
 
     def create_binary_tree(self):
         """

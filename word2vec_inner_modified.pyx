@@ -141,7 +141,6 @@ cdef unsigned long long fast_sentence_sg_neg_graph_based(
             target_index = word_index
             label = ONEF
         else:
-            # TODO NOW check it works well or not
             target_index = ns_list[(next_random >> 16) % potential_ns_len]
             next_random = (next_random * <unsigned long long>25214903917ULL + 11) & modulo
             # target_index = ns_list[d-1]
@@ -473,8 +472,17 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
     if negative:
         syn1neg = <REAL_t *>(np.PyArray_DATA(model.syn1neg))
         if ns_mode:
+            '''ATTENTION DANGEROUS ZONE !!!
+            If ns_array[0] has 20 elements, ns_array[0][40] does not work for sure, BUT ns_array_view[0][40] works!!!
+            BUT what it gives is not 41st element in ns_array[0] (If we make ns_array[0] have more than 41 elements).
+            So avoid this cause there is no error or warning even it's wrong!
+            '''
             # receive graph-based negative sample array
             ns_array_view = model.ns_array
+            # check ns_array_view length
+            if ns_array_view.shape[1] != potential_ns_len_pyx:
+                print('ERROR: potential_ns_len_pyx should be equal to ns_array_view.shape[1]')
+                exit()
         else:
             cum_table = <np.uint32_t *>(np.PyArray_DATA(model.cum_table))
             cum_table_len = len(model.cum_table)

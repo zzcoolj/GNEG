@@ -1,6 +1,7 @@
 import os
 from word2vec_gensim_modified import Word2Vec
 import pandas as pd
+import re
 import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -78,16 +79,22 @@ class GridSearch(object):
         '''
         evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
         if ns_path:
-            result = [multi_processing.get_file_name(ns_path),
+            ns_name = multi_processing.get_file_name(ns_path)
+            # e.g. encoded_edges_count_window_size_3_undirected_ns_2_max.pickle
+            ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_ns_(.*)_(.*)', ns_name)
+            result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
+                      int(ns_name_information.group(3)), ns_name_information.group(4),
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         else:
-            result = [ns_path, evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+            result = [ns_path, None, None, None, None,
+                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         print(result)
         return result
 
     def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
         evaluation_result = self.one_search(ns_path=None)  # baseline: original word2vec
-        df = pd.DataFrame(columns=['NS file', 'Pearson correlation', 'Pearson pvalue', 'Spearman correlation',
+        df = pd.DataFrame(columns=['NS file', 'Graph window size', 'Directed/Undirected', 'Negative', 'Max/Min',
+                                   'Pearson correlation', 'Pearson pvalue', 'Spearman correlation',
                                    'Spearman pvalue', 'Ration of pairs with OOV'])
         df.loc[0] = evaluation_result
 
@@ -111,6 +118,6 @@ if __name__ == '__main__':
                     index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                     merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                     valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                    workers=5, sg=sg, negative=20, potential_ns_len=200)
+                    workers=5, sg=sg, negative=20, potential_ns_len=1000)
 
     gs.grid_search()

@@ -280,4 +280,4 @@ if __name__ == '__main__':
     # bridge.one_to_many_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                       directed=False, t_max=1, negative=20)
 
-    bridge.many_to_many_rw(directed=False, t_max=7, potential_ns_len=200, process_num=2)
+    bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
