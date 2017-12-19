@@ -120,6 +120,8 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue(ns.get_matrix_value_by_token_xy('the', ',') == 3/(3+4+2+6+8))
         self.assertTrue(ns.get_matrix_value_by_token_xy(',', '.') == 0)
         self.assertTrue(ns.get_matrix_value_by_token_xy('in', ',') == 2/(2+2+6+1+1))
+        # TODO check
+        print(ns.convert_matrix_to_dict_of_dicts(output_folder=self.graph_folder))
 
         # t=2 steps random walk
         nodes, matrix2 = graph.get_t_step_random_walk_stochastic_matrix(t=2)

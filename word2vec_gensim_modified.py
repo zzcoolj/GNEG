@@ -504,6 +504,7 @@ class Word2Vec(utils.SaveLoad):
         self.initialize_word_vectors()
         self.sg = int(sg)
         self.cum_table = None  # for negative sampling
+        self.cum_matrix = None  # for negative sampling
         self.ns_array = None  # for negative sampling
         self.vector_size = int(size)
         self.layer1_size = int(size)
@@ -582,6 +583,34 @@ class Word2Vec(utils.SaveLoad):
             self.cum_table[word_index] = round(cumulative / train_words_pow * domain)
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
+
+    def load_graph_based_ns_matrix_dict(self, ns_matrix_dict_path, power=1, domain=2 ** 31 - 1):
+        """
+        Transfer ns_matrix_dic_path (a dict of dicts) to a 2d array following the order of index2word like what
+        make_cum_table does.
+        """
+        ns_matrix_dict = common.read_pickle(ns_matrix_dict_path)
+
+        # initialize the 2d array
+        vocab_size = len(self.wv.index2word)
+        self.cum_matrix = zeros((vocab_size, vocab_size), dtype=uint32)
+
+        # each row is a cum_table for a target token
+        for target_index in xrange(vocab_size):
+            # get the corresponding dict
+            target_token_dict = ns_matrix_dict[self.wv.index2word[target_index]]
+            print(self.wv.index2word[target_index])
+
+            # compute sum of all power (Z in paper) (as in make_cum_table)
+            train_words_pow = 0.0
+            for target_ns_index in xrange(vocab_size):
+                train_words_pow += target_token_dict[self.wv.index2word[target_ns_index]] ** power
+            cumulative = 0.0
+            for target_ns_index in xrange(vocab_size):
+                cumulative += target_token_dict[self.wv.index2word[target_ns_index]] ** power
+                self.cum_matrix[target_index][target_ns_index] = round(cumulative / train_words_pow * domain)
+            if len(self.cum_matrix[target_index]) > 0:
+                assert self.cum_matrix[target_index][-1] == domain
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
         """ATTENTION
@@ -858,8 +887,12 @@ class Word2Vec(utils.SaveLoad):
             if self.ns_mode_pyx == 0:
                 self.make_cum_table()
             else:
-                self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
-            # self.load_graph_based_negative_sample_table()
+                # TODO NOW NOW NOW unblock
+                # self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
+                # TODO NOW NOW NOW test
+                print('in')
+                self.load_graph_based_ns_matrix_dict(ns_matrix_dict_path=translated_shortest_path_nodes_dict_path)
+                print('out')
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)
             # this word is only ever input – never predicted – so count, huffman-point, etc doesn't matter

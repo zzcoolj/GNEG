@@ -101,6 +101,7 @@ cdef void fast_sentence_sg_hs(
 
 
 # to support random draws from negative-sampling cum_table
+# TODO NOW NOW NOW thing throughly about this function
 cdef inline unsigned long long bisect_left(np.uint32_t *a, unsigned long long x, unsigned long long lo, unsigned long long hi) nogil:
     cdef unsigned long long mid
     while hi > lo:
@@ -421,6 +422,7 @@ cdef unsigned long long fast_sentence_cbow_neg(
 
 
 def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, potential_ns_len_pyx):
+    # TODO NOW NOW NOW work here for cum_matrix as cum_table
     """
     :param ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
     """
