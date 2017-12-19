@@ -100,7 +100,7 @@ class TestGraphDataProvider(unittest.TestCase):
                                  name_prefix=graph.name_prefix)
         ns.write_translated_negative_samples_dict(n=3, selected_mode='max', output_folder=self.graph_folder)
         ns.print_tokens_negative_samples_and_their_value_in_matrix(['the', 'of'])
-        print(ns.convert_matrix_to_dict_of_dicts())  # verified => result correct
+        print(ns.convert_matrix_to_dict_of_dicts(output_folder=self.graph_folder))  # verified => result correct
 
     def test_3_get_ns_dict_by_t_step_random_walk(self):
         # Undirected

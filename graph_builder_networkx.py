@@ -157,7 +157,7 @@ class NegativeSamples:
         matrix_y = nodes.index(word2index[token_y])
         return self.matrix[matrix_x][matrix_y]
 
-    def convert_matrix_to_dict_of_dicts(self):
+    def convert_matrix_to_dict_of_dicts(self, output_folder):
         """
         :return: result[token_x][token_y] = matrix[token_x_index][token_y_index]
         """
@@ -176,6 +176,8 @@ class NegativeSamples:
                 token_y_index = nodes[j]
                 token_y = index2word[token_y_index]
                 result[token_x][token_y] = self.matrix[i][j]
+
+        common.write_to_pickle(result, output_folder + self.name_prefix + '_matrix_dict.pickle')
         return result
 
     def __get_negative_samples_dict_from_matrix(self, n, selected_mode):
