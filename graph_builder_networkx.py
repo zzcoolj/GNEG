@@ -157,6 +157,27 @@ class NegativeSamples:
         matrix_y = nodes.index(word2index[token_y])
         return self.matrix[matrix_x][matrix_y]
 
+    def convert_matrix_to_dict_of_dicts(self):
+        """
+        :return: result[token_x][token_y] = matrix[token_x_index][token_y_index]
+        """
+        if self.matrix.shape[0] != self.matrix.shape[1]:
+            print('ERROR: #row should be equal to #columns.')
+            exit()
+
+        result = {}
+        index2word = gdp.get_index2word(file=self.merged_dict_path)
+        nodes = list(self.row_column_indices_value)
+        for i in range(self.matrix.shape[0]):
+            token_x_index = nodes[i]
+            token_x = index2word[token_x_index]
+            result[token_x] = {}
+            for j in range(self.matrix.shape[1]):
+                token_y_index = nodes[j]
+                token_y = index2word[token_y_index]
+                result[token_x][token_y] = self.matrix[i][j]
+        return result
+
     def __get_negative_samples_dict_from_matrix(self, n, selected_mode):
         """e.g.
         nodes -> a list of word indices (here word index is there index in merged dict.)
@@ -204,6 +225,8 @@ class NegativeSamples:
         translated_negative_samples_dict = {}
         for key, value in self.__get_negative_samples_dict_from_matrix(n, selected_mode).items():
             translated_negative_samples_dict[index2word[key]] = [index2word[node_id] for node_id in value]
+        if not name_suffix:
+            name_suffix=''
         common.write_to_pickle(translated_negative_samples_dict,
                                output_folder + self.name_prefix + '_ns' + name_suffix + '.pickle')
         self.translated_negative_samples_dict = translated_negative_samples_dict
