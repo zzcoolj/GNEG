@@ -157,7 +157,44 @@ class NegativeSamples:
         matrix_y = nodes.index(word2index[token_y])
         return self.matrix[matrix_x][matrix_y]
 
+    def reorder_matrix(self, word2vec_index2word):
+        """
+
+        :param word2vec_index2word: self.wv.index2word in word2vec_gensim_modified.py,
+                                    different from row_column_indices_value order.
+        :return: a reordered matrix following the order of word2vec_index2word
+        """
+        graph_index2word = gdp.get_index2word(file=self.merged_dict_path)
+        ''' 
+            e.g. row_column_indices_value = [7, 91, 20, ...] means:
+                the 1st row/column represents token of index (graph_index2word) 7
+                the 2nd row/column represents token of index (graph_index2word) 91
+        '''
+        translated_matrix_order = [graph_index2word[index] for index in self.row_column_indices_value]
+        '''
+        new matrix row/column index order is always [0, 1, ..., 9999] (if vocab_size is 10000), but here index is not
+        based on the graph_index2word. It's based on the word2vec_index2word (self.wv.index2word)
+        '''
+        reordered_matrix_length = self.matrix.shape[0]
+        reordered_matrix = np.zeros((reordered_matrix_length, reordered_matrix_length), dtype=np.uint32)
+        # reorder rows
+        for i in range(reordered_matrix_length):
+            reordered_matrix[i] = self.matrix[translated_matrix_order.index(word2vec_index2word[i])]
+        # reorder columns
+        translated_reordered_matrix_order = [word2vec_index2word[index] for index in range(reordered_matrix_length)]
+        '''e.g.
+        translated_matrix_order: [windows, apple, ibm, tesla]
+        translated_reordered_matrix_order: [apple, tesla, ibm, windows] (what I want)
+        new_index_order = [1, 3, 2, 0]
+        1 means translated_matrix_order index 1 element apple is the first element in translated_reordered_matrix_order
+        3 means translated_matrix_order index 3 element tesla is the second element in translated_reordered_matrix_order
+        '''
+        new_index_order = [translated_matrix_order.index(token) for token in translated_reordered_matrix_order]
+        reordered_matrix = reordered_matrix[:, new_index_order]
+        return reordered_matrix
+
     def convert_matrix_to_dict_of_dicts(self, output_folder):
+        # Too slow for a 10000*10000 matrix
         """
         :return: result[token_x][token_y] = matrix[token_x_index][token_y_index]
         """
@@ -319,4 +356,3 @@ if __name__ == '__main__':
 
     bridge.one_to_one_rw_distribution(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
                          directed=False, t=1)
-
