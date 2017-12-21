@@ -101,11 +101,10 @@ cdef void fast_sentence_sg_hs(
 
 
 # to support random draws from negative-sampling cum_table
-# TODO NOW NOW NOW thing throughly about this function
 cdef inline unsigned long long bisect_left(np.uint32_t *a, unsigned long long x, unsigned long long lo, unsigned long long hi) nogil:
     cdef unsigned long long mid
     while hi > lo:
-        mid = (lo + hi) >> 1
+        mid = (lo + hi) >> 1  # equals to (lo + hi)//2 e.g. 5>>1=2
         if a[mid] >= x:
             hi = mid
         else:
@@ -468,6 +467,13 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
     cdef np.uint32_t [:] ns_list
     cdef int ns_mode = ns_mode_pyx
 
+    # TODO NOW NOW NOW test
+    # declare a 2d NumPy array in C order
+    cdef np.ndarray[np.uint32_t, ndim=2, mode = 'c'] np_buff
+    # TODO NOW how to transfer potential_ns_len to 10000
+    cdef np.uint32_t cum_matrix_bis[10000][10000]
+    cdef np.uint32_t *cum_matrix_row
+
     if hs:
         syn1 = <REAL_t *>(np.PyArray_DATA(model.syn1))
 
@@ -479,15 +485,31 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
             BUT what it gives is not 41st element in ns_array[0] (If we make ns_array[0] have more than 41 elements).
             So avoid this cause there is no error or warning even it's wrong!
             '''
-            # receive graph-based negative sample array
-            ns_array_view = model.ns_array
-            # check ns_array_view length
-            if ns_array_view.shape[1] != potential_ns_len_pyx:
-                print('ERROR: potential_ns_len_pyx should be equal to ns_array_view.shape[1]')
-                exit()
+            # TODO NOW NOW NOW unblock
+            # # receive graph-based negative sample array
+            # ns_array_view = model.ns_array
+            # # check ns_array_view length
+            # if ns_array_view.shape[1] != potential_ns_len_pyx:
+            #     print('ERROR: potential_ns_len_pyx should be equal to ns_array_view.shape[1]')
+            #     exit()
+
+            # TODO test field
+            # Solution 1
+            # unbox NumPy array into local variable np_buff, make sure we have a contiguous array in C order.
+            # call C function with the address of np_buff[0, 1], that is &np_buff[0, 1]
+            # <class 'numpy.ndarray'>
+            np_buff = np.ascontiguousarray(model.cum_matrix, dtype=np.uint32)
+            # Solution 2
+            # <class 'list'>
+            cum_matrix_bis = np_buff
         else:
+            print('in cum_table')
             cum_table = <np.uint32_t *>(np.PyArray_DATA(model.cum_table))
             cum_table_len = len(model.cum_table)
+            # TODO NOW test
+            print('in2')
+            print(cum_table[0])
+            print('passed2')
     if negative or sample:
         next_random = (2**24) * model.random.randint(0, 2**24) + model.random.randint(0, 2**24)
 
@@ -547,9 +569,15 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
                         fast_sentence_sg_hs(points[i], codes[i], codelens[i], syn0, syn1, size, indexes[j], _alpha, work, word_locks, _compute_loss, &_running_training_loss)
                     if negative:
                         if ns_mode:
-                            word_index = indexes[i]
-                            ns_list = ns_array_view[word_index]  # This line cause two warnings 'warning: code will never be executed [-Wunreachable-code]'
-                            next_random = fast_sentence_sg_neg_graph_based(negative, potential_ns_len, ns_list, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
+                            # TODO NOW NOW NOW test here
+                            # TODO NOW NOW NOW think
+                            cum_matrix_row = <np.uint32_t *>(cum_matrix_bis[indexes[i]])
+                            next_random = fast_sentence_sg_neg(negative, cum_matrix_row, potential_ns_len, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
+
+                            # TODO NOW NOW NOW unblock
+                            # word_index = indexes[i]
+                            # ns_list = ns_array_view[word_index]  # This line cause two warnings 'warning: code will never be executed [-Wunreachable-code]'
+                            # next_random = fast_sentence_sg_neg_graph_based(negative, potential_ns_len, ns_list, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
                         else:
                             next_random = fast_sentence_sg_neg(negative, cum_table, cum_table_len, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
 

@@ -265,6 +265,16 @@ class FromEncodedEdgesCountToTranslatedNSDict:
                                                   output_folder=self.translated_ns_dict_folder,
                                                   name_suffix='_'+str(t)+'_'+selected_mode)
 
+    def one_to_one_rw_distribution(self, encoded_edges_count_file_path, directed, t):
+        # TODO work on this function
+        # TODO so slow: just keep matrix and reorder columns by order in word2vec index2word. It's hard cause index2word changes each time.
+        graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
+        nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=t)
+        ns = NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+                             merged_dict_path=self.merged_dict_path,
+                             name_prefix=graph.name_prefix)
+        ns.convert_matrix_to_dict_of_dicts(output_folder=self.translated_ns_dict_folder)
+
     def one_to_many_rw(self, encoded_edges_count_file_path, directed, potential_ns_len, t_max):
         """
         For one encoded_edges_count_file, get ns dict by different combinations of parameters:
@@ -305,4 +315,8 @@ if __name__ == '__main__':
     # bridge.one_to_many_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                       directed=False, t_max=1, negative=20)
 
-    bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
+    # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
+
+    bridge.one_to_one_rw_distribution(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
+                         directed=False, t=1)
+
