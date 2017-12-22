@@ -93,7 +93,6 @@ class NXGraph:
         """
         matrix = nx.floyd_warshall_numpy(self.graph)  # ATTENTION: return type is NumPy matrix not NumPy ndarray.
         # ATTENTION: after saving, NumPy matrix has been changed to 2darray.
-        # TODO NOW Decide save or not
         np.save(output_folder + self.name_prefix + '_matrix.npy', matrix, fix_imports=False)
         common.write_to_pickle(self.graph.nodes(), output_folder + self.name_prefix + '_nodes.pickle')
         return self.graph.nodes(), matrix
@@ -108,12 +107,16 @@ class NXGraph:
         stochastic_graph = nx.stochastic_graph(directed_graph, weight='weight')
         return nx.to_numpy_matrix(stochastic_graph)
 
-    def get_t_step_random_walk_stochastic_matrix(self, t):
+    def get_t_step_random_walk_stochastic_matrix(self, t, output_folder=None):
         transition_matrix = self.__get_stochastic_matrix()
         result = transition_matrix
         while t > 1:
             result = np.matmul(result, transition_matrix)
             t -= 1
+        if output_folder:
+            file_prefix = output_folder + self.name_prefix + '_' + str(t)
+            np.save(file_prefix + '_step_rw_matrix.npy', result, fix_imports=False)
+            common.write_to_pickle(self.graph.nodes(), file_prefix + '_step_rw_nodes.pickle')
         return self.graph.nodes(), result
 
     def one_to_t_step_random_walk_stochastic_matrix_yielder(self, t):
@@ -266,10 +269,14 @@ class NegativeSamples:
 
 
 class FromEncodedEdgesCountToTranslatedNSDict:
-    def __init__(self, encoded_edges_count_file_folder, translated_ns_dict_folder, merged_dict_path):
+    def __init__(self, encoded_edges_count_file_folder, ns_folder, merged_dict_path):
         self.encoded_edges_count_file_folder = encoded_edges_count_file_folder  # input folder
-        self.translated_ns_dict_folder = translated_ns_dict_folder  # output folder
+        self.ns_folder = ns_folder  # output folder
         self.merged_dict_path = merged_dict_path
+
+    def one_to_one(self, encoded_edges_count_file_path, directed, t):
+        graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
+        graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
 
     def one_to_one_rw(self, encoded_edges_count_file_path, directed, t, negative, selected_mode):
         graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
@@ -278,7 +285,7 @@ class FromEncodedEdgesCountToTranslatedNSDict:
                              merged_dict_path=self.merged_dict_path,
                              name_prefix=graph.name_prefix)
         ns.write_translated_negative_samples_dict(n=negative, selected_mode=selected_mode,
-                                                  output_folder=self.translated_ns_dict_folder,
+                                                  output_folder=self.ns_folder,
                                                   name_suffix='_'+str(t)+'_'+selected_mode)
 
     def one_to_many_rw(self, encoded_edges_count_file_path, directed, potential_ns_len, t_max):
@@ -295,7 +302,7 @@ class FromEncodedEdgesCountToTranslatedNSDict:
                                  name_prefix=graph.name_prefix)
             for selected_mode in ['max', 'min']:
                 ns.write_translated_negative_samples_dict(n=potential_ns_len, selected_mode=selected_mode,
-                                                          output_folder=self.translated_ns_dict_folder,
+                                                          output_folder=self.ns_folder,
                                                           name_suffix='_' + str(t) + '_' + selected_mode)
 
     def many_to_many_rw(self, directed, potential_ns_len, t_max, process_num):
@@ -313,7 +320,7 @@ class FromEncodedEdgesCountToTranslatedNSDict:
 
 if __name__ == '__main__':
     bridge = FromEncodedEdgesCountToTranslatedNSDict(encoded_edges_count_file_folder=config['graph']['graph_folder'],
-                                                     translated_ns_dict_folder=config['word2vec']['negative_samples_folder'],
+                                                     ns_folder=config['word2vec']['negative_samples_folder'],
                                                      merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt')
     # bridge.one_to_one_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                      directed=False, t=1, negative=20, selected_mode='min')
@@ -322,3 +329,5 @@ if __name__ == '__main__':
     #                       directed=False, t_max=1, negative=20)
 
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
+    bridge.one_to_one(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
+                      directed=False, t=1)

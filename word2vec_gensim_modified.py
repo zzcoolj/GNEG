@@ -591,6 +591,7 @@ class Word2Vec(utils.SaveLoad):
             assert self.cum_table[-1] == domain
 
     def make_cum_matrix(self, power=1, domain=2 ** 31 - 1):
+        # TODO NOW NOW NOW test
         # NegativeSamples instance
         ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
                                       row_column_indices_value_path=self.row_column_indices_value_path,
@@ -890,10 +891,7 @@ class Word2Vec(utils.SaveLoad):
             else:
                 # TODO NOW NOW NOW unblock
                 # self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
-                # TODO NOW NOW NOW test
-                print('in')
                 self.make_cum_matrix()
-                print('out')
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)
             # this word is only ever input – never predicted – so count, huffman-point, etc doesn't matter
