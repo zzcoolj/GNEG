@@ -141,12 +141,14 @@ class NegativeSamples:
         self.merged_dict_path = merged_dict_path
         self.translated_negative_samples_dict = None
 
-    def print_matrix_and_token_order(self):
+    def get_and_print_matrix_and_token_order(self):
         index2word = gdp.get_index2word(file=self.merged_dict_path)
         print('\n******************* Matrix & tokens order *******************')
-        print([index2word[index] for index in self.row_column_indices_value])
+        token_order = [index2word[index] for index in self.row_column_indices_value]
+        print(token_order)
         print(self.matrix)
         print('*************************************************************\n')
+        return self.matrix, token_order
 
     def get_matrix_value_by_token_xy(self, token_x, token_y):
         # Does not need translated ns dict to be calculated.
@@ -176,11 +178,6 @@ class NegativeSamples:
         based on the graph_index2word. It's based on the word2vec_index2word (self.wv.index2word)
         '''
         reordered_matrix_length = self.matrix.shape[0]
-        reordered_matrix = np.zeros((reordered_matrix_length, reordered_matrix_length), dtype=np.uint32)
-        # reorder rows
-        for i in range(reordered_matrix_length):
-            reordered_matrix[i] = self.matrix[translated_matrix_order.index(word2vec_index2word[i])]
-        # reorder columns
         translated_reordered_matrix_order = [word2vec_index2word[index] for index in range(reordered_matrix_length)]
         '''e.g.
         translated_matrix_order: [windows, apple, ibm, tesla]
@@ -190,6 +187,9 @@ class NegativeSamples:
         3 means translated_matrix_order index 3 element tesla is the second element in translated_reordered_matrix_order
         '''
         new_index_order = [translated_matrix_order.index(token) for token in translated_reordered_matrix_order]
+        # reorder rows
+        reordered_matrix = self.matrix[new_index_order, :]
+        # reorder columns
         reordered_matrix = reordered_matrix[:, new_index_order]
         return reordered_matrix
 
