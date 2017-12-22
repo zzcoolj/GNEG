@@ -43,6 +43,57 @@ class GridSearch(object):
         self.negative = negative
         self.potential_ns_len = potential_ns_len
 
+    def one_search_distribution(self, matrix_path, row_column_indices_value_path):
+        # TODO NOW
+        sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
+
+        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
+        if matrix_path:
+            ns_mode_pyx = 1
+        else:
+            ns_mode_pyx = 0
+
+        """ATTENTION
+        The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to 
+        get valid words' count.
+        """
+        # TODO LATER a valid word count function in gdp, so as to transfer only one parameter for Word2Vec class.
+
+        model = Word2Vec(sentences=sentences,
+                         index2word_path=self.index2word_path,
+                         merged_word_count_path=self.merged_word_count_path,
+                         valid_vocabulary_path=self.valid_vocabulary_path,
+                         translated_shortest_path_nodes_dict_path=None,
+                         matrix_path=matrix_path,
+                         row_column_indices_value_path=row_column_indices_value_path,
+                         ns_mode_pyx=ns_mode_pyx,
+                         potential_ns_len=self.potential_ns_len,
+                         size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
+                         negative=self.negative)
+        word_vectors = model.wv
+        # TODO LATER save wv
+        del model
+
+        ''' Result of evaluate_word_pairs contains 3 parts:
+        ((0.43915524919358867, 2.3681259690228147e-13),                                     Pearson
+        SpearmanrResult(correlation=0.44614214937080449, pvalue=8.8819867392097872e-14),    Spearman 
+        28.328611898016998)                                                                 ratio of pairs with unknown 
+                                                                                            words (float)
+        '''
+        evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
+        if ns_path:
+            ns_name = multi_processing.get_file_name(ns_path)
+            # e.g. encoded_edges_count_window_size_3_undirected_ns_2_max.pickle
+            ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_ns_(.*)_(.*)', ns_name)
+            result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
+                      int(ns_name_information.group(3)), ns_name_information.group(4),
+                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        else:
+            result = [ns_path, None, None, None, None,
+                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        print(result)
+        return result
+
     def one_search(self, ns_path):
         sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
 

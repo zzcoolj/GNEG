@@ -597,6 +597,9 @@ class Word2Vec(utils.SaveLoad):
                                       row_column_indices_value_path=self.row_column_indices_value_path,
                                       merged_dict_path=self.graph_index2word_path)
         # reorder matrix's row and column to follow wv.index2word's order
+        # TODO delete
+        ns.get_and_print_matrix_and_token_order()
+        print(self.wv.index2word)
         reordered_matrix = ns.reorder_matrix(self.wv.index2word)
         print(reordered_matrix)
 
@@ -618,6 +621,7 @@ class Word2Vec(utils.SaveLoad):
             if len(self.cum_matrix[x]) > 0:
                 assert self.cum_matrix[x][-1] == domain
         print(self.cum_matrix)
+        exit()
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
         """ATTENTION

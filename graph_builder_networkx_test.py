@@ -6,6 +6,7 @@ import numpy as np
 class TestGraphDataProvider(unittest.TestCase):
     graph_folder = 'output/intermediate data for unittest/graph/'
     merged_dict_path = 'output/intermediate data for unittest/graph/keep/dict_merged_for_unittest.txt'
+    ns_folder = 'output/intermediate data for unittest/negative_samples/'
     encoded_edges_count_path = 'output/intermediate data for unittest/graph/keep/encoded_edges_count_window_size_6_vocab_size_none_for_unittest.txt'
     merged_dict_undirected_path = 'output/intermediate data for unittest/graph/keep/dict_merged_undirected_for_unittest.txt'
     encoded_edges_count_undirected_path = 'output/intermediate data for unittest/graph/keep/encoded_edges_count_window_size_6_vocab_size_none_undirected_for_unittest.txt'
@@ -154,10 +155,9 @@ class TestGraphDataProvider(unittest.TestCase):
 
     def test_4_reorder_matrix(self):
         # Undirected
-        graph = gbn.NXGraph.from_encoded_edges_count_file(self.encoded_edges_count_undirected_path, directed=False,
-                                                          output_folder=self.graph_folder)
+        graph = gbn.NXGraph.from_encoded_edges_count_file(self.encoded_edges_count_undirected_path, directed=False)
         # t=1 step random walk
-        nodes, matrix1 = graph.get_t_step_random_walk_stochastic_matrix(t=1)
+        nodes, matrix1 = graph.get_t_step_random_walk_stochastic_matrix(t=1, output_folder=self.ns_folder)
         ns = gbn.NegativeSamples(matrix=matrix1, row_column_indices_value=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path,
                                  name_prefix=graph.name_prefix)
