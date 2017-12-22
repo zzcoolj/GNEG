@@ -100,7 +100,6 @@ class TestGraphDataProvider(unittest.TestCase):
                                  name_prefix=graph.name_prefix)
         ns.write_translated_negative_samples_dict(n=3, selected_mode='max', output_folder=self.graph_folder)
         ns.print_tokens_negative_samples_and_their_value_in_matrix(['the', 'of'])
-        print(ns.convert_matrix_to_dict_of_dicts(output_folder=self.graph_folder))  # verified => result correct
 
     def test_3_get_ns_dict_by_t_step_random_walk(self):
         # Undirected
@@ -120,8 +119,6 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue(ns.get_matrix_value_by_token_xy('the', ',') == 3/(3+4+2+6+8))
         self.assertTrue(ns.get_matrix_value_by_token_xy(',', '.') == 0)
         self.assertTrue(ns.get_matrix_value_by_token_xy('in', ',') == 2/(2+2+6+1+1))
-        # TODO check
-        print(ns.convert_matrix_to_dict_of_dicts(output_folder=self.graph_folder))
 
         # t=2 steps random walk
         nodes, matrix2 = graph.get_t_step_random_walk_stochastic_matrix(t=2)
