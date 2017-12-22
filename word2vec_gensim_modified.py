@@ -534,12 +534,16 @@ class Word2Vec(utils.SaveLoad):
         self.model_trimmed_post_training = False
         self.compute_loss = compute_loss
         self.running_training_loss = 0
-        self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
-        self.ns_mode_pyx = ns_mode_pyx  # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
-        self.potential_ns_len = potential_ns_len
+        # for construct graph based vocab
         self.graph_index2word_path = index2word_path
         self.merged_word_count_path = merged_word_count_path
         self.valid_vocabulary_path = valid_vocabulary_path
+        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
+        self.ns_mode_pyx = ns_mode_pyx
+        # graph based ns solution 1
+        self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
+        self.potential_ns_len = potential_ns_len
+        # graph based ns solution 2
         self.matrix_path = matrix_path
         self.row_column_indices_value_path = row_column_indices_value_path
 
