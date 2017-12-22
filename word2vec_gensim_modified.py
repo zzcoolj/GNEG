@@ -418,7 +418,8 @@ class Word2Vec(utils.SaveLoad):
 
     def __init__(
             self, index2word_path, merged_word_count_path, valid_vocabulary_path,
-            translated_shortest_path_nodes_dict_path, ns_mode_pyx, potential_ns_len,
+            translated_shortest_path_nodes_dict_path, matrix_path, row_column_indices_value_path,
+            ns_mode_pyx, potential_ns_len,
             sentences=None,
             size=100, alpha=0.025, window=5, min_count=5,
             max_vocab_size=None, sample=1e-3, seed=1, workers=3, min_alpha=0.0001,
@@ -536,14 +537,16 @@ class Word2Vec(utils.SaveLoad):
         self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
         self.ns_mode_pyx = ns_mode_pyx  # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
         self.potential_ns_len = potential_ns_len
+        self.graph_index2word_path = index2word_path
+        self.merged_word_count_path = merged_word_count_path
+        self.valid_vocabulary_path = valid_vocabulary_path
+        self.matrix_path = matrix_path
+        self.row_column_indices_value_path = row_column_indices_value_path
 
         if sentences is not None:
             if isinstance(sentences, GeneratorType):
                 raise TypeError("You can't pass a generator as the sentences argument. Try an iterator.")
             self.build_vocab(sentences,
-                             index2word_path=index2word_path,
-                             merged_word_count_path=merged_word_count_path,
-                             valid_vocabulary_path=valid_vocabulary_path,
                              translated_shortest_path_nodes_dict_path=translated_shortest_path_nodes_dict_path,
                              trim_rule=trim_rule)
             self.train(sentences, total_examples=self.corpus_count, epochs=self.iter,
@@ -558,7 +561,6 @@ class Word2Vec(utils.SaveLoad):
         self.wv = KeyedVectors()
 
     def make_cum_table(self, power=0.75, domain=2 ** 31 - 1):
-        # TODO NOW NOW NOW
         """
         Create a cumulative-distribution table using stored vocabulary word counts for
         drawing random words in the negative-sampling training routines.
@@ -584,33 +586,33 @@ class Word2Vec(utils.SaveLoad):
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
 
-    def load_graph_based_ns_matrix_dict(self, ns_matrix_dict_path, power=1, domain=2 ** 31 - 1):
-        """
-        Transfer ns_matrix_dic_path (a dict of dicts) to a 2d array following the order of index2word like what
-        make_cum_table does.
-        """
-        ns_matrix_dict = common.read_pickle(ns_matrix_dict_path)
+    def make_cum_matrix(self, power=1, domain=2 ** 31 - 1):
+        # NegativeSamples instance
+        ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
+                                      row_column_indices_value_path=self.row_column_indices_value_path,
+                                      merged_dict_path=self.graph_index2word_path)
+        # reorder matrix's row and column to follow wv.index2word's order
+        reordered_matrix = ns.reorder_matrix(self.wv.index2word)
+        print(reordered_matrix)
 
         # initialize the 2d array
         vocab_size = len(self.wv.index2word)
         self.cum_matrix = zeros((vocab_size, vocab_size), dtype=uint32)
 
         # each row is a cum_table for a target token
-        for target_index in xrange(vocab_size):
-            # get the corresponding dict
-            target_token_dict = ns_matrix_dict[self.wv.index2word[target_index]]
-            print(self.wv.index2word[target_index])
-
+        for x in xrange(vocab_size):
+            target_cum_table = reordered_matrix[x]
             # compute sum of all power (Z in paper) (as in make_cum_table)
             train_words_pow = 0.0
-            for target_ns_index in xrange(vocab_size):
-                train_words_pow += target_token_dict[self.wv.index2word[target_ns_index]] ** power
+            for y in xrange(vocab_size):
+                train_words_pow += target_cum_table[y] ** power
             cumulative = 0.0
-            for target_ns_index in xrange(vocab_size):
-                cumulative += target_token_dict[self.wv.index2word[target_ns_index]] ** power
-                self.cum_matrix[target_index][target_ns_index] = round(cumulative / train_words_pow * domain)
-            if len(self.cum_matrix[target_index]) > 0:
-                assert self.cum_matrix[target_index][-1] == domain
+            for y in xrange(vocab_size):
+                cumulative += target_cum_table[y] ** power
+                self.cum_matrix[x][y] = round(cumulative / train_words_pow * domain)
+            if len(self.cum_matrix[x]) > 0:
+                assert self.cum_matrix[x][-1] == domain
+        print(self.cum_matrix)
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
         """ATTENTION
@@ -685,7 +687,6 @@ class Word2Vec(utils.SaveLoad):
             logger.info("built huffman tree with maximum node depth %i", max_depth)
 
     def build_vocab(self, sentences,
-                    index2word_path, merged_word_count_path, valid_vocabulary_path,
                     translated_shortest_path_nodes_dict_path,
                     keep_raw_vocab=False, trim_rule=None, progress_per=10000, update=False):
         """
@@ -695,13 +696,11 @@ class Word2Vec(utils.SaveLoad):
         """
         # TODO Remind: replace scan_vocab by my version, which uses valid vocabulary from graph.
         # self.scan_vocab(sentences, progress_per=progress_per, trim_rule=trim_rule)  # initial survey
-        self.scan_vocab_from_graph_data_provider_vocabulary(sentences,
-                                                            index2word_path=index2word_path,
-                                                            merged_word_count_path=merged_word_count_path,
-                                                            valid_vocabulary_path=valid_vocabulary_path)
+        self.scan_vocab_from_graph_data_provider_vocabulary(sentences)
         self.scale_vocab(keep_raw_vocab=keep_raw_vocab, trim_rule=trim_rule,
                          update=update)  # trim by min_count & precalculate downsampling
-        self.finalize_vocab(update=update, translated_shortest_path_nodes_dict_path=translated_shortest_path_nodes_dict_path)  # build tables & arrays
+        self.finalize_vocab(update=update,
+                            translated_shortest_path_nodes_dict_path=translated_shortest_path_nodes_dict_path)  # build tables & arrays
 
     def scan_vocab(self, sentences, progress_per=10000, trim_rule=None):
         """Do an initial scan of all words appearing in sentences."""
@@ -738,15 +737,13 @@ class Word2Vec(utils.SaveLoad):
         print(self.max_vocab_size)
         print(len(self.raw_vocab))
 
-    def scan_vocab_from_graph_data_provider_vocabulary(self, sentences,
-                                                       index2word_path,
-                                                       merged_word_count_path,
-                                                       valid_vocabulary_path):
+    def scan_vocab_from_graph_data_provider_vocabulary(self, sentences):
+        # TODO NOW check build_vocab_from_freq in github
         """Do an initial scan of all words appearing in sentences."""
         vocab = defaultdict(int)
-        index2word = gdp.get_index2word(index2word_path)
-        merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(merged_word_count_path, key_type=str, value_type=int)
-        valid_vocabulary = dict.fromkeys(gdp.read_valid_vocabulary(valid_vocabulary_path))
+        index2word = gdp.get_index2word(self.graph_index2word_path)
+        merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(self.merged_word_count_path, key_type=str, value_type=int)
+        valid_vocabulary = dict.fromkeys(gdp.read_valid_vocabulary(self.valid_vocabulary_path))
         for index in valid_vocabulary:
             vocab[index2word[int(index)]] = merged_word_count[str(index)]
         for sentence_no, sentence in enumerate(sentences):
@@ -891,7 +888,7 @@ class Word2Vec(utils.SaveLoad):
                 # self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
                 # TODO NOW NOW NOW test
                 print('in')
-                self.load_graph_based_ns_matrix_dict(ns_matrix_dict_path=translated_shortest_path_nodes_dict_path)
+                self.make_cum_matrix()
                 print('out')
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)

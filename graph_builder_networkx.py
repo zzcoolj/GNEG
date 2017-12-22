@@ -129,10 +129,6 @@ class NXGraph:
             yield result, t
 
 
-# matrix = np.load(data_folder + self.name_prefix + '_matrix.npy')
-# nodes = common.read_pickle(data_folder + self.name_prefix + '_nodes.pickle')
-
-
 class NegativeSamples:
     def __init__(self, matrix, row_column_indices_value, merged_dict_path, name_prefix):
         self.name_prefix = name_prefix
@@ -140,6 +136,13 @@ class NegativeSamples:
         self.row_column_indices_value = row_column_indices_value
         self.merged_dict_path = merged_dict_path
         self.translated_negative_samples_dict = None
+
+    @classmethod
+    def load(cls, matrix_path, row_column_indices_value_path, merged_dict_path):
+        matrix = np.load(matrix_path)
+        row_column_indices_value = common.read_pickle(row_column_indices_value_path)
+        return cls(matrix=matrix, row_column_indices_value=row_column_indices_value, merged_dict_path=merged_dict_path,
+                   name_prefix=None)
 
     def get_and_print_matrix_and_token_order(self):
         index2word = gdp.get_index2word(file=self.merged_dict_path)
