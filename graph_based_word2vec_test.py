@@ -19,5 +19,6 @@ class TestGraphBasedWord2vec(unittest.TestCase):
         # gs.one_search(ns_path=None)
 
 
+
 if __name__ == '__main__':
     unittest.main()
