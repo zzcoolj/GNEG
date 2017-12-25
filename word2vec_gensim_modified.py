@@ -591,17 +591,12 @@ class Word2Vec(utils.SaveLoad):
             assert self.cum_table[-1] == domain
 
     def make_cum_matrix(self, power=1, domain=2 ** 31 - 1):
-        # TODO NOW NOW NOW test
         # NegativeSamples instance
         ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
                                       row_column_indices_value_path=self.row_column_indices_value_path,
                                       merged_dict_path=self.graph_index2word_path)
         # reorder matrix's row and column to follow wv.index2word's order
-        # TODO delete
-        ns.get_and_print_matrix_and_token_order()
-        print(self.wv.index2word)
         reordered_matrix = ns.reorder_matrix(self.wv.index2word)
-        print(reordered_matrix)
 
         # initialize the 2d array
         vocab_size = len(self.wv.index2word)
@@ -620,8 +615,6 @@ class Word2Vec(utils.SaveLoad):
                 self.cum_matrix[x][y] = round(cumulative / train_words_pow * domain)
             if len(self.cum_matrix[x]) > 0:
                 assert self.cum_matrix[x][-1] == domain
-        print(self.cum_matrix)
-        exit()
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
         """ATTENTION

@@ -81,6 +81,7 @@ class GridSearch(object):
                                                                                             words (float)
         '''
         evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
+        print(evaluation)
         if ns_path:
             ns_name = multi_processing.get_file_name(ns_path)
             # e.g. encoded_edges_count_window_size_3_undirected_ns_2_max.pickle
