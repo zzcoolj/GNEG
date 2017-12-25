@@ -108,6 +108,7 @@ class NXGraph:
         return nx.to_numpy_matrix(stochastic_graph)
 
     def get_t_step_random_walk_stochastic_matrix(self, t, output_folder=None):
+        # TODO NOW NOW NOW not the same result from 1 step random walk
         transition_matrix = self.__get_stochastic_matrix()
         result = transition_matrix
         while t > 1:
@@ -167,7 +168,7 @@ class NegativeSamples:
 
     def reorder_matrix(self, word2vec_index2word):
         """
-
+        Called in word2vec_gensim_modified.py make_cum_matrix function.
         :param word2vec_index2word: self.wv.index2word in word2vec_gensim_modified.py,
                                     different from row_column_indices_value order.
         :return: a reordered matrix following the order of word2vec_index2word
@@ -265,26 +266,23 @@ class NegativeSamples:
             for ns_word in ns_words:
                 print('\t', ns_word, '\t', self.get_matrix_value_by_token_xy(token_x=word, token_y=ns_word))
 
-# TODO NOW NOW NOW not the same result from 1 step random walk
-
 
 class FromEncodedEdgesCountToTranslatedNSDict:
+    """ATTENTION [DEPRECATED]
+    This class only serves the old uniform ns selection idea, which should be deprecated.
+    """
     def __init__(self, encoded_edges_count_file_folder, ns_folder, merged_dict_path):
         self.encoded_edges_count_file_folder = encoded_edges_count_file_folder  # input folder
         self.ns_folder = ns_folder  # output folder
         self.merged_dict_path = merged_dict_path
 
-    def one_to_one(self, encoded_edges_count_file_path, directed, t):
-        graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
-        graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
-
-    def one_to_one_rw(self, encoded_edges_count_file_path, directed, t, negative, selected_mode):
+    def one_to_one_rw(self, encoded_edges_count_file_path, directed, t, potential_ns_len, selected_mode):
         graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
         nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=t)
         ns = NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
                              merged_dict_path=self.merged_dict_path,
                              name_prefix=graph.name_prefix)
-        ns.write_translated_negative_samples_dict(n=negative, selected_mode=selected_mode,
+        ns.write_translated_negative_samples_dict(n=potential_ns_len, selected_mode=selected_mode,
                                                   output_folder=self.ns_folder,
                                                   name_suffix='_'+str(t)+'_'+selected_mode)
 
@@ -318,16 +316,58 @@ class FromEncodedEdgesCountToTranslatedNSDict:
                                 **kw)
 
 
+class GraphGridSearcher:
+    """
+    This class is just a helper for NXGraph. When there are several encoded_edges_count files. This class goes through
+    all of them and produce result of different t steps.
+    """
+    def __init__(self, ns_folder):
+        self.ns_folder = ns_folder  # output folder
+
+    def one_to_one(self, encoded_edges_count_file_path, directed, t):
+        graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
+        graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
+
+    def one_to_many(self, encoded_edges_count_file_path, directed, t_max):
+        print(multi_processing.get_pid(), encoded_edges_count_file_path)
+        # graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
+        # # They share the same nodes file
+        # nodes = graph.graph.nodes()
+        # common.write_to_pickle(nodes, graph.name_prefix + '_nodes.pickle')
+        # for matrix, t in graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
+        #     file_prefix = self.ns_folder + graph.name_prefix + '_' + str(t)
+        #     np.save(file_prefix + '_step_rw_matrix.npy', matrix, fix_imports=False)
+
+    def many_to_many(self, encoded_edges_count_file_folder, directed, t_max, process_num):
+        """
+        For all encoded_edges_count_file (of different window size)
+        """
+        kw = {'directed': directed, 't_max': t_max}
+        if directed:
+            # TODO LATER So far, all directed encoded_edges_count files don't have such file extension below.
+            file_extension = '_directed.txt'
+        else:
+            file_extension = '_undirected.txt'
+        multi_processing.master(files_getter=multi_processing.get_files_endswith,
+                                data_folder=encoded_edges_count_file_folder,
+                                file_extension=file_extension,
+                                worker=self.one_to_many,
+                                process_num=process_num,
+                                **kw)
+
+
 if __name__ == '__main__':
-    bridge = FromEncodedEdgesCountToTranslatedNSDict(encoded_edges_count_file_folder=config['graph']['graph_folder'],
-                                                     ns_folder=config['word2vec']['negative_samples_folder'],
-                                                     merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt')
+    # DEPRECATED
+    # bridge = FromEncodedEdgesCountToTranslatedNSDict(encoded_edges_count_file_folder=config['graph']['graph_folder'],
+    #                                                  ns_folder=config['word2vec']['negative_samples_folder'],
+    #                                                  merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt')
     # bridge.one_to_one_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                      directed=False, t=1, negative=20, selected_mode='min')
     #
     # bridge.one_to_many_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                       directed=False, t_max=1, negative=20)
-
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
-    bridge.one_to_one(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
-                      directed=False, t=1)
+
+    grid_searcher = GraphGridSearcher(ns_folder=config['word2vec']['negative_samples_folder'])
+    grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=3,
+                               process_num=2)
