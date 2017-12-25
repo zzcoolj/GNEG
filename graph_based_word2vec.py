@@ -26,8 +26,11 @@ class WikiSentences(object):
                             yield [word.decode('iso-8859-1') for word in line.split()]
 
 
-class GridSearch(object):
-    """ATTENTION
+class GridSearch_old(object):
+    """ATTENTION [DEPRECATED]
+    This class only serves the old uniform ns selection idea, which should be deprecated.
+    (work together with FromEncodedEdgesCountToTranslatedNSDict class in graph_builder_network.py)
+
     Based on the assumption that we already have all 'write_translated_negative_samples_dict's based on different
     parameters combination.
     """
@@ -43,58 +46,6 @@ class GridSearch(object):
         self.negative = negative
         self.potential_ns_len = potential_ns_len
 
-    def one_search_distribution(self, matrix_path, row_column_indices_value_path):
-        # TODO NOW
-        sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
-
-        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
-        if matrix_path:
-            ns_mode_pyx = 1
-        else:
-            ns_mode_pyx = 0
-
-        """ATTENTION
-        The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to 
-        get valid words' count.
-        """
-        # TODO LATER a valid word count function in gdp, so as to transfer only one parameter for Word2Vec class.
-
-        model = Word2Vec(sentences=sentences,
-                         index2word_path=self.index2word_path,
-                         merged_word_count_path=self.merged_word_count_path,
-                         valid_vocabulary_path=self.valid_vocabulary_path,
-                         translated_shortest_path_nodes_dict_path=None,
-                         matrix_path=matrix_path,
-                         row_column_indices_value_path=row_column_indices_value_path,
-                         ns_mode_pyx=ns_mode_pyx,
-                         potential_ns_len=self.potential_ns_len,
-                         size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
-                         negative=self.negative)
-        word_vectors = model.wv
-        # TODO LATER save wv
-        del model
-
-        ''' Result of evaluate_word_pairs contains 3 parts:
-        ((0.43915524919358867, 2.3681259690228147e-13),                                     Pearson
-        SpearmanrResult(correlation=0.44614214937080449, pvalue=8.8819867392097872e-14),    Spearman 
-        28.328611898016998)                                                                 ratio of pairs with unknown 
-                                                                                            words (float)
-        '''
-        evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
-        print(evaluation)
-        if ns_path:
-            ns_name = multi_processing.get_file_name(ns_path)
-            # e.g. encoded_edges_count_window_size_3_undirected_ns_2_max.pickle
-            ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_ns_(.*)_(.*)', ns_name)
-            result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
-                      int(ns_name_information.group(3)), ns_name_information.group(4),
-                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
-        else:
-            result = [ns_path, None, None, None, None,
-                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
-        print(result)
-        return result
-
     def one_search(self, ns_path):
         sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
 
@@ -108,7 +59,6 @@ class GridSearch(object):
         The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to 
         get valid words' count.
         """
-        # TODO LATER a valid word count function in gdp, so as to transfer only one parameter for Word2Vec class.
 
         model = Word2Vec(sentences=sentences,
                          index2word_path=self.index2word_path,
@@ -120,7 +70,6 @@ class GridSearch(object):
                          size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
                          negative=self.negative)
         word_vectors = model.wv
-        # TODO LATER save wv
         del model
 
         ''' Result of evaluate_word_pairs contains 3 parts:
@@ -132,7 +81,7 @@ class GridSearch(object):
         evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
         if ns_path:
             ns_name = multi_processing.get_file_name(ns_path)
-            # e.g. encoded_edges_count_window_size_3_undirected_ns_2_max.pickle
+            # e.g. encoded_edges_count_window_size_3_undirected_ns_2_max
             ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_ns_(.*)_(.*)', ns_name)
             result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
                       int(ns_name_information.group(3)), ns_name_information.group(4),
@@ -162,14 +111,94 @@ class GridSearch(object):
         writer.save()
 
 
+class GridSearch_new(object):
+    def __init__(self, training_data_folder, index2word_path, merged_word_count_path, valid_vocabulary_path,
+                 workers, sg, negative):
+        # common parameters
+        self.training_data_folder = training_data_folder
+        self.index2word_path = index2word_path  # same as merged_dict_path
+        self.merged_word_count_path = merged_word_count_path
+        self.valid_vocabulary_path = valid_vocabulary_path
+        self.workers = workers  # number of threads use for one word2vec calculation.
+        self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
+        self.negative = negative
+
+    def one_search(self, matrix_path, row_column_indices_value_path):
+        sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
+
+        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
+        if matrix_path:
+            ns_mode_pyx = 1
+        else:
+            ns_mode_pyx = 0
+
+        """ATTENTION
+        The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to 
+        get valid words' count.
+        """
+        # TODO LATER a valid word count function in gdp, so as to transfer only one parameter to Word2Vec class.
+        # TODO LATER rethink about min_count & max_vocab_size
+
+        # TODO NOW translated_shortest_path_nodes_dict_path & potential_ns_len may be useless
+        # TODO NOW NOW NOW how to deal with potential_ns_len
+
+        model = Word2Vec(sentences=sentences,
+                         index2word_path=self.index2word_path,
+                         merged_word_count_path=self.merged_word_count_path,
+                         valid_vocabulary_path=self.valid_vocabulary_path,
+                         translated_shortest_path_nodes_dict_path=None,
+                         matrix_path=matrix_path,
+                         row_column_indices_value_path=row_column_indices_value_path,
+                         ns_mode_pyx=ns_mode_pyx,
+                         potential_ns_len=10000,
+                         size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
+                         negative=self.negative)
+        word_vectors = model.wv
+        # TODO LATER save wv
+        del model
+
+        ''' Result of evaluate_word_pairs contains 3 parts:
+        ((0.43915524919358867, 2.3681259690228147e-13),                                     Pearson
+        SpearmanrResult(correlation=0.44614214937080449, pvalue=8.8819867392097872e-14),    Spearman 
+        28.328611898016998)                                                                 ratio of pairs with unknown 
+                                                                                            words (float)
+        '''
+        evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
+        print(evaluation)
+        if matrix_path:
+            ns_name = multi_processing.get_file_name(matrix_path)
+            # e.g. encoded_edges_count_window_size_5_undirected_1_step_rw_matrix
+            ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_(.*)_step_rw_matrix', ns_name)
+            result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
+                      int(ns_name_information.group(3)),
+                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        else:
+            result = [matrix_path, None, None, None,
+                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        print(result)
+        return result
+
+    def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
+        # TODO NOW
+        pass
+
+
 if __name__ == '__main__':
     # Fixed parameters for word2vec
     sg = 1  # Only care about skip-gram
 
-    gs = GridSearch(training_data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep',
-                    index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-                    merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
-                    valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                    workers=5, sg=sg, negative=20, potential_ns_len=200)
+    # # DEPRECATED
+    # gs = GridSearch_old(training_data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep',
+    #                     index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
+    #                     merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
+    #                     valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
+    #                     workers=5, sg=sg, negative=20, potential_ns_len=200)
+    # gs.grid_search(ns_folder='output/intermediate data/negative_samples_potential_ns_len_200/')
 
-    gs.grid_search(ns_folder='output/intermediate data/negative_samples_potential_ns_len_200/')
+    gs2 = GridSearch_new(training_data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep',
+                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
+                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
+                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
+                         workers=5, sg=sg, negative=20)
+    gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_matrix.npy',
+                   row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle')

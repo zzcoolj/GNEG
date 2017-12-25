@@ -615,6 +615,7 @@ class Word2Vec(utils.SaveLoad):
                 self.cum_matrix[x][y] = round(cumulative / train_words_pow * domain)
             if len(self.cum_matrix[x]) > 0:
                 assert self.cum_matrix[x][-1] == domain
+        print(self.cum_matrix)
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
         """ATTENTION

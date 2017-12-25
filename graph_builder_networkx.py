@@ -357,7 +357,7 @@ class GraphGridSearcher:
 
 
 if __name__ == '__main__':
-    # DEPRECATED
+    # # DEPRECATED
     # bridge = FromEncodedEdgesCountToTranslatedNSDict(encoded_edges_count_file_folder=config['graph']['graph_folder'],
     #                                                  ns_folder=config['word2vec']['negative_samples_folder'],
     #                                                  merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt')
