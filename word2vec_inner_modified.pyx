@@ -471,7 +471,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
     # declare a 2d NumPy array in C order
     cdef np.ndarray[np.uint32_t, ndim=2, mode = 'c'] np_buff
     # TODO NOW how to transfer potential_ns_len to 10000
-    cdef np.uint32_t cum_matrix_bis[10000][10000]
+    cdef np.uint32_t cum_matrix_bis[6][6]
     cdef np.uint32_t *cum_matrix_row
 
     if hs:
@@ -494,6 +494,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
             #     exit()
 
             # TODO test field
+            print('0')
             # Solution 1
             # unbox NumPy array into local variable np_buff, make sure we have a contiguous array in C order.
             # call C function with the address of np_buff[0, 1], that is &np_buff[0, 1]
@@ -501,7 +502,11 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
             np_buff = np.ascontiguousarray(model.cum_matrix, dtype=np.uint32)
             # Solution 2
             # <class 'list'>
+            print('1')
             cum_matrix_bis = np_buff
+            print('2')
+            print(cum_matrix_bis[3])
+            print(cum_matrix_bis[5])
         else:
             print('in cum_table')
             cum_table = <np.uint32_t *>(np.PyArray_DATA(model.cum_table))

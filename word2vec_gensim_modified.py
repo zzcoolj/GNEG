@@ -590,7 +590,7 @@ class Word2Vec(utils.SaveLoad):
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
 
-    def make_cum_matrix(self, power=1, domain=2 ** 31 - 1):
+    def make_cum_matrix(self, power=1, domain=2 ** 31 - 1, quick_mode=False):
         # NegativeSamples instance
         ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
                                       row_column_indices_value_path=self.row_column_indices_value_path,
@@ -602,20 +602,35 @@ class Word2Vec(utils.SaveLoad):
         vocab_size = len(self.wv.index2word)
         self.cum_matrix = zeros((vocab_size, vocab_size), dtype=uint32)
 
-        # each row is a cum_table for a target token
-        for x in xrange(vocab_size):
-            target_cum_table = reordered_matrix[x]
-            # compute sum of all power (Z in paper) (as in make_cum_table)
-            train_words_pow = 0.0
-            for y in xrange(vocab_size):
-                train_words_pow += target_cum_table[y] ** power
-            cumulative = 0.0
-            for y in xrange(vocab_size):
-                cumulative += target_cum_table[y] ** power
-                self.cum_matrix[x][y] = round(cumulative / train_words_pow * domain)
-            if len(self.cum_matrix[x]) > 0:
-                assert self.cum_matrix[x][-1] == domain
+        if quick_mode:
+            # TODO LATER quick_mode only works for t-step random work, which result's matrix is already percentage, and
+            # TODO LATER the sum of each row equals to 1.
+            # TODO LATER power does not work.
+            print('in')
+            for x in range(vocab_size):
+                target_cum_table = reordered_matrix[x]
+                cumulative_percentage = 0.0
+                for y in range(vocab_size):
+                    cumulative_percentage += target_cum_table[y]
+                    self.cum_matrix[x][y] = round(cumulative_percentage * domain)
+                if vocab_size > 0:
+                    assert self.cum_matrix[x][-1] == domain
+        else:
+            # each row is a cum_table for a target token
+            for x in xrange(vocab_size):
+                target_cum_table = reordered_matrix[x]
+                # compute sum of all power (Z in paper) (as in make_cum_table)
+                train_words_pow = 0.0
+                for y in xrange(vocab_size):
+                    train_words_pow += target_cum_table[y] ** power
+                cumulative = 0.0
+                for y in xrange(vocab_size):
+                    cumulative += target_cum_table[y] ** power
+                    self.cum_matrix[x][y] = round(cumulative / train_words_pow * domain)
+                if len(self.cum_matrix[x]) > 0:
+                    assert self.cum_matrix[x][-1] == domain
         print(self.cum_matrix)
+        print(self.cum_matrix.shape)
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
         """ATTENTION
@@ -889,7 +904,7 @@ class Word2Vec(utils.SaveLoad):
             else:
                 # TODO NOW NOW NOW unblock
                 # self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
-                self.make_cum_matrix()
+                self.make_cum_matrix(quick_mode=True)
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)
             # this word is only ever input – never predicted – so count, huffman-point, etc doesn't matter
