@@ -116,7 +116,7 @@ except ImportError:
 
 from numpy import exp, log, dot, zeros, outer, random, dtype, float32 as REAL, \
     double, uint32, seterr, array, uint8, vstack, fromstring, sqrt, newaxis, \
-    ndarray, empty, sum as np_sum, prod, ones, ascontiguousarray, vstack, logaddexp
+    ndarray, empty, sum as np_sum, prod, ones, ascontiguousarray, vstack, logaddexp, cumsum, rint
 
 from scipy.special import expit
 
@@ -598,24 +598,23 @@ class Word2Vec(utils.SaveLoad):
         # reorder matrix's row and column to follow wv.index2word's order
         reordered_matrix = ns.reorder_matrix(self.wv.index2word)
 
-        # initialize the 2d array
-        vocab_size = len(self.wv.index2word)
-        self.cum_matrix = zeros((vocab_size, vocab_size), dtype=uint32)
-
         if quick_mode:
-            # TODO LATER quick_mode only works for t-step random work, which result's matrix is already percentage, and
-            # TODO LATER the sum of each row equals to 1.
-            # TODO LATER power does not work.
-            print('in')
-            for x in range(vocab_size):
-                target_cum_table = reordered_matrix[x]
-                cumulative_percentage = 0.0
-                for y in range(vocab_size):
-                    cumulative_percentage += target_cum_table[y]
-                    self.cum_matrix[x][y] = round(cumulative_percentage * domain)
-                if vocab_size > 0:
-                    assert self.cum_matrix[x][-1] == domain
+            '''ATTENTION
+            quick_mode only works for t-step random work: 
+                1. which result's matrix is already percentage, and the sum of each row equals to 1.
+                2. power has no effect 
+            '''
+            # sum over columns for each rows
+            self.cum_matrix = cumsum(reordered_matrix, axis=1) * domain
+            # round elements to the nearest integer, float64 => uint32
+            self.cum_matrix = rint(self.cum_matrix).astype(uint32)
+            # set last column's elements value to domain
+            self.cum_matrix[:, -1] = domain
         else:
+            # TODO here
+            # initialize the 2d array
+            vocab_size = len(self.wv.index2word)
+            self.cum_matrix = zeros((vocab_size, vocab_size), dtype=uint32)
             # each row is a cum_table for a target token
             for x in xrange(vocab_size):
                 target_cum_table = reordered_matrix[x]
@@ -629,8 +628,6 @@ class Word2Vec(utils.SaveLoad):
                     self.cum_matrix[x][y] = round(cumulative / train_words_pow * domain)
                 if len(self.cum_matrix[x]) > 0:
                     assert self.cum_matrix[x][-1] == domain
-        print(self.cum_matrix)
-        print(self.cum_matrix.shape)
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
         """ATTENTION
