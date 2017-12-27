@@ -418,8 +418,8 @@ class Word2Vec(utils.SaveLoad):
 
     def __init__(
             self, index2word_path, merged_word_count_path, valid_vocabulary_path,
-            translated_shortest_path_nodes_dict_path, matrix_path, row_column_indices_value_path,
-            ns_mode_pyx,
+            matrix_path, row_column_indices_value_path,
+            ns_mode_pyx, power,
             sentences=None,
             size=100, alpha=0.025, window=5, min_count=5,
             max_vocab_size=None, sample=1e-3, seed=1, workers=3, min_alpha=0.0001,
@@ -540,20 +540,18 @@ class Word2Vec(utils.SaveLoad):
         self.valid_vocabulary_path = valid_vocabulary_path
         # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
         self.ns_mode_pyx = ns_mode_pyx
-        # graph based ns solution 1
-        self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
-        # TODO LATER: [DEPRECATED]
+        # TODO LATER: [DEPRECATED] graph based ns solution 1
+        # self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
         # self.potential_ns_len = potential_ns_len
         # graph based ns solution 2
         self.matrix_path = matrix_path
         self.row_column_indices_value_path = row_column_indices_value_path
+        self.power = power
 
         if sentences is not None:
             if isinstance(sentences, GeneratorType):
                 raise TypeError("You can't pass a generator as the sentences argument. Try an iterator.")
-            self.build_vocab(sentences,
-                             translated_shortest_path_nodes_dict_path=translated_shortest_path_nodes_dict_path,
-                             trim_rule=trim_rule)
+            self.build_vocab(sentences, trim_rule=trim_rule)
             self.train(sentences, total_examples=self.corpus_count, epochs=self.iter,
                        start_alpha=self.alpha, end_alpha=self.min_alpha)
         else:
@@ -591,7 +589,8 @@ class Word2Vec(utils.SaveLoad):
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
 
-    def make_cum_matrix(self, power=1, domain=2 ** 31 - 1):
+    def make_cum_matrix(self, domain=2 ** 31 - 1):
+        power = self.power
         # NegativeSamples instance
         ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
                                       row_column_indices_value_path=self.row_column_indices_value_path,
@@ -680,9 +679,7 @@ class Word2Vec(utils.SaveLoad):
 
             logger.info("built huffman tree with maximum node depth %i", max_depth)
 
-    def build_vocab(self, sentences,
-                    translated_shortest_path_nodes_dict_path,
-                    keep_raw_vocab=False, trim_rule=None, progress_per=10000, update=False):
+    def build_vocab(self, sentences, keep_raw_vocab=False, trim_rule=None, progress_per=10000, update=False):
         """
         Build vocabulary from a sequence of sentences (can be a once-only generator stream).
         Each sentence must be a list of unicode strings.
@@ -693,8 +690,7 @@ class Word2Vec(utils.SaveLoad):
         self.scan_vocab_from_graph_data_provider_vocabulary(sentences)
         self.scale_vocab(keep_raw_vocab=keep_raw_vocab, trim_rule=trim_rule,
                          update=update)  # trim by min_count & precalculate downsampling
-        self.finalize_vocab(update=update,
-                            translated_shortest_path_nodes_dict_path=translated_shortest_path_nodes_dict_path)  # build tables & arrays
+        self.finalize_vocab(update=update)  # build tables & arrays
 
     def scan_vocab(self, sentences, progress_per=10000, trim_rule=None):
         """Do an initial scan of all words appearing in sentences."""
@@ -864,7 +860,7 @@ class Word2Vec(utils.SaveLoad):
 
         return report_values
 
-    def finalize_vocab(self, translated_shortest_path_nodes_dict_path, update=False):
+    def finalize_vocab(self, update=False):
         """Build tables and model weights based on final vocabulary settings."""
         if not self.wv.index2word:
             self.scale_vocab()

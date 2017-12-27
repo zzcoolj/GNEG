@@ -123,7 +123,7 @@ class GridSearch_new(object):
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
         self.negative = negative
 
-    def one_search(self, matrix_path, row_column_indices_value_path):
+    def one_search(self, matrix_path, row_column_indices_value_path, power):
         sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
 
         # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
@@ -146,10 +146,10 @@ class GridSearch_new(object):
                          index2word_path=self.index2word_path,
                          merged_word_count_path=self.merged_word_count_path,
                          valid_vocabulary_path=self.valid_vocabulary_path,
-                         translated_shortest_path_nodes_dict_path=None,
                          matrix_path=matrix_path,
                          row_column_indices_value_path=row_column_indices_value_path,
                          ns_mode_pyx=ns_mode_pyx,
+                         power=power,
                          size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
                          negative=self.negative)
         word_vectors = model.wv
@@ -169,10 +169,10 @@ class GridSearch_new(object):
             # e.g. encoded_edges_count_window_size_5_undirected_1_step_rw_matrix
             ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_(.*)_step_rw_matrix', ns_name)
             result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
-                      int(ns_name_information.group(3)),
+                      int(ns_name_information.group(3)), power,
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         else:
-            result = [matrix_path, None, None, None,
+            result = [matrix_path, None, None, None, '0.75',
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         print(result)
         return result
@@ -200,4 +200,5 @@ if __name__ == '__main__':
                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
                          workers=5, sg=sg, negative=20)
     gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_matrix.npy',
-                   row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle')
+                   row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle',
+                   power=0.75)
