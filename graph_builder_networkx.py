@@ -330,13 +330,13 @@ class GraphGridSearcher:
 
     def one_to_many(self, encoded_edges_count_file_path, directed, t_max):
         print(multi_processing.get_pid(), encoded_edges_count_file_path)
-        # graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
-        # # They share the same nodes file
-        # nodes = graph.graph.nodes()
-        # common.write_to_pickle(nodes, graph.name_prefix + '_nodes.pickle')
-        # for matrix, t in graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
-        #     file_prefix = self.ns_folder + graph.name_prefix + '_' + str(t)
-        #     np.save(file_prefix + '_step_rw_matrix.npy', matrix, fix_imports=False)
+        graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
+        # They share the same nodes file
+        nodes = graph.graph.nodes()
+        common.write_to_pickle(nodes, self.ns_folder + graph.name_prefix + '_nodes.pickle')
+        for matrix, t in graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
+            file_prefix = self.ns_folder + graph.name_prefix + '_' + str(t)
+            np.save(file_prefix + '_step_rw_matrix.npy', matrix, fix_imports=False)
 
     def many_to_many(self, encoded_edges_count_file_folder, directed, t_max, process_num):
         """
@@ -369,5 +369,5 @@ if __name__ == '__main__':
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
 
     grid_searcher = GraphGridSearcher(ns_folder=config['word2vec']['negative_samples_folder'])
-    grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=3,
-                               process_num=2)
+    grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
+                               process_num=4)
