@@ -111,6 +111,17 @@ cdef inline unsigned long long bisect_left(np.uint32_t *a, unsigned long long x,
             lo = mid + 1
     return lo
 
+# to support random draws from negative-sampling cum_table
+cdef inline unsigned long long bisect_left_memoryviews(np.uint32_t [:] a, unsigned long long x, unsigned long long lo, unsigned long long hi) nogil:
+    cdef unsigned long long mid
+    while hi > lo:
+        mid = (lo + hi) >> 1  # equals to (lo + hi)//2 e.g. 5>>1=2
+        if a[mid] >= x:
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo
+
 # this quick & dirty RNG apparently matches Java's (non-Secure)Random
 # note this function side-effects next_random to set up the next number
 cdef inline unsigned long long random_int32(unsigned long long *next_random) nogil:
@@ -146,6 +157,55 @@ cdef unsigned long long fast_sentence_sg_neg_graph_based(
             # target_index = ns_list[d-1]
             if target_index == word_index:
                 # Extremely important: not using same word as ns sample.
+                continue
+            label = <REAL_t>0.0
+
+        row2 = target_index * size
+        f_dot = our_dot(&size, &syn0[row1], &ONE, &syn1neg[row2], &ONE)
+        if f_dot <= -MAX_EXP or f_dot >= MAX_EXP:
+            continue
+        f = EXP_TABLE[<int>((f_dot + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]
+        g = (label - f) * alpha
+
+        if _compute_loss == 1:
+            f_dot = (f_dot if d == 0  else -f_dot)
+            if f_dot <= -MAX_EXP or f_dot >= MAX_EXP:
+                continue
+            log_e_f_dot = LOG_TABLE[<int>((f_dot + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]
+            _running_training_loss_param[0] = _running_training_loss_param[0] - log_e_f_dot
+
+        our_saxpy(&size, &g, &syn1neg[row2], &ONE, work, &ONE)
+        our_saxpy(&size, &g, &syn0[row1], &ONE, &syn1neg[row2], &ONE)
+
+    our_saxpy(&size, &word_locks[word2_index], work, &ONE, &syn0[row1], &ONE)
+
+    return next_random
+
+cdef unsigned long long fast_sentence_sg_neg_memoryviews(
+    const int negative, np.uint32_t [:] cum_table, unsigned long long cum_table_len,
+    REAL_t *syn0, REAL_t *syn1neg, const int size, const np.uint32_t word_index,
+    const np.uint32_t word2_index, const REAL_t alpha, REAL_t *work,
+    unsigned long long next_random, REAL_t *word_locks,
+    const int _compute_loss, REAL_t *_running_training_loss_param) nogil:
+
+    cdef long long a
+    cdef long long row1 = word2_index * size, row2
+    cdef unsigned long long modulo = 281474976710655ULL
+    cdef REAL_t f, g, label, f_dot, log_e_f_dot
+    cdef np.uint32_t target_index
+    cdef int d
+
+    memset(work, 0, size * cython.sizeof(REAL_t))
+
+    for d in range(negative+1):
+        if d == 0:
+            target_index = word_index
+            label = ONEF
+        else:
+            # Get a random value between 0 and cum_table[cum_table_len-1], then find the index of this value.
+            target_index = bisect_left_memoryviews(cum_table, (next_random >> 16) % cum_table[cum_table_len-1], 0, cum_table_len)
+            next_random = (next_random * <unsigned long long>25214903917ULL + 11) & modulo
+            if target_index == word_index:
                 continue
             label = <REAL_t>0.0
 
@@ -467,12 +527,15 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
     cdef np.uint32_t [:] ns_list
     cdef int ns_mode = ns_mode_pyx
 
-    # TODO NOW NOW NOW test
-    # declare a 2d NumPy array in C order
-    cdef np.ndarray[np.uint32_t, ndim=2, mode = 'c'] np_buff
-    # TODO NOW how to transfer potential_ns_len to 10000
-    cdef np.uint32_t cum_matrix_bis[6][6]
-    cdef np.uint32_t *cum_matrix_row
+    # TODO NOW test
+    # # Solution 1 NumPy array buffer support: declare a 2d NumPy array in C order; Need malloc for big variable
+    # cdef np.ndarray[np.uint32_t, ndim=2, mode = 'c'] np_buff
+    # cdef np.uint32_t cum_matrix_bis[1000][1000]
+    # cdef np.uint32_t *cum_matrix_row_bis
+
+    # Solution 2 Typed Memoryviews
+    cdef np.uint32_t [:,:] cum_matrix
+    cdef np.uint32_t [:] cum_matrix_row
 
     if hs:
         syn1 = <REAL_t *>(np.PyArray_DATA(model.syn1))
@@ -494,27 +557,18 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
             #     exit()
 
             # TODO test field
-            print('0')
-            # Solution 1
+            # # Solution 1 <class 'numpy.ndarray'>
             # unbox NumPy array into local variable np_buff, make sure we have a contiguous array in C order.
             # call C function with the address of np_buff[0, 1], that is &np_buff[0, 1]
-            # <class 'numpy.ndarray'>
-            np_buff = np.ascontiguousarray(model.cum_matrix, dtype=np.uint32)
-            # Solution 2
-            # <class 'list'>
-            print('1')
-            cum_matrix_bis = np_buff
-            print('2')
-            print(cum_matrix_bis[3])
-            print(cum_matrix_bis[5])
+
+            # # Solution 2 <class 'list'>
+            # np_buff = np.ascontiguousarray(model.cum_matrix, dtype=np.uint32)
+            # cum_matrix_bis = np_buff
+
+            cum_matrix = model.cum_matrix
         else:
-            print('in cum_table')
             cum_table = <np.uint32_t *>(np.PyArray_DATA(model.cum_table))
             cum_table_len = len(model.cum_table)
-            # TODO NOW test
-            print('in2')
-            print(cum_table[0])
-            print('passed2')
     if negative or sample:
         next_random = (2**24) * model.random.randint(0, 2**24) + model.random.randint(0, 2**24)
 
@@ -574,12 +628,12 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
                         fast_sentence_sg_hs(points[i], codes[i], codelens[i], syn0, syn1, size, indexes[j], _alpha, work, word_locks, _compute_loss, &_running_training_loss)
                     if negative:
                         if ns_mode:
-                            # TODO NOW NOW NOW test here
-                            # TODO NOW NOW NOW think
-                            cum_matrix_row = <np.uint32_t *>(cum_matrix_bis[indexes[i]])
-                            next_random = fast_sentence_sg_neg(negative, cum_matrix_row, potential_ns_len, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
+                            # TODO NOW NOW NOW test
+                            word_index = indexes[i]
+                            cum_matrix_row = cum_matrix[word_index]
+                            next_random = fast_sentence_sg_neg_memoryviews(negative, cum_matrix_row, potential_ns_len, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
 
-                            # TODO NOW NOW NOW unblock
+                            # TODO NOW unblock
                             # word_index = indexes[i]
                             # ns_list = ns_array_view[word_index]  # This line cause two warnings 'warning: code will never be executed [-Wunreachable-code]'
                             # next_random = fast_sentence_sg_neg_graph_based(negative, potential_ns_len, ns_list, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
