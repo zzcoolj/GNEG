@@ -129,6 +129,7 @@ cdef inline unsigned long long random_int32(unsigned long long *next_random) nog
     next_random[0] = (next_random[0] * <unsigned long long>25214903917ULL + 11) & 281474976710655ULL
     return this_random
 
+# TODO LATER: [DEPRECATED]
 cdef unsigned long long fast_sentence_sg_neg_graph_based(
     const int negative, unsigned long long potential_ns_len,
     const np.uint32_t [:] ns_list,
@@ -480,8 +481,7 @@ cdef unsigned long long fast_sentence_cbow_neg(
     return next_random
 
 
-def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, potential_ns_len_pyx):
-    # TODO NOW NOW NOW work here for cum_matrix as cum_table
+def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx):
     """
     :param ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
     """
@@ -517,25 +517,20 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
     cdef REAL_t *syn1neg
     cdef np.uint32_t *cum_table
     cdef unsigned long long cum_table_len  # 64-bit unsigned integer
-    # for graph based skip-gram negative sampling
-    cdef unsigned long long potential_ns_len = potential_ns_len_pyx
     # for sampling (negative and frequent-word downsampling)
     cdef unsigned long long next_random
 
-    # for receive graph-based negative sample array
-    cdef np.uint32_t [:,:] ns_array_view
-    cdef np.uint32_t [:] ns_list
+    # TODO LATER: [DEPRECATED] for receive graph-based negative sample array
+    # # for graph based skip-gram negative sampling
+    # cdef unsigned long long potential_ns_len = potential_ns_len_pyx
+    # cdef np.uint32_t [:,:] ns_array_view
+    # cdef np.uint32_t [:] ns_list
+
+    # Typed Memoryviews
     cdef int ns_mode = ns_mode_pyx
-
-    # TODO NOW test
-    # # Solution 1 NumPy array buffer support: declare a 2d NumPy array in C order; Need malloc for big variable
-    # cdef np.ndarray[np.uint32_t, ndim=2, mode = 'c'] np_buff
-    # cdef np.uint32_t cum_matrix_bis[1000][1000]
-    # cdef np.uint32_t *cum_matrix_row_bis
-
-    # Solution 2 Typed Memoryviews
     cdef np.uint32_t [:,:] cum_matrix
     cdef np.uint32_t [:] cum_matrix_row
+    cdef unsigned long long cum_matrix_len  # 64-bit unsigned integer
 
     if hs:
         syn1 = <REAL_t *>(np.PyArray_DATA(model.syn1))
@@ -548,7 +543,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
             BUT what it gives is not 41st element in ns_array[0] (If we make ns_array[0] have more than 41 elements).
             So avoid this cause there is no error or warning even it's wrong!
             '''
-            # TODO NOW NOW NOW unblock
+            # TODO LATER: [DEPRECATED]
             # # receive graph-based negative sample array
             # ns_array_view = model.ns_array
             # # check ns_array_view length
@@ -556,16 +551,8 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
             #     print('ERROR: potential_ns_len_pyx should be equal to ns_array_view.shape[1]')
             #     exit()
 
-            # TODO test field
-            # # Solution 1 <class 'numpy.ndarray'>
-            # unbox NumPy array into local variable np_buff, make sure we have a contiguous array in C order.
-            # call C function with the address of np_buff[0, 1], that is &np_buff[0, 1]
-
-            # # Solution 2 <class 'list'>
-            # np_buff = np.ascontiguousarray(model.cum_matrix, dtype=np.uint32)
-            # cum_matrix_bis = np_buff
-
             cum_matrix = model.cum_matrix
+            cum_matrix_len = model.cum_matrix.shape[1]
         else:
             cum_table = <np.uint32_t *>(np.PyArray_DATA(model.cum_table))
             cum_table_len = len(model.cum_table)
@@ -628,12 +615,11 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
                         fast_sentence_sg_hs(points[i], codes[i], codelens[i], syn0, syn1, size, indexes[j], _alpha, work, word_locks, _compute_loss, &_running_training_loss)
                     if negative:
                         if ns_mode:
-                            # TODO NOW NOW NOW test
                             word_index = indexes[i]
                             cum_matrix_row = cum_matrix[word_index]
-                            next_random = fast_sentence_sg_neg_memoryviews(negative, cum_matrix_row, potential_ns_len, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
+                            next_random = fast_sentence_sg_neg_memoryviews(negative, cum_matrix_row, cum_matrix_len, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
 
-                            # TODO NOW unblock
+                            # TODO LATER: [DEPRECATED]
                             # word_index = indexes[i]
                             # ns_list = ns_array_view[word_index]  # This line cause two warnings 'warning: code will never be executed [-Wunreachable-code]'
                             # next_random = fast_sentence_sg_neg_graph_based(negative, potential_ns_len, ns_list, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
@@ -644,6 +630,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx, po
     return effective_words
 
 
+# TODO LATER: [DEPRECATED] still deprecated ns_dict version. So far, focus on the sg only.
 def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss, ns_mode_pyx):
     """
     :param ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table

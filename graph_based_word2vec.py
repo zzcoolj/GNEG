@@ -113,7 +113,7 @@ class GridSearch_old(object):
 
 class GridSearch_new(object):
     def __init__(self, training_data_folder, index2word_path, merged_word_count_path, valid_vocabulary_path,
-                 workers, sg, negative, potential_ns_len):
+                 workers, sg, negative):
         # common parameters
         self.training_data_folder = training_data_folder
         self.index2word_path = index2word_path  # same as merged_dict_path
@@ -122,7 +122,6 @@ class GridSearch_new(object):
         self.workers = workers  # number of threads use for one word2vec calculation.
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
         self.negative = negative
-        self.potential_ns_len = potential_ns_len
 
     def one_search(self, matrix_path, row_column_indices_value_path):
         sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
@@ -151,7 +150,6 @@ class GridSearch_new(object):
                          matrix_path=matrix_path,
                          row_column_indices_value_path=row_column_indices_value_path,
                          ns_mode_pyx=ns_mode_pyx,
-                         potential_ns_len=self.potential_ns_len,
                          size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
                          negative=self.negative)
         word_vectors = model.wv
@@ -200,6 +198,6 @@ if __name__ == '__main__':
                          index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                          merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                         workers=1, sg=sg, negative=20, potential_ns_len=10000)
+                         workers=5, sg=sg, negative=20)
     gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_matrix.npy',
                    row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle')

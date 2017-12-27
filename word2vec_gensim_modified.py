@@ -419,7 +419,7 @@ class Word2Vec(utils.SaveLoad):
     def __init__(
             self, index2word_path, merged_word_count_path, valid_vocabulary_path,
             translated_shortest_path_nodes_dict_path, matrix_path, row_column_indices_value_path,
-            ns_mode_pyx, potential_ns_len,
+            ns_mode_pyx,
             sentences=None,
             size=100, alpha=0.025, window=5, min_count=5,
             max_vocab_size=None, sample=1e-3, seed=1, workers=3, min_alpha=0.0001,
@@ -542,7 +542,8 @@ class Word2Vec(utils.SaveLoad):
         self.ns_mode_pyx = ns_mode_pyx
         # graph based ns solution 1
         self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
-        self.potential_ns_len = potential_ns_len
+        # TODO LATER: [DEPRECATED]
+        # self.potential_ns_len = potential_ns_len
         # graph based ns solution 2
         self.matrix_path = matrix_path
         self.row_column_indices_value_path = row_column_indices_value_path
@@ -606,44 +607,45 @@ class Word2Vec(utils.SaveLoad):
         # set last column's elements value to domain
         self.cum_matrix[:, -1] = domain
 
-    def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
-        """ATTENTION
-        This function works on the assumptions below:
-        - shortest_path_nodes_dict contains exactly same tokens(format str) as in wv.vocab.
-        - wv.vocab.index is from 0 to (vocab_size-1), e.g. 0 to 9999 when vocab_size is 10000.
-        """
-        """ATTENTION 2
-        1. For the same translated_shortest_path_nodes_dict_path, wv.vocab and wv.index2word change each time.
-        Even ids are different each time, if we translate them into tokens, we will get same result.
-        Verification code below (run several times to check result):
-        
-        print(self.wv.vocab['the'].index)
-        print(self.ns_array[self.wv.vocab['the'].index])
-        print([self.wv.index2word[i] for i in self.ns_array[self.wv.vocab['the'].index]])
-
-        print(self.wv.vocab['upwards'].index)
-        print(self.wv.index2word[self.wv.vocab['upwards'].index])
-        
-        2. Why wv.vocab and wv.index2word change each time?
-        My guess is wv are ordered from the most frequent to the vocabulary-size-th frequent (e.g. 10000th). 
-        So wv.index2word[0] is always 'the', but for the tokens not so frequent, their ranks slightly change. 
-        Because there will be several tokens have the same frequency.
-        """
-        shortest_path_nodes_dict = common.read_pickle(translated_shortest_path_nodes_dict_path)
-
-        ns_dict = {}
-        for target_node, ns_nodes in shortest_path_nodes_dict.items():
-            target_node_id = self.wv.vocab[target_node].index
-            ns_nodes_ids = [self.wv.vocab[ns_node].index for ns_node in ns_nodes]
-            ns_dict[target_node_id] = ns_nodes_ids
-        if (len(ns_dict) != len(self.wv.vocab)) or (len(ns_dict) != len(shortest_path_nodes_dict)):
-            print('ERROR: Graph vocabulary and wv vocabulary are different.')
-            exit()
-        # transform ns_dict to an array following wv.vocab order from 0 to (ns_dict_length - 1)
-        dict_size = len(ns_dict)
-        self.ns_array = zeros((dict_size, self.potential_ns_len), dtype=uint32)
-        for i in range(dict_size):
-            self.ns_array[i] = ns_dict[i][:self.potential_ns_len]
+    # TODO LATER: [DEPRECATED]
+    # def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
+    #     """ATTENTION
+    #     This function works on the assumptions below:
+    #     - shortest_path_nodes_dict contains exactly same tokens(format str) as in wv.vocab.
+    #     - wv.vocab.index is from 0 to (vocab_size-1), e.g. 0 to 9999 when vocab_size is 10000.
+    #     """
+    #     """ATTENTION 2
+    #     1. For the same translated_shortest_path_nodes_dict_path, wv.vocab and wv.index2word change each time.
+    #     Even ids are different each time, if we translate them into tokens, we will get same result.
+    #     Verification code below (run several times to check result):
+    #
+    #     print(self.wv.vocab['the'].index)
+    #     print(self.ns_array[self.wv.vocab['the'].index])
+    #     print([self.wv.index2word[i] for i in self.ns_array[self.wv.vocab['the'].index]])
+    #
+    #     print(self.wv.vocab['upwards'].index)
+    #     print(self.wv.index2word[self.wv.vocab['upwards'].index])
+    #
+    #     2. Why wv.vocab and wv.index2word change each time?
+    #     My guess is wv are ordered from the most frequent to the vocabulary-size-th frequent (e.g. 10000th).
+    #     So wv.index2word[0] is always 'the', but for the tokens not so frequent, their ranks slightly change.
+    #     Because there will be several tokens have the same frequency.
+    #     """
+    #     shortest_path_nodes_dict = common.read_pickle(translated_shortest_path_nodes_dict_path)
+    #
+    #     ns_dict = {}
+    #     for target_node, ns_nodes in shortest_path_nodes_dict.items():
+    #         target_node_id = self.wv.vocab[target_node].index
+    #         ns_nodes_ids = [self.wv.vocab[ns_node].index for ns_node in ns_nodes]
+    #         ns_dict[target_node_id] = ns_nodes_ids
+    #     if (len(ns_dict) != len(self.wv.vocab)) or (len(ns_dict) != len(shortest_path_nodes_dict)):
+    #         print('ERROR: Graph vocabulary and wv vocabulary are different.')
+    #         exit()
+    #     # transform ns_dict to an array following wv.vocab order from 0 to (ns_dict_length - 1)
+    #     dict_size = len(ns_dict)
+    #     self.ns_array = zeros((dict_size, self.potential_ns_len), dtype=uint32)
+    #     for i in range(dict_size):
+    #         self.ns_array[i] = ns_dict[i][:self.potential_ns_len]
 
     def create_binary_tree(self):
         """
@@ -876,7 +878,7 @@ class Word2Vec(utils.SaveLoad):
             if self.ns_mode_pyx == 0:
                 self.make_cum_table()
             else:
-                # TODO unblock or add an option
+                # TODO LATER: [DEPRECATED]
                 # self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
                 self.make_cum_matrix()
         if self.null_word:
@@ -920,10 +922,10 @@ class Word2Vec(utils.SaveLoad):
         tally = 0
         if self.sg:
             # Code below only works for word2vec_inner_modified.pyx, cause python version does not has ns_mode_pyx
-            tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx,
-                                    potential_ns_len_pyx=self.potential_ns_len)
+            tally += train_batch_sg(self, sentences, alpha, work, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx)
         else:
             # Code below only works for word2vec_inner_modified.pyx, cause python version does not has ns_mode_pyx
+            # ATTENTION: cbow uses deprecated version unlike train_batch_sg
             tally += train_batch_cbow(self, sentences, alpha, work, neu1, self.compute_loss, ns_mode_pyx=self.ns_mode_pyx)
         return tally, self._raw_word_count(sentences)
 
@@ -1563,7 +1565,7 @@ class Word2Vec(utils.SaveLoad):
         if model.negative and hasattr(model.wv, 'index2word'):
             model.make_cum_table()  # rebuild cum_table from vocabulary
             # TODO: Not sure about whether should put code below here.
-            model.load_graph_based_negative_sample_table(model.translated_shortest_path_nodes_dict_path)
+            model.make_cum_matrix()
         if not hasattr(model, 'corpus_count'):
             model.corpus_count = None
         for v in model.wv.vocab.values():
