@@ -116,7 +116,7 @@ except ImportError:
 
 from numpy import exp, log, dot, zeros, outer, random, dtype, float32 as REAL, \
     double, uint32, seterr, array, uint8, vstack, fromstring, sqrt, newaxis, \
-    ndarray, empty, sum as np_sum, prod, ones, ascontiguousarray, vstack, logaddexp, cumsum, rint
+    ndarray, empty, sum as np_sum, prod, ones, ascontiguousarray, vstack, logaddexp, cumsum, rint, power as np_power
 
 from scipy.special import expit
 
@@ -590,7 +590,7 @@ class Word2Vec(utils.SaveLoad):
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
 
-    def make_cum_matrix(self, power=1, domain=2 ** 31 - 1, quick_mode=False):
+    def make_cum_matrix(self, power=1, domain=2 ** 31 - 1):
         # NegativeSamples instance
         ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
                                       row_column_indices_value_path=self.row_column_indices_value_path,
@@ -598,36 +598,13 @@ class Word2Vec(utils.SaveLoad):
         # reorder matrix's row and column to follow wv.index2word's order
         reordered_matrix = ns.reorder_matrix(self.wv.index2word)
 
-        if quick_mode:
-            '''ATTENTION
-            quick_mode only works for t-step random work: 
-                1. which result's matrix is already percentage, and the sum of each row equals to 1.
-                2. power has no effect 
-            '''
-            # sum over columns for each rows
-            self.cum_matrix = cumsum(reordered_matrix, axis=1) * domain
-            # round elements to the nearest integer, float64 => uint32
-            self.cum_matrix = rint(self.cum_matrix).astype(uint32)
-            # set last column's elements value to domain
-            self.cum_matrix[:, -1] = domain
-        else:
-            # TODO here
-            # initialize the 2d array
-            vocab_size = len(self.wv.index2word)
-            self.cum_matrix = zeros((vocab_size, vocab_size), dtype=uint32)
-            # each row is a cum_table for a target token
-            for x in xrange(vocab_size):
-                target_cum_table = reordered_matrix[x]
-                # compute sum of all power (Z in paper) (as in make_cum_table)
-                train_words_pow = 0.0
-                for y in xrange(vocab_size):
-                    train_words_pow += target_cum_table[y] ** power
-                cumulative = 0.0
-                for y in xrange(vocab_size):
-                    cumulative += target_cum_table[y] ** power
-                    self.cum_matrix[x][y] = round(cumulative / train_words_pow * domain)
-                if len(self.cum_matrix[x]) > 0:
-                    assert self.cum_matrix[x][-1] == domain
+        self.cum_matrix = np_power(reordered_matrix, power)
+        train_words_pow = np_sum(self.cum_matrix, axis=1, keepdims=True)  # sum of each row and preserve the dimension
+        self.cum_matrix = cumsum(self.cum_matrix, axis=1) / train_words_pow * domain
+        # round elements to the nearest integer, float64 => uint32
+        self.cum_matrix = rint(self.cum_matrix).astype(uint32)
+        # set last column's elements value to domain
+        self.cum_matrix[:, -1] = domain
 
     def load_graph_based_negative_sample_table(self, translated_shortest_path_nodes_dict_path):
         """ATTENTION
@@ -899,9 +876,9 @@ class Word2Vec(utils.SaveLoad):
             if self.ns_mode_pyx == 0:
                 self.make_cum_table()
             else:
-                # TODO NOW NOW NOW unblock
+                # TODO unblock or add an option
                 # self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)
-                self.make_cum_matrix(quick_mode=True)
+                self.make_cum_matrix()
         if self.null_word:
             # create null pseudo-word for padding when using concatenative L1 (run-of-words)
             # this word is only ever input – never predicted – so count, huffman-point, etc doesn't matter
