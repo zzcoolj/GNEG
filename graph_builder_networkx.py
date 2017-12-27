@@ -370,4 +370,4 @@ if __name__ == '__main__':
 
     grid_searcher = GraphGridSearcher(ns_folder=config['word2vec']['negative_samples_folder'])
     grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
-                               process_num=4)
+                               process_num=3)
