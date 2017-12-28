@@ -163,7 +163,6 @@ class GridSearch_new(object):
                                                                                             words (float)
         '''
         evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
-        print(evaluation)
         if matrix_path:
             ns_name = multi_processing.get_file_name(matrix_path)
             # e.g. encoded_edges_count_window_size_5_undirected_1_step_rw_matrix
@@ -172,14 +171,32 @@ class GridSearch_new(object):
                       int(ns_name_information.group(3)), power,
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         else:
+            # in original word2vec (baseline), power is set to 0.75 as default.
             result = [matrix_path, None, None, None, '0.75',
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         print(result)
         return result
 
     def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
-        # TODO NOW
-        pass
+        evaluation_result = self.one_search(matrix_path=None, row_column_indices_value_path=None, power=None)  # baseline: original word2vec
+        df = pd.DataFrame(columns=['NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
+                                   'Pearson correlation', 'Pearson pvalue', 'Spearman correlation',
+                                   'Spearman pvalue', 'Ration of pairs with OOV'])
+        df.loc[0] = evaluation_result
+
+        i = 1
+        files = multi_processing.get_files_endswith(data_folder=ns_folder, file_extension='.npy')
+        for file in files:
+            nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', file).group(1) + '_nodes.pickle'
+            for power in [0.25, 0.5, 0.75, 1]:
+                evaluation_result = self.one_search(matrix_path=file, row_column_indices_value_path=nodes_path,
+                                                    power=power)
+                df.loc[i] = evaluation_result
+                i += 1
+
+        writer = pd.ExcelWriter(ns_folder+'output.xlsx')
+        df.to_excel(writer, 'Sheet1')
+        writer.save()
 
 
 if __name__ == '__main__':
@@ -198,7 +215,8 @@ if __name__ == '__main__':
                          index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                          merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                         workers=5, sg=sg, negative=20)
-    gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_matrix.npy',
-                   row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle',
-                   power=0.75)
+                         workers=4, sg=sg, negative=20)
+    # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_matrix.npy',
+    #                row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle',
+    #                power=0.75)
+    gs2.grid_search()
