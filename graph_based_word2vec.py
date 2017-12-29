@@ -172,7 +172,7 @@ class GridSearch_new(object):
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         else:
             # in original word2vec (baseline), power is set to 0.75 as default.
-            result = [matrix_path, None, None, None, '0.75',
+            result = [matrix_path, None, None, None, 0.75,
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         print(result)
         return result
