@@ -12,7 +12,7 @@ print('timer starts')
 start_time = time.time()
 
 sg = 1  # Only care about skip-gram
-gs = gbw.GridSearch_new(training_data_folder='/vol/corpusiles/open/Wikipedia-Dumps/en/20170420/prep/',
+gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
