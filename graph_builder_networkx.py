@@ -4,6 +4,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 import configparser
+from multiprocessing import Pool
+from itertools import repeat
 import sys
 sys.path.insert(0, '../common/')
 import common
@@ -336,24 +338,36 @@ class GraphGridSearcher:
         common.write_to_pickle(nodes, self.ns_folder + graph.name_prefix + '_nodes.pickle')
         for matrix, t in graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
             file_prefix = self.ns_folder + graph.name_prefix + '_' + str(t)
+            print('write matrix', file_prefix)
             np.save(file_prefix + '_step_rw_matrix.npy', matrix, fix_imports=False)
+        print('need memory clean')
+        return None
 
     def many_to_many(self, encoded_edges_count_file_folder, directed, t_max, process_num):
         """
         For all encoded_edges_count_file (of different window size)
         """
-        kw = {'directed': directed, 't_max': t_max}
+        # kw = {'directed': directed, 't_max': t_max}
         if directed:
             # TODO LATER: So far, all directed encoded_edges_count files don't have such file extension below.
             file_extension = '_directed.txt'
         else:
             file_extension = '_undirected.txt'
-        multi_processing.master(files_getter=multi_processing.get_files_endswith,
-                                data_folder=encoded_edges_count_file_folder,
-                                file_extension=file_extension,
-                                worker=self.one_to_many,
-                                process_num=process_num,
-                                **kw)
+
+        files_list = multi_processing.get_files_endswith(encoded_edges_count_file_folder, file_extension)
+        p = Pool(process_num)
+        p.starmap(self.one_to_many,
+                  zip(files_list, repeat(directed), repeat(t_max)))
+        p.close()
+        p.join()
+
+
+        # multi_processing.master(files_getter=multi_processing.get_files_endswith,
+        #                         data_folder=encoded_edges_count_file_folder,
+        #                         file_extension=file_extension,
+        #                         worker=self.one_to_many,
+        #                         process_num=process_num,
+        #                         **kw)
 
 
 if __name__ == '__main__':
