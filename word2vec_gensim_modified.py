@@ -688,9 +688,12 @@ class Word2Vec(utils.SaveLoad):
         # TODO Remind: replace scan_vocab by my version, which uses valid vocabulary from graph.
         # self.scan_vocab(sentences, progress_per=progress_per, trim_rule=trim_rule)  # initial survey
         self.scan_vocab_from_graph_data_provider_vocabulary(sentences)
+        print('scan finish')
         self.scale_vocab(keep_raw_vocab=keep_raw_vocab, trim_rule=trim_rule,
                          update=update)  # trim by min_count & precalculate downsampling
+        print('scale finish')
         self.finalize_vocab(update=update)  # build tables & arrays
+        print('finalize vocab finish')
 
     def scan_vocab(self, sentences, progress_per=10000, trim_rule=None):
         """Do an initial scan of all words appearing in sentences."""
