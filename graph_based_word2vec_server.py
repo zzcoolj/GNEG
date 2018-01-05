@@ -19,8 +19,8 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
                         workers=50, sg=sg, negative=20)
 
 # gs.grid_search()
-gs.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_10_undirected_3_step_rw_matrix.npy',
-              row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_10_undirected_nodes.pickle',
-              power=0.1)
+gs.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_3_undirected_3_step_rw_matrix.npy',
+              row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_3_undirected_nodes.pickle',
+              power=0.5)
 
 print('time in seconds:', common.count_time(start_time))
