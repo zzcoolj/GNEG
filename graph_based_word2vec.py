@@ -22,8 +22,11 @@ class WikiSentences(object):
                 sub_folder_path = os.path.join(self.dirname, sub_folder_name)
                 for fname in os.listdir(sub_folder_path):
                     if not fname.startswith('.'):
-                        for line in open(os.path.join(sub_folder_path, fname), 'rb'):
-                            yield [word.decode('iso-8859-1') for word in line.split()]
+                        # TODO LATER Delete two codes below when whole wiki test passed.
+                        # for line in open(os.path.join(sub_folder_path, fname), 'rb'):
+                        #     yield [word.decode('iso-8859-1') for word in line.split()]
+                        for line in open(os.path.join(sub_folder_path, fname), 'r', encoding='utf-8'):
+                            yield line.strip().split()
 
 
 class GridSearch_old(object):
@@ -137,10 +140,7 @@ class GridSearch_new(object):
         get valid words' count.
         """
         # TODO LATER a valid word count function in gdp, so as to transfer only one parameter to Word2Vec class.
-        # TODO LATER rethink about min_count & max_vocab_size
-
-        # TODO NOW translated_shortest_path_nodes_dict_path & potential_ns_len may be useless
-        # TODO NOW NOW NOW how to deal with potential_ns_len
+        # TODO LATER rethink about min_count & max_vocab_size, maybe they are useless?
 
         model = Word2Vec(sentences=sentences,
                          index2word_path=self.index2word_path,
