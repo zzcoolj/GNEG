@@ -42,6 +42,7 @@ class NoGraph:
             # ATTENTION: undirected graph
             cooccurrence_matrix[target_index][source_index] = weight
         self.cooccurrence_matrix = cooccurrence_matrix
+        
 
 
 class NXGraph:
