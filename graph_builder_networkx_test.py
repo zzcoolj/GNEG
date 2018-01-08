@@ -17,7 +17,7 @@ class TestGraphDataProvider(unittest.TestCase):
                                                           output_folder=self.graph_folder)
         graph.print_graph_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes, merged_dict_path=self.merged_dict_path,
+        ns = gbn.NegativeSamples(matrix=matrix, graph_index2wordId=nodes, merged_dict_path=self.merged_dict_path,
                                  name_prefix=graph.name_prefix)
         ns.get_and_print_matrix_and_token_order()
         translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='min',
@@ -67,7 +67,7 @@ class TestGraphDataProvider(unittest.TestCase):
         graph.print_graph_information()
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
 
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+        ns = gbn.NegativeSamples(matrix=matrix, graph_index2wordId=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path,
                                  name_prefix=graph.name_prefix)
         ns.get_and_print_matrix_and_token_order()
@@ -96,7 +96,7 @@ class TestGraphDataProvider(unittest.TestCase):
         graph = gbn.NXGraph.from_encoded_edges_count_file(self.encoded_edges_count_undirected_path, directed=False,
                                                           output_folder=self.graph_folder)
         nodes, matrix = graph.get_shortest_path_lengths_between_all_nodes(output_folder=self.graph_folder)
-        ns = gbn.NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+        ns = gbn.NegativeSamples(matrix=matrix, graph_index2wordId=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path,
                                  name_prefix=graph.name_prefix)
         ns.write_translated_negative_samples_dict(n=3, selected_mode='max', output_folder=self.graph_folder)
@@ -110,7 +110,7 @@ class TestGraphDataProvider(unittest.TestCase):
 
         # t=1 step random walk
         nodes, matrix1 = graph.get_t_step_random_walk_stochastic_matrix(t=1)
-        ns = gbn.NegativeSamples(matrix=matrix1, row_column_indices_value=nodes,
+        ns = gbn.NegativeSamples(matrix=matrix1, graph_index2wordId=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path,
                                  name_prefix=graph.name_prefix)
         ns.get_and_print_matrix_and_token_order()
@@ -123,7 +123,7 @@ class TestGraphDataProvider(unittest.TestCase):
 
         # t=2 steps random walk
         nodes, matrix2 = graph.get_t_step_random_walk_stochastic_matrix(t=2)
-        ns = gbn.NegativeSamples(matrix=matrix2, row_column_indices_value=nodes,
+        ns = gbn.NegativeSamples(matrix=matrix2, graph_index2wordId=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path,
                                  name_prefix=graph.name_prefix)
         ns.get_and_print_matrix_and_token_order()
@@ -135,7 +135,7 @@ class TestGraphDataProvider(unittest.TestCase):
 
         # t=3 steps random walk
         nodes, matrix3 = graph.get_t_step_random_walk_stochastic_matrix(t=3)
-        ns = gbn.NegativeSamples(matrix=matrix3, row_column_indices_value=nodes,
+        ns = gbn.NegativeSamples(matrix=matrix3, graph_index2wordId=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path,
                                  name_prefix=graph.name_prefix)
         ns.get_and_print_matrix_and_token_order()
@@ -158,7 +158,7 @@ class TestGraphDataProvider(unittest.TestCase):
         graph = gbn.NXGraph.from_encoded_edges_count_file(self.encoded_edges_count_undirected_path, directed=False)
         # t=1 step random walk
         nodes, matrix1 = graph.get_t_step_random_walk_stochastic_matrix(t=1, output_folder=self.ns_folder)
-        ns = gbn.NegativeSamples(matrix=matrix1, row_column_indices_value=nodes,
+        ns = gbn.NegativeSamples(matrix=matrix1, graph_index2wordId=nodes,
                                  merged_dict_path=self.merged_dict_undirected_path,
                                  name_prefix=graph.name_prefix)
         matrix, graph_token_order = ns.get_and_print_matrix_and_token_order()

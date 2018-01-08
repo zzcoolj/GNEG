@@ -16,7 +16,7 @@ class TestGraphBasedWord2vec(unittest.TestCase):
 
         # gs.one_search(ns_path=None)
         gs.one_search(matrix_path='output/intermediate data for unittest/negative_samples/encoded_edges_count_window_size_6_vocab_size_none_undirected_for_unittest_1_step_rw_matrix.npy',
-                      row_column_indices_value_path='output/intermediate data for unittest/negative_samples/encoded_edges_count_window_size_6_vocab_size_none_undirected_for_unittest_1_step_rw_nodes.pickle',
+                      graph_index2wordId_path='output/intermediate data for unittest/negative_samples/encoded_edges_count_window_size_6_vocab_size_none_undirected_for_unittest_1_step_rw_nodes.pickle',
                       power=0.75)
 
 

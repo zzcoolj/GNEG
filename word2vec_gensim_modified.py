@@ -418,7 +418,7 @@ class Word2Vec(utils.SaveLoad):
 
     def __init__(
             self, index2word_path, merged_word_count_path, valid_vocabulary_path,
-            matrix_path, row_column_indices_value_path,
+            matrix_path, graph_index2wordId_path,
             ns_mode_pyx, power,
             sentences=None,
             size=100, alpha=0.025, window=5, min_count=5,
@@ -545,7 +545,7 @@ class Word2Vec(utils.SaveLoad):
         # self.potential_ns_len = potential_ns_len
         # graph based ns solution 2
         self.matrix_path = matrix_path
-        self.row_column_indices_value_path = row_column_indices_value_path
+        self.graph_index2wordId_path = graph_index2wordId_path
         self.power = power
 
         if sentences is not None:
@@ -593,7 +593,7 @@ class Word2Vec(utils.SaveLoad):
         power = self.power
         # NegativeSamples instance
         ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
-                                      row_column_indices_value_path=self.row_column_indices_value_path,
+                                      graph_index2wordId_path=self.graph_index2wordId_path,
                                       merged_dict_path=self.graph_index2word_path)
         # reorder matrix's row and column to follow wv.index2word's order
         reordered_matrix = ns.reorder_matrix(self.wv.index2word)

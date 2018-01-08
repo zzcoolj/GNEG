@@ -126,7 +126,7 @@ class GridSearch_new(object):
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
         self.negative = negative
 
-    def one_search(self, matrix_path, row_column_indices_value_path, power):
+    def one_search(self, matrix_path, graph_index2wordId_path, power):
         sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
 
         # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
@@ -147,7 +147,7 @@ class GridSearch_new(object):
                          merged_word_count_path=self.merged_word_count_path,
                          valid_vocabulary_path=self.valid_vocabulary_path,
                          matrix_path=matrix_path,
-                         row_column_indices_value_path=row_column_indices_value_path,
+                         graph_index2wordId_path=graph_index2wordId_path,
                          ns_mode_pyx=ns_mode_pyx,
                          power=power,
                          size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
@@ -178,7 +178,7 @@ class GridSearch_new(object):
         return result
 
     def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
-        evaluation_result = self.one_search(matrix_path=None, row_column_indices_value_path=None, power=None)  # baseline: original word2vec
+        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)  # baseline: original word2vec
         df = pd.DataFrame(columns=['NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
                                    'Pearson correlation', 'Pearson pvalue', 'Spearman correlation',
                                    'Spearman pvalue', 'Ration of pairs with OOV'])
@@ -190,7 +190,7 @@ class GridSearch_new(object):
             nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', file).group(1) + '_nodes.pickle'
             for power in [0.1, 0.25, 0.5, 0.75, 1]:
                 try:
-                    evaluation_result = self.one_search(matrix_path=file, row_column_indices_value_path=nodes_path,
+                    evaluation_result = self.one_search(matrix_path=file, graph_index2wordId_path=nodes_path,
                                                         power=power)
                 except:
                     print('ERROR:', file, nodes_path)
@@ -222,6 +222,6 @@ if __name__ == '__main__':
                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
                          workers=4, sg=sg, negative=20)
     # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_matrix.npy',
-    #                row_column_indices_value_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle',
+    #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle',
     #                power=0.75)
     gs2.grid_search()

@@ -16,6 +16,34 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 
+class NoGraph:
+    def __init__(self, encoded_edges_count_file_path, vocab_size):
+        self.name_prefix = multi_processing.get_file_name(encoded_edges_count_file_path).split('.')[0]
+        # initialize numpy 2d array
+        cooccurrence_matrix = np.zeros((vocab_size, vocab_size))
+        # initialize graph_index2wordId
+        graph_index2wordId = []
+        # read encoded_edges_count_file
+        for line in common.read_file_line_yielder(encoded_edges_count_file_path):
+            # ATTENTION: line e.g. 17  57  10 or 57   17  10 (only one of them will appear in the file.)
+            (source, target, weight) = line.split("\t")
+            if source in graph_index2wordId:
+                source_index = graph_index2wordId.index(source)
+            else:
+                source_index = len(graph_index2wordId)
+                graph_index2wordId.append(source_index)
+
+            if target in graph_index2wordId:
+                target_index = graph_index2wordId.index(target)
+            else:
+                target_index = len(graph_index2wordId)
+                graph_index2wordId.append(target_index)
+            cooccurrence_matrix[source_index][target_index] = weight
+            # ATTENTION: undirected graph
+            cooccurrence_matrix[target_index][source_index] = weight
+        self.cooccurrence_matrix = cooccurrence_matrix
+
+
 class NXGraph:
     def __init__(self, graph, name_prefix, directed):
         # name_prefix = encoded_edges_count file's name - '.txt' => encoded_edges_count file names must be unique.
@@ -138,24 +166,24 @@ class NXGraph:
 
 
 class NegativeSamples:
-    def __init__(self, matrix, row_column_indices_value, merged_dict_path, name_prefix):
+    def __init__(self, matrix, graph_index2wordId, merged_dict_path, name_prefix):
         self.name_prefix = name_prefix
         self.matrix = np.asarray(matrix)  # ATTENTION: change NumPy matrix type to NumPy ndarray.
-        self.row_column_indices_value = row_column_indices_value
+        self.graph_index2wordId = graph_index2wordId
         self.merged_dict_path = merged_dict_path
         self.translated_negative_samples_dict = None
 
     @classmethod
-    def load(cls, matrix_path, row_column_indices_value_path, merged_dict_path):
+    def load(cls, matrix_path, graph_index2wordId_path, merged_dict_path):
         matrix = np.load(matrix_path)
-        row_column_indices_value = common.read_pickle(row_column_indices_value_path)
-        return cls(matrix=matrix, row_column_indices_value=row_column_indices_value, merged_dict_path=merged_dict_path,
+        graph_index2wordId = common.read_pickle(graph_index2wordId_path)
+        return cls(matrix=matrix, graph_index2wordId=graph_index2wordId, merged_dict_path=merged_dict_path,
                    name_prefix=None)
 
     def get_and_print_matrix_and_token_order(self):
         index2word = gdp.get_index2word(file=self.merged_dict_path)
         print('\n******************* Matrix & tokens order *******************')
-        token_order = [index2word[index] for index in self.row_column_indices_value]
+        token_order = [index2word[index] for index in self.graph_index2wordId]
         print(token_order)
         print(self.matrix)
         print('*************************************************************\n')
@@ -165,7 +193,7 @@ class NegativeSamples:
         # Does not need translated ns dict to be calculated.
         word2index = gdp.read_two_columns_file_to_build_dictionary_type_specified(
             file=self.merged_dict_path, key_type=str, value_type=int)
-        nodes = list(self.row_column_indices_value)
+        nodes = list(self.graph_index2wordId)
         matrix_x = nodes.index(word2index[token_x])
         matrix_y = nodes.index(word2index[token_y])
         return self.matrix[matrix_x][matrix_y]
@@ -174,19 +202,19 @@ class NegativeSamples:
         """
         Called in word2vec_gensim_modified.py make_cum_matrix function.
         :param word2vec_index2word: self.wv.index2word in word2vec_gensim_modified.py,
-                                    different from row_column_indices_value order.
+                                    different from graph_index2wordId order.
         :return: a reordered matrix following the order of word2vec_index2word
         """
-        graph_index2word = gdp.get_index2word(file=self.merged_dict_path)
+        graph_wordId2word = gdp.get_index2word(file=self.merged_dict_path)
         ''' 
-            e.g. row_column_indices_value = [7, 91, 20, ...] means:
-                the 1st row/column represents token of index (graph_index2word) 7
-                the 2nd row/column represents token of index (graph_index2word) 91
+            e.g. graph_index2wordId = [7, 91, 20, ...] means:
+                the 1st row/column represents token of id (graph_wordId2word) 7
+                the 2nd row/column represents token of id (graph_wordId2word) 91
         '''
-        translated_matrix_order = [graph_index2word[index] for index in self.row_column_indices_value]
+        translated_matrix_order = [graph_wordId2word[wordId] for wordId in self.graph_index2wordId]
         '''
         new matrix row/column index order is always [0, 1, ..., 9999] (if vocab_size is 10000), but here index is not
-        based on the graph_index2word. It's based on the word2vec_index2word (self.wv.index2word)
+        based on the graph_wordId2word. It's based on the word2vec_index2word (self.wv.index2word)
         '''
         reordered_matrix_length = self.matrix.shape[0]
         translated_reordered_matrix_order = [word2vec_index2word[index] for index in range(reordered_matrix_length)]
@@ -217,7 +245,7 @@ class NegativeSamples:
              [  2.   3.   1.   3.   2.   0.]]
         """
         n += 1  # add one more potential results, in case results have self loop node.
-        nodes_list = list(self.row_column_indices_value)
+        nodes_list = list(self.graph_index2wordId)
         if selected_mode == 'min':
             selected_indices = np.argpartition(self.matrix, n)[:, :n]
         elif selected_mode == 'max':
@@ -241,7 +269,7 @@ class NegativeSamples:
                 cleaned_selected_indices[i] = np.delete(selected_indices[i], self_loop_index)
             # translate nodes list indices to words indices (nodes list values),
             # and the row's order follows the order of nodes
-            negative_samples_dict[nodes_list[i]] = np.array(self.row_column_indices_value)[
+            negative_samples_dict[nodes_list[i]] = np.array(self.graph_index2wordId)[
                 cleaned_selected_indices[i]].tolist()
         # common.write_to_pickle(shortest_path_nodes_dict, data_folder+'shortest_path_nodes_dict.pickle')
         return negative_samples_dict
@@ -283,7 +311,7 @@ class FromEncodedEdgesCountToTranslatedNSDict:
     def one_to_one_rw(self, encoded_edges_count_file_path, directed, t, potential_ns_len, selected_mode):
         graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
         nodes, matrix = graph.get_t_step_random_walk_stochastic_matrix(t=t)
-        ns = NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+        ns = NegativeSamples(matrix=matrix, graph_index2wordId=nodes,
                              merged_dict_path=self.merged_dict_path,
                              name_prefix=graph.name_prefix)
         ns.write_translated_negative_samples_dict(n=potential_ns_len, selected_mode=selected_mode,
@@ -299,7 +327,7 @@ class FromEncodedEdgesCountToTranslatedNSDict:
         graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
         nodes = graph.graph.nodes()
         for matrix, t in graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
-            ns = NegativeSamples(matrix=matrix, row_column_indices_value=nodes,
+            ns = NegativeSamples(matrix=matrix, graph_index2wordId=nodes,
                                  merged_dict_path=self.merged_dict_path,
                                  name_prefix=graph.name_prefix)
             for selected_mode in ['max', 'min']:
