@@ -27,22 +27,38 @@ class NoGraph:
         for line in common.read_file_line_yielder(encoded_edges_count_file_path):
             # ATTENTION: line e.g. 17  57  10 or 57   17  10 (only one of them will appear in the file.)
             (source, target, weight) = line.split("\t")
+            source = int(source)
+            target = int(target)
             if source in graph_index2wordId:
                 source_index = graph_index2wordId.index(source)
             else:
                 source_index = len(graph_index2wordId)
-                graph_index2wordId.append(source_index)
+                graph_index2wordId.append(source)
 
             if target in graph_index2wordId:
                 target_index = graph_index2wordId.index(target)
             else:
                 target_index = len(graph_index2wordId)
-                graph_index2wordId.append(target_index)
+                graph_index2wordId.append(target)
             cooccurrence_matrix[source_index][target_index] = weight
             # ATTENTION: undirected graph
             cooccurrence_matrix[target_index][source_index] = weight
+        self.graph_index2wordId = graph_index2wordId
         self.cooccurrence_matrix = cooccurrence_matrix
-        
+
+    def get_stochastic_matrix(self):
+        """
+        A replacement of get_stochastic_matrix function NXGraph class.
+        """
+        vocab_size = self.cooccurrence_matrix.shape[0]
+        stochastic_matrix = self.cooccurrence_matrix.copy()
+        # remove self loop
+        for i in range(vocab_size):
+            stochastic_matrix[i][i] = 0
+        # calculate percentage
+        matrix_sum_row = np.sum(stochastic_matrix, axis=1, keepdims=True)  # sum of each row and preserve the dimension
+        stochastic_matrix /= matrix_sum_row
+        return stochastic_matrix
 
 
 class NXGraph:
@@ -129,14 +145,12 @@ class NXGraph:
         return self.graph.nodes(), matrix
 
     def __get_stochastic_matrix(self):
-        # TODO LATER: too slow in real server test. Better to run in encoded_edges_count file level.
         self.graph.remove_edges_from(list(nx.selfloop_edges(self.graph)))  # remove self loop
         if self.directed:
             directed_graph = self.graph
         else:
             directed_graph = self.graph.to_directed()
         # this function only works with directed graph
-        # TODO NOW NOW NOW: stochastic_graph too slow in real server test
         stochastic_graph = nx.stochastic_graph(directed_graph, weight='weight')
         return nx.to_numpy_matrix(stochastic_graph)
 
@@ -182,9 +196,9 @@ class NegativeSamples:
                    name_prefix=None)
 
     def get_and_print_matrix_and_token_order(self):
-        index2word = gdp.get_index2word(file=self.merged_dict_path)
+        wordId2word = gdp.get_index2word(file=self.merged_dict_path)
         print('\n******************* Matrix & tokens order *******************')
-        token_order = [index2word[index] for index in self.graph_index2wordId]
+        token_order = [wordId2word[wordId] for wordId in self.graph_index2wordId]
         print(token_order)
         print(self.matrix)
         print('*************************************************************\n')
@@ -276,6 +290,9 @@ class NegativeSamples:
         return negative_samples_dict
 
     def write_translated_negative_samples_dict(self, n, selected_mode, output_folder, name_suffix=None):
+        """ATTENTION [DEPRECATED]
+        This function has only been used by deprecated FromEncodedEdgesCountToTranslatedNSDict class
+        """
         index2word = gdp.get_index2word(file=self.merged_dict_path)
         translated_negative_samples_dict = {}
         for key, value in self.__get_negative_samples_dict_from_matrix(n, selected_mode).items():

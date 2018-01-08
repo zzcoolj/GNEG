@@ -121,6 +121,20 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue(ns.get_matrix_value_by_token_xy(',', '.') == 0)
         self.assertTrue(ns.get_matrix_value_by_token_xy('in', ',') == 2/(2+2+6+1+1))
 
+        # stochastic matrix calculated by NoGraph class
+        no_graph = gbn.NoGraph(self.encoded_edges_count_undirected_path, vocab_size=6)
+        ns_no_graph = gbn.NegativeSamples(matrix=no_graph.get_stochastic_matrix(),
+                                          graph_index2wordId=no_graph.graph_index2wordId,
+                                          merged_dict_path=self.merged_dict_undirected_path,
+                                          name_prefix=no_graph.name_prefix)
+        print('NoGraph')
+        ns_no_graph.get_and_print_matrix_and_token_order()
+        self.assertTrue(ns_no_graph.get_matrix_value_by_token_xy('.', 'the') == 2 / (2 + 2 + 3 + 1))
+        self.assertTrue(ns_no_graph.get_matrix_value_by_token_xy('and', 'the') == 4 / (2 + 1 + 4 + 3 + 4))
+        self.assertTrue(ns_no_graph.get_matrix_value_by_token_xy('the', ',') == 3 / (3 + 4 + 2 + 6 + 8))
+        self.assertTrue(ns_no_graph.get_matrix_value_by_token_xy(',', '.') == 0)
+        self.assertTrue(ns_no_graph.get_matrix_value_by_token_xy('in', ',') == 2 / (2 + 2 + 6 + 1 + 1))
+
         # t=2 steps random walk
         nodes, matrix2 = graph.get_t_step_random_walk_stochastic_matrix(t=2)
         ns = gbn.NegativeSamples(matrix=matrix2, graph_index2wordId=nodes,
@@ -147,11 +161,6 @@ class TestGraphDataProvider(unittest.TestCase):
         for i in range(6):
             value_sum += matrix2[3, i] * matrix1[i, 5]  # matrix1 is the transition matrix
         self.assertTrue(value_sum == matrix3[3, 5])
-
-        # TODO LATER check below
-        translate_shortest_path_nodes_dict = ns.write_translated_negative_samples_dict(n=3, selected_mode='min',
-                                                                                       output_folder=self.graph_folder)
-        print(translate_shortest_path_nodes_dict)
 
     def test_4_reorder_matrix(self):
         # Undirected
