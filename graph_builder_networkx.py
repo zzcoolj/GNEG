@@ -1,5 +1,6 @@
 __author__ = 'Zheng ZHANG'
 
+import time
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
@@ -400,12 +401,12 @@ class GraphGridSearcher:
         self.ns_folder = ns_folder  # output folder
 
     def one_to_one(self, encoded_edges_count_file_path, directed, t):
-        # # NXGraph version: too slow
-        # graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
-        # graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
+        # NXGraph version: too slow
+        graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
+        graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
 
-        no_graph = NoGraph(encoded_edges_count_file_path)
-        no_graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
+        # no_graph = NoGraph(encoded_edges_count_file_path)
+        # no_graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
 
     def one_to_many(self, encoded_edges_count_file_path, directed, t_max):
         print(multi_processing.get_pid(), encoded_edges_count_file_path)
@@ -463,6 +464,11 @@ if __name__ == '__main__':
     #                       directed=False, t_max=1, negative=20)
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
 
+    start_time = time.time()
     grid_searcher = GraphGridSearcher(ns_folder=config['word2vec']['negative_samples_folder'])
-    grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
-                               process_num=3)
+    grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
+                             directed=False,
+                             t=1)
+    common.count_time(start_time)
+    # grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
+    #                            process_num=3)
