@@ -409,7 +409,8 @@ class GraphGridSearcher:
         # graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
         # graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
 
-        no_graph = NoGraph(encoded_edges_count_file_path)
+        # TODO NOW NOW NOW vocab_size
+        no_graph = NoGraph(encoded_edges_count_file_path, vocab_size=10000)
         no_graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
 
     def one_to_many(self, encoded_edges_count_file_path, directed, t_max):
