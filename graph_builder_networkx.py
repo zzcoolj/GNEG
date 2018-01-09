@@ -425,7 +425,8 @@ class GraphGridSearcher:
         # common.write_to_pickle(nodes, self.ns_folder + graph.name_prefix + '_nodes.pickle')
         # for matrix, t in graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
 
-        no_graph = NoGraph(encoded_edges_count_file_path)
+        # TODO NOW NOW NOW vocab_size
+        no_graph = NoGraph(encoded_edges_count_file_path, vocab_size=10000)
         common.write_to_pickle(no_graph.graph_index2wordId, self.ns_folder + no_graph.name_prefix + '_nodes.pickle')
         for matrix, t in no_graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
             file_prefix = self.ns_folder + no_graph.name_prefix + '_' + str(t)
