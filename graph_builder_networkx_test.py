@@ -122,12 +122,13 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue(ns.get_matrix_value_by_token_xy('in', ',') == 2/(2+2+6+1+1))
 
         # stochastic matrix calculated by NoGraph class
+        print('NoGraph')
         no_graph = gbn.NoGraph(self.encoded_edges_count_undirected_path, vocab_size=6)
-        ns_no_graph = gbn.NegativeSamples(matrix=no_graph.get_stochastic_matrix(),
+        matrix11 = no_graph.get_stochastic_matrix()
+        ns_no_graph = gbn.NegativeSamples(matrix=matrix11,
                                           graph_index2wordId=no_graph.graph_index2wordId,
                                           merged_dict_path=self.merged_dict_undirected_path,
                                           name_prefix=no_graph.name_prefix)
-        print('NoGraph')
         ns_no_graph.get_and_print_matrix_and_token_order()
         self.assertTrue(ns_no_graph.get_matrix_value_by_token_xy('.', 'the') == 2 / (2 + 2 + 3 + 1))
         self.assertTrue(ns_no_graph.get_matrix_value_by_token_xy('and', 'the') == 4 / (2 + 1 + 4 + 3 + 4))
@@ -147,6 +148,18 @@ class TestGraphDataProvider(unittest.TestCase):
             value_sum += matrix1[3, i] * matrix1[i, 5]
         self.assertTrue(value_sum == matrix2[3, 5])
 
+        # t=2 steps random walk NoGraph
+        nodes, matrix22 = no_graph.get_t_step_random_walk_stochastic_matrix(t=2)
+        ns_no_graph = gbn.NegativeSamples(matrix=matrix22, graph_index2wordId=nodes,
+                                          merged_dict_path=self.merged_dict_undirected_path,
+                                          name_prefix=no_graph.name_prefix)
+        ns_no_graph.get_and_print_matrix_and_token_order()
+        # check the calculation of cell value.
+        value_sum = 0
+        for i in range(6):
+            value_sum += matrix11[3, i] * matrix11[i, 5]
+        self.assertTrue(value_sum == matrix22[3, 5])
+
         # t=3 steps random walk
         nodes, matrix3 = graph.get_t_step_random_walk_stochastic_matrix(t=3)
         ns = gbn.NegativeSamples(matrix=matrix3, graph_index2wordId=nodes,
@@ -161,6 +174,21 @@ class TestGraphDataProvider(unittest.TestCase):
         for i in range(6):
             value_sum += matrix2[3, i] * matrix1[i, 5]  # matrix1 is the transition matrix
         self.assertTrue(value_sum == matrix3[3, 5])
+
+        # t=3 steps random walk NoGraph
+        nodes, matrix33 = no_graph.get_t_step_random_walk_stochastic_matrix(t=3)
+        ns_no_graph = gbn.NegativeSamples(matrix=matrix33, graph_index2wordId=nodes,
+                                          merged_dict_path=self.merged_dict_undirected_path,
+                                          name_prefix=no_graph.name_prefix)
+        ns_no_graph.get_and_print_matrix_and_token_order()
+        # check the sum of each line in matrix equals to 1
+        for i in range(0, matrix33.shape[0]):
+            self.assertTrue(np.sum(matrix33[i]).astype(int) == 1)
+        # check the calculation of cell value.
+        value_sum = 0
+        for i in range(6):
+            value_sum += matrix22[3, i] * matrix11[i, 5]  # matrix1 is the transition matrix
+        self.assertTrue(value_sum == matrix33[3, 5])
 
     def test_4_reorder_matrix(self):
         # Undirected
