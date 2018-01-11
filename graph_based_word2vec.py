@@ -188,7 +188,7 @@ class GridSearch_new(object):
         files = multi_processing.get_files_endswith(data_folder=ns_folder, file_extension='.npy')
         for file in files:
             nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', file).group(1) + '_nodes.pickle'
-            for power in [0.1, 0.25, 0.5, 0.75, 1]:
+            for power in [0.001, 0.01, 0.05, 0.07, 0.1, 0.2, 0.25, 0.5, 0.75, 0.9, 1]:
                 try:
                     evaluation_result = self.one_search(matrix_path=file, graph_index2wordId_path=nodes_path,
                                                         power=power)
