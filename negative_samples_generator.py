@@ -208,7 +208,7 @@ class NegativeSamplesGenerator:
 
         files_list = multi_processing.get_files_endswith(encoded_edges_count_file_folder, file_extension)
         p = Pool(process_num, maxtasksperchild=1)
-        p.starmap_async(self.one_to_many, zip(files_list, repeat(directed), repeat(t_max)))
+        p.starmap_async(self.one_to_many, zip(files_list, repeat(t_max)))
         p.close()
         p.join()
 
@@ -263,7 +263,7 @@ class NegativeSamplesGenerator_old:
 
 
 if __name__ == '__main__':
-    # # DEPRECATED
+    # # [DEPRECATED]
     # bridge = NegativeSamplesGenerator_old(encoded_edges_count_file_folder=config['graph']['graph_folder'],
     #                                                  ns_folder=config['word2vec']['negative_samples_folder'],
     #                                                  merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt')
