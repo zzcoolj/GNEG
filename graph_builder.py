@@ -1,5 +1,9 @@
 __author__ = 'Zheng ZHANG'
 
+"""
+graph_builder is used by negative_samples_generator.py to get what is needed to build the negative samples.
+"""
+
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
