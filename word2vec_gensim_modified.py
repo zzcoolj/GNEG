@@ -732,11 +732,11 @@ class Word2Vec(utils.SaveLoad):
         # TODO LATER It takes arount 20 minutes for whole wiki data, worth it?
         """Do an initial scan of all words appearing in sentences."""
         vocab = defaultdict(int)
-        index2word = gdp.get_index2word(self.graph_index2word_path)
+        graph_index2word = gdp.get_index2word(self.graph_index2word_path)
         merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(self.merged_word_count_path, key_type=str, value_type=int)
         valid_vocabulary = dict.fromkeys(gdp.read_valid_vocabulary(self.valid_vocabulary_path))
         for index in valid_vocabulary:
-            vocab[index2word[int(index)]] = merged_word_count[str(index)]
+            vocab[graph_index2word[int(index)]] = merged_word_count[str(index)]
         for sentence_no, sentence in enumerate(sentences):
             continue
         self.corpus_count = sentence_no + 1
