@@ -22,6 +22,11 @@ class NoGraph:
         """
         Theoretically valid_vocabulary file is not necessary. We could build a graph_index2wordId dict by going through
         encoded_edges_count_file_path and getting all wordIds. But it's not efficient.
+
+        valid_wordId's order is really important and should be static, because:
+            1. graph_index2wordId is built on this
+            2. graph_wordId2index (temp var), on which cooccurrence_matrix element's order is based, is built on this.
+            3. graph_index2wordId represents cooccurrence_matrix element's order
         """
         self.name_prefix = multi_processing.get_file_name(encoded_edges_count_file_path).split('.')[0]
         valid_wordId = list(set(gdp.read_valid_vocabulary(valid_vocabulary_path)))  # make sure no duplication
