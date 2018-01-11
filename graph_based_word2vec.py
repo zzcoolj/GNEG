@@ -224,4 +224,8 @@ if __name__ == '__main__':
     # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_matrix.npy',
     #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle',
     #                power=0.75)
-    gs2.grid_search()
+    # gs2.grid_search()
+    # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'shelter/encoded_edges_count_window_size_10_undirected_1_step_rw_matrix_new.npy',
+    #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'shelter/encoded_edges_count_window_size_10_undirected_nodes.pickle',
+    #                power=0.75)
+
