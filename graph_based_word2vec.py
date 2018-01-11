@@ -32,7 +32,7 @@ class WikiSentences(object):
 class GridSearch_old(object):
     """ATTENTION [DEPRECATED]
     This class only serves the old uniform ns selection idea, which should be deprecated.
-    (work together with FromEncodedEdgesCountToTranslatedNSDict class in graph_builder_network.py)
+    (work together with NegativeSamplesGenerator_old class in graph_builder_network.py)
 
     Based on the assumption that we already have all 'write_translated_negative_samples_dict's based on different
     parameters combination.
