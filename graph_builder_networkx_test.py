@@ -5,11 +5,12 @@ import numpy as np
 
 class TestGraphDataProvider(unittest.TestCase):
     graph_folder = 'output/intermediate data for unittest/graph/'
-    merged_dict_path = 'output/intermediate data for unittest/graph/keep/dict_merged_for_unittest.txt'
     ns_folder = 'output/intermediate data for unittest/negative_samples/'
+    merged_dict_path = 'output/intermediate data for unittest/graph/keep/dict_merged_for_unittest.txt'
     encoded_edges_count_path = 'output/intermediate data for unittest/graph/keep/encoded_edges_count_window_size_6_vocab_size_none_for_unittest.txt'
     merged_dict_undirected_path = 'output/intermediate data for unittest/graph/keep/dict_merged_undirected_for_unittest.txt'
     encoded_edges_count_undirected_path = 'output/intermediate data for unittest/graph/keep/encoded_edges_count_window_size_6_vocab_size_none_undirected_for_unittest.txt'
+    valid_vocabulary_undirected_path = 'output/intermediate data for unittest/graph/keep/valid_vocabulary_min_count_5_undirected.txt'
 
     def test_1_get_ns_dict_by_shortest_path(self):
         # Directed graph
@@ -123,7 +124,8 @@ class TestGraphDataProvider(unittest.TestCase):
 
         # stochastic matrix calculated by NoGraph class
         print('NoGraph')
-        no_graph = gbn.NoGraph(self.encoded_edges_count_undirected_path, vocab_size=6)
+        no_graph = gbn.NoGraph(self.encoded_edges_count_undirected_path,
+                               valid_vocabulary_path=self.valid_vocabulary_undirected_path)
         matrix11 = no_graph.get_stochastic_matrix()
         ns_no_graph = gbn.NegativeSamples(matrix=matrix11,
                                           graph_index2wordId=no_graph.graph_index2wordId,
@@ -158,7 +160,7 @@ class TestGraphDataProvider(unittest.TestCase):
         value_sum = 0
         for i in range(6):
             value_sum += matrix11[3, i] * matrix11[i, 5]
-        self.assertTrue(value_sum == matrix22[3, 5])
+        np.testing.assert_array_almost_equal(value_sum, matrix22[3, 5])
 
         # t=3 steps random walk
         nodes, matrix3 = graph.get_t_step_random_walk_stochastic_matrix(t=3)
@@ -183,12 +185,12 @@ class TestGraphDataProvider(unittest.TestCase):
         ns_no_graph.get_and_print_matrix_and_token_order()
         # check the sum of each line in matrix equals to 1
         for i in range(0, matrix33.shape[0]):
-            self.assertTrue(np.sum(matrix33[i]).astype(int) == 1)
+            np.testing.assert_array_almost_equal(np.sum(matrix33[i]), 1)
         # check the calculation of cell value.
         value_sum = 0
         for i in range(6):
             value_sum += matrix22[3, i] * matrix11[i, 5]  # matrix1 is the transition matrix
-        self.assertTrue(value_sum == matrix33[3, 5])
+        np.testing.assert_array_almost_equal(value_sum, matrix33[3, 5])
 
     def test_4_reorder_matrix(self):
         # Undirected

@@ -18,33 +18,28 @@ config.read('config.ini')
 
 
 class NoGraph:
-    def __init__(self, encoded_edges_count_file_path, vocab_size):
+    def __init__(self, encoded_edges_count_file_path, valid_vocabulary_path):
+        """
+        Theoretically valid_vocabulary file is not necessary. We could build a graph_index2wordId dict by going through
+        encoded_edges_count_file_path and getting all wordIds. But it's not efficient.
+        """
         self.name_prefix = multi_processing.get_file_name(encoded_edges_count_file_path).split('.')[0]
+        valid_wordId = list(set(gdp.read_valid_vocabulary(valid_vocabulary_path)))  # make sure no duplication
+        # ATTENTION: graph_index2wordId should be a list of which the index order is from 0 to vocab_size-1
+        # TODO LATER No need to make graph_index2wordId an int list
+        self.graph_index2wordId = list(map(int, valid_wordId))
+        vocab_size = len(valid_wordId)
+        # ATTENTION: the index is of the type int, while the wordId is of the type str
+        graph_wordId2index = dict(zip(valid_wordId, range(vocab_size)))
         # initialize numpy 2d array
         cooccurrence_matrix = np.zeros((vocab_size, vocab_size))
-        # initialize graph_index2wordId
-        graph_index2wordId = []
         # read encoded_edges_count_file
         for line in common.read_file_line_yielder(encoded_edges_count_file_path):
-            # ATTENTION: line e.g. 17  57  10 or 57   17  10 (only one of them will appear in the file.)
+            # ATTENTION: line e.g. '17'  '57'  '10' or '57'   '17'  '10' (only one of them will appear in the file.)
             (source, target, weight) = line.split("\t")
-            source = int(source)
-            target = int(target)
-            if source in graph_index2wordId:
-                source_index = graph_index2wordId.index(source)
-            else:
-                source_index = len(graph_index2wordId)
-                graph_index2wordId.append(source)
-
-            if target in graph_index2wordId:
-                target_index = graph_index2wordId.index(target)
-            else:
-                target_index = len(graph_index2wordId)
-                graph_index2wordId.append(target)
-            cooccurrence_matrix[source_index][target_index] = weight
-            # ATTENTION: undirected graph
-            cooccurrence_matrix[target_index][source_index] = weight
-        self.graph_index2wordId = graph_index2wordId
+            cooccurrence_matrix[graph_wordId2index[source]][graph_wordId2index[target]] = weight
+            # undirected graph
+            cooccurrence_matrix[graph_wordId2index[target]][graph_wordId2index[source]] = weight
         self.cooccurrence_matrix = cooccurrence_matrix
 
     def get_stochastic_matrix(self, power=None):
@@ -185,7 +180,7 @@ class NXGraph:
         return nx.to_numpy_matrix(stochastic_graph)
 
     def get_t_step_random_walk_stochastic_matrix(self, t, output_folder=None):
-        # TODO NOW not the same result from 1 step random walk
+        # TODO LATER not the same result from 1 step random walk
         transition_matrix = self.__get_stochastic_matrix()
         result = transition_matrix
         while t > 1:
@@ -236,11 +231,11 @@ class NegativeSamples:
 
     def get_matrix_value_by_token_xy(self, token_x, token_y):
         # Does not need translated ns dict to be calculated.
-        word2index = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+        word2wordId = gdp.read_two_columns_file_to_build_dictionary_type_specified(
             file=self.merged_dict_path, key_type=str, value_type=int)
         nodes = list(self.graph_index2wordId)
-        matrix_x = nodes.index(word2index[token_x])
-        matrix_y = nodes.index(word2index[token_y])
+        matrix_x = nodes.index(word2wordId[token_x])
+        matrix_y = nodes.index(word2wordId[token_y])
         return self.matrix[matrix_x][matrix_y]
 
     def reorder_matrix(self, word2vec_index2word):
@@ -401,16 +396,16 @@ class GraphGridSearcher:
     This class is just a helper for NXGraph. When there are several encoded_edges_count files. This class goes through
     all of them and produce result of different t steps.
     """
-    def __init__(self, ns_folder):
+    def __init__(self, ns_folder, valid_vocabulary_path):
         self.ns_folder = ns_folder  # output folder
+        self.valid_vocabulary_path = valid_vocabulary_path
 
-    def one_to_one(self, encoded_edges_count_file_path, directed, t):
+    def one_to_one(self, encoded_edges_count_file_path, t, directed):
         # # NXGraph version: too slow
         # graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
         # graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
 
-        # TODO NOW NOW NOW vocab_size
-        no_graph = NoGraph(encoded_edges_count_file_path, vocab_size=10000)
+        no_graph = NoGraph(encoded_edges_count_file_path, valid_vocabulary_path=self.valid_vocabulary_path)
         no_graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
 
     def one_to_many(self, encoded_edges_count_file_path, directed, t_max):
@@ -426,8 +421,7 @@ class GraphGridSearcher:
         # common.write_to_pickle(nodes, self.ns_folder + graph.name_prefix + '_nodes.pickle')
         # for matrix, t in graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
 
-        # TODO NOW NOW NOW vocab_size
-        no_graph = NoGraph(encoded_edges_count_file_path, vocab_size=10000)
+        no_graph = NoGraph(encoded_edges_count_file_path, valid_vocabulary_path=self.valid_vocabulary_path)
         common.write_to_pickle(no_graph.graph_index2wordId, self.ns_folder + no_graph.name_prefix + '_nodes.pickle')
         for matrix, t in no_graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
             file_prefix = self.ns_folder + no_graph.name_prefix + '_' + str(t)
@@ -471,7 +465,8 @@ if __name__ == '__main__':
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
 
     start_time = time.time()
-    grid_searcher = GraphGridSearcher(ns_folder=config['word2vec']['negative_samples_folder'])
+    grid_searcher = GraphGridSearcher(ns_folder=config['word2vec']['negative_samples_folder'],
+                                      valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
     grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
                              directed=False,
                              t=1)
