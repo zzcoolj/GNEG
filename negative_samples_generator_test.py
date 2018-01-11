@@ -1,5 +1,5 @@
 import unittest
-import graph_builder_networkx as gbn
+import negative_samples_generator as gbn
 import numpy as np
 
 

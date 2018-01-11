@@ -127,7 +127,7 @@ from six.moves import xrange
 from types import GeneratorType
 from scipy import stats
 import graph_data_provider as gdp
-import graph_builder_networkx as gbn
+import negative_samples_generator as gbn
 import sys
 sys.path.insert(0, '../common/')
 import common
