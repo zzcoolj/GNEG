@@ -566,14 +566,13 @@ class Word2Vec(utils.SaveLoad):
     def make_cum_table_uniform_distribution(self, domain=2 ** 31 - 1):
         """
         All table values are same, meaning all words have the same possibility to be selected as negative samples.
+        power is useless for this function.
         Used for "bottomline" calculation.
         """
         vocab_size = len(self.wv.index2word)
         self.cum_table = ones(vocab_size, dtype=uint32)
-        self.cum_table = cumsum(self.cum_table, axis=1) / vocab_size * domain
+        self.cum_table = cumsum(self.cum_table) / vocab_size * domain
         self.cum_table[-1] = domain
-        print(self.cum_table)
-        exit()
 
     def make_cum_table(self, power=0.75, domain=2 ** 31 - 1):
         """

@@ -126,12 +126,14 @@ class GridSearch_new(object):
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
         self.negative = negative
 
-    def one_search(self, matrix_path, graph_index2wordId_path, power):
+    def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx=0):
         sentences = WikiSentences(self.training_data_folder)  # a memory-friendly iterator
 
         # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
         if matrix_path:
             ns_mode_pyx = 1
+        elif ns_mode_pyx == -1:
+            ns_mode_pyx = -1
         else:
             ns_mode_pyx = 0
 
@@ -163,28 +165,37 @@ class GridSearch_new(object):
                                                                                             words (float)
         '''
         evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
-        if matrix_path:
+        if ns_mode_pyx == 1:
             ns_name = multi_processing.get_file_name(matrix_path)
             # e.g. encoded_edges_count_window_size_5_undirected_1_step_rw_matrix
             ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_(.*)_step_rw_matrix', ns_name)
             result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
                       int(ns_name_information.group(3)), power,
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
-        else:
-            # in original word2vec (baseline), power is set to 0.75 as default.
+        elif ns_mode_pyx == 0:
+            # in original word2vec (frontline), power is set to 0.75 as default.
             result = [matrix_path, None, None, None, 0.75,
+                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        elif ns_mode_pyx == -1:
+            # ibottomline, power is set to 0 as default.
+            result = [matrix_path, None, None, None, 0,
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
         print(result)
         return result
 
     def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
-        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)  # baseline: original word2vec
+        # frontline: original word2vec
+        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
         df = pd.DataFrame(columns=['NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
                                    'Pearson correlation', 'Pearson pvalue', 'Spearman correlation',
                                    'Spearman pvalue', 'Ration of pairs with OOV'])
         df.loc[0] = evaluation_result
 
-        i = 1
+        # bottomline: uniformly distribution
+        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=-1)
+        df.loc[1] = evaluation_result
+
+        i = 2
         files = multi_processing.get_files_endswith(data_folder=ns_folder, file_extension='.npy')
         for file in files:
             nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', file).group(1) + '_nodes.pickle'
@@ -222,11 +233,11 @@ if __name__ == '__main__':
                          merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
                          workers=4, sg=sg, negative=20)
-    gs2.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
+    # gs2.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
     # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_matrix.npy',
     #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_5_undirected_1_step_rw_nodes.pickle',
     #                power=0.75)
-    # gs2.grid_search()
+    gs2.grid_search()
     # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'shelter/encoded_edges_count_window_size_10_undirected_1_step_rw_matrix_new.npy',
     #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'shelter/encoded_edges_count_window_size_10_undirected_nodes.pickle',
     #                power=0.75)
