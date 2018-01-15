@@ -538,7 +538,7 @@ class Word2Vec(utils.SaveLoad):
         self.graph_index2word_path = index2word_path
         self.merged_word_count_path = merged_word_count_path
         self.valid_vocabulary_path = valid_vocabulary_path
-        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
+        # ns_mode_pyx:  -1: uniform distribution cum_table ; 0: original, using cum_table; 1: using graph-based ns_table
         self.ns_mode_pyx = ns_mode_pyx
         # TODO LATER: [DEPRECATED] graph based ns solution 1
         # self.translated_shortest_path_nodes_dict_path = translated_shortest_path_nodes_dict_path
@@ -562,6 +562,18 @@ class Word2Vec(utils.SaveLoad):
 
     def initialize_word_vectors(self):
         self.wv = KeyedVectors()
+
+    def make_cum_table_uniform_distribution(self, domain=2 ** 31 - 1):
+        """
+        All table values are same, meaning all words have the same possibility to be selected as negative samples.
+        Used for "bottomline" calculation.
+        """
+        vocab_size = len(self.wv.index2word)
+        self.cum_table = ones(vocab_size, dtype=uint32)
+        self.cum_table = cumsum(self.cum_table, axis=1) / vocab_size * domain
+        self.cum_table[-1] = domain
+        print(self.cum_table)
+        exit()
 
     def make_cum_table(self, power=0.75, domain=2 ** 31 - 1):
         """
@@ -874,6 +886,8 @@ class Word2Vec(utils.SaveLoad):
             # build the table for drawing random words (for negative sampling)
             if self.ns_mode_pyx == 0:
                 self.make_cum_table()
+            elif self.ns_mode_pyx == -1:
+                self.make_cum_table_uniform_distribution()
             else:
                 # TODO LATER: [DEPRECATED]
                 # self.load_graph_based_negative_sample_table(translated_shortest_path_nodes_dict_path)

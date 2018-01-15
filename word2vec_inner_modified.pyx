@@ -537,7 +537,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx):
 
     if negative:
         syn1neg = <REAL_t *>(np.PyArray_DATA(model.syn1neg))
-        if ns_mode:
+        if ns_mode == 1:
             '''ATTENTION DANGEROUS ZONE !!!
             If ns_array[0] has 20 elements, ns_array[0][40] does not work for sure, BUT ns_array_view[0][40] works!!!
             BUT what it gives is not 41st element in ns_array[0] (If we make ns_array[0] have more than 41 elements).
@@ -614,7 +614,7 @@ def train_batch_sg(model, sentences, alpha, _work, compute_loss, ns_mode_pyx):
                     if hs:
                         fast_sentence_sg_hs(points[i], codes[i], codelens[i], syn0, syn1, size, indexes[j], _alpha, work, word_locks, _compute_loss, &_running_training_loss)
                     if negative:
-                        if ns_mode:
+                        if ns_mode == 1:
                             word_index = indexes[i]
                             cum_matrix_row = cum_matrix[word_index]
                             next_random = fast_sentence_sg_neg_memoryviews(negative, cum_matrix_row, cum_matrix_len, syn0, syn1neg, size, indexes[i], indexes[j], _alpha, work, next_random, word_locks, _compute_loss, &_running_training_loss)
@@ -686,7 +686,7 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss, ns_mod
 
     if negative:
         syn1neg = <REAL_t *>(np.PyArray_DATA(model.syn1neg))
-        if ns_mode:
+        if ns_mode == 1:
             # receive graph-based negative sample array
             ns_array_view = model.ns_array
         else:
@@ -749,7 +749,7 @@ def train_batch_cbow(model, sentences, alpha, _work, _neu1, compute_loss, ns_mod
                 if hs:
                     fast_sentence_cbow_hs(points[i], codes[i], codelens, neu1, syn0, syn1, size, indexes, _alpha, work, i, j, k, cbow_mean, word_locks, _compute_loss, &_running_training_loss)
                 if negative:
-                    if ns_mode:
+                    if ns_mode == 1:
                         word_index = indexes[i]
                         ns_list = ns_array_view[word_index]  # This line cause two warnings 'warning: code will never be executed [-Wunreachable-code]'
                         next_random = fast_sentence_cbow_neg_graph_based(negative, ns_list, neu1, syn0, syn1neg, size, indexes, _alpha, work, i, j, k, cbow_mean, next_random, word_locks, _compute_loss, &_running_training_loss)
