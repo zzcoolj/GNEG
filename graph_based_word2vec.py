@@ -30,6 +30,7 @@ class WikiSentences(object):
             else:
                 # get last units number of elements; the original list is like ['AB', 'AA']
                 self.sub_folder_names = self.sub_folder_names[-units:]
+            print('ATTENTION: Only part of the corpus is used.', self.sub_folder_names)
 
     def __iter__(self):
         for sub_folder_name in self.sub_folder_names:
