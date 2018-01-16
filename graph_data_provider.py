@@ -289,14 +289,21 @@ def multiprocessing_write_transferred_edges_files_and_transferred_word_count(loc
                             **kw)
 
 
-def merge_transferred_word_count(word_count_folder, output_folder):
+def merge_transferred_word_count(word_count_folder, output_folder, file_name='word_count_all.txt', units=None):
     # TODO LATER too slow, improve this part
-    files = get_files_startswith(word_count_folder, "word_count_")
+    if units:
+        files = []
+        for unit_name in units:
+            files.extend(get_files_startswith(word_count_folder, "word_count_"+unit_name+'_'))
+    else:
+        # shouldn't count word_count_all.txt or word_count_partial.txt
+        files = get_files_startswith(word_count_folder, "word_count_")
+
     c = Counter()
     for file in files:
         counter_temp = common.read_two_columns_file_to_build_dictionary_type_specified(file, int, int)
         c += counter_temp
-    common.write_dict_to_file(output_folder + "word_count_all.txt", dict(c), 'str')
+    common.write_dict_to_file(output_folder + file_name, dict(c), 'str')
     return dict(c)
 
 
@@ -357,12 +364,15 @@ def get_counted_edges_worker(edges_files_paths, valid_vocabulary_path, output_fo
 
 def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, process_num,
                                                                 min_count=config['graph']['min_count'],
-                                                                dicts_folder=config['graph'][
-                                                                    'dicts_and_encoded_texts_folder'],
+                                                                dicts_folder=config['graph']['dicts_and_encoded_texts_folder'],
                                                                 edges_folder=config['graph']['edges_folder'],
                                                                 output_folder=config['graph']['graph_folder'],
                                                                 max_vocab_size=config['graph']['max_vocab_size'],
-                                                                already_existed_window_size=None):
+                                                                already_existed_window_size=None,
+                                                                units=None):
+    """
+    :param units: 0, all files in edges folder are resources for edges files selection.
+    """
     def counted_edges_from_worker_yielder(paths):
         for path in paths:
             yield Counter(common.read_pickle(path))
@@ -378,12 +388,15 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
             process_num = 1
         files_list = multi_processing.chunkify(lst=files, n=num_tasks)
         p = Pool(process_num)
-        if (max_vocab_size == 'None') or (not max_vocab_size):
-            worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
+        if units:
+            worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_partial_min_count_' + str(min_count) + '_vocab_size_' + str(max_vocab_size) + '.txt'
         else:
-            worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(
-                min_count) + '_vocab_size_' + str(
-                max_vocab_size) + '.txt'
+            if (max_vocab_size == 'None') or (not max_vocab_size):
+                worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(min_count) + '.txt'
+            else:
+                worker_valid_vocabulary_path = dicts_folder + 'valid_vocabulary_min_count_' + str(
+                    min_count) + '_vocab_size_' + str(
+                    max_vocab_size) + '.txt'
         worker_output_path = edges_folder
         p.starmap(get_counted_edges_worker,
                   zip(files_list, repeat(worker_valid_vocabulary_path), repeat(worker_output_path)))
@@ -409,16 +422,32 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
 
     # Get all target edges files' paths to be merged and counted.
     files = {}
-    for i in range(2, window_size + 1):
-        files_of_specific_distance = multi_processing.get_files_endswith(edges_folder,
-                                                                         "_encoded_edges_distance_{0}.txt".format(i))
-        if not files_of_specific_distance:
-            print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
-                i - 1) + '.')
-            window_size = i - 1
-            break
-        else:
-            files[i] = files_of_specific_distance
+    if units:
+        for i in range(2, window_size + 1):
+            files_of_specific_distance = multi_processing.get_files_endswith(edges_folder,
+                                                                             "_encoded_edges_distance_{0}.txt".format(i))
+            files_of_specific_distance_selected = []
+            for unit in units:
+                files_of_specific_distance_selected.extend([path for path in files_of_specific_distance if unit in path])
+            if not files_of_specific_distance_selected:
+                print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
+                    i - 1) + '.')
+                window_size = i - 1
+                break
+            else:
+                print(files_of_specific_distance_selected)
+                files[i] = files_of_specific_distance_selected
+    else:
+        for i in range(2, window_size + 1):
+            files_of_specific_distance = multi_processing.get_files_endswith(edges_folder,
+                                                                             "_encoded_edges_distance_{0}.txt".format(i))
+            if not files_of_specific_distance:
+                print('No encoded edges file of window size ' + str(window_size) + '. Reset window size to ' + str(
+                    i - 1) + '.')
+                window_size = i - 1
+                break
+            else:
+                files[i] = files_of_specific_distance
 
     # Generate counted edges of different window sizes in a stepwise way.
     if not already_existed_window_size:
@@ -443,7 +472,11 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
         else:
             # counted edges of window size n (n>=3) = counted edges of window size n-1 + counted edges of distance n
             counted_edges_of_specific_window_size += counted_edges_of_distance_i
-        common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(i) + ".txt",
+        if units:
+            encoded_edges_count_file_prefix = "encoded_edges_count_partial_window_size_"
+        else:
+            encoded_edges_count_file_prefix = "encoded_edges_count_window_size_"
+        common.write_dict_to_file(output_folder + encoded_edges_count_file_prefix + str(i) + ".txt",
                                   counted_edges_of_specific_window_size, 'tuple')
 
     return counted_edges_of_specific_window_size
@@ -484,7 +517,8 @@ def get_files_startswith(data_folder, starting):
     files = [os.path.join(data_folder, name) for name in os.listdir(data_folder)
              if (os.path.isfile(os.path.join(data_folder, name))
                  and name.startswith(starting)
-                 and (name != 'word_count_all.txt'))]
+                 and (name != 'word_count_all.txt')
+                 and (name != 'word_count_partial.txt'))]
     return files
 
 
@@ -519,6 +553,30 @@ def prepare_intermediate_data(data_folder, file_extension,
         output_path=valid_vocabulary_name,
         min_count=int(min_count),
         max_vocab_size=max_vocab_size)
+
+
+def part_of_data(units, window_size, process_num,
+                 dicts_folder=config['graph']['dicts_and_encoded_texts_folder'],
+                 min_count=config['graph']['min_count'],
+                 max_vocab_size=config['graph']['max_vocab_size']):
+    if not units:
+        print("units shouldn't be None for the part_of_data function")
+        exit()
+    # edges files should be already existed
+    word_count_name = 'word_count_partial.txt'
+    merge_transferred_word_count(word_count_folder=dicts_folder, output_folder=dicts_folder, file_name=word_count_name, units=units)
+    valid_vocabulary_name = dicts_folder + 'valid_vocabulary_partial_min_count_' + str(min_count) + '_vocab_size_' + str(max_vocab_size) + '.txt'
+    write_valid_vocabulary(
+        merged_word_count_path=dicts_folder + word_count_name,
+        output_path=valid_vocabulary_name,
+        min_count=int(min_count),
+        max_vocab_size=max_vocab_size)
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=window_size, process_num=process_num,
+                                                                max_vocab_size=max_vocab_size, units=units)
+    for i in range(2, window_size+1):
+        file_path = config['graph']['graph_folder'] + 'encoded_edges_count_partial_window_size_' + str(i) + '.txt'
+        merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path)
+
 
 
 def filter_edges(min_count,
@@ -639,12 +697,12 @@ if __name__ == '__main__':
     #                           process_num=4,
     #                           max_vocab_size=10000)
 
-    # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=10, process_num=4, max_vocab_size=10000, already_existed_window_size=7)
+    part_of_data(units=['AB', 'AA'], window_size=2, process_num=4)
 
-    # get undirected edges count for all file
-    for i in range(2, 11):
-        file_path = config['graph']['graph_folder'] + 'encoded_edges_count_window_size_' + str(i) + '.txt'
-        merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path)
+    # # get undirected edges count for all file
+    # for i in range(2, 11):
+    #     file_path = config['graph']['graph_folder'] + 'encoded_edges_count_window_size_' + str(i) + '.txt'
+    #     merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path)
 
 # TODO LATER Add weight according to word pair distance in write_edges_of_different_window_size function
 # TODO NOW This program now allows self-loop, add one option for that.
