@@ -280,5 +280,8 @@ if __name__ == '__main__':
     grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
                              t=1)
     print(common.count_time(start_time))
+
+    # TODO NOW NOW NOW partial version
+
     # grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
     #                            process_num=3)

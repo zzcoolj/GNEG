@@ -473,11 +473,11 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
             # counted edges of window size n (n>=3) = counted edges of window size n-1 + counted edges of distance n
             counted_edges_of_specific_window_size += counted_edges_of_distance_i
         if units:
-            encoded_edges_count_file_prefix = "encoded_edges_count_partial_window_size_"
+            common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(i) + "_partial.txt",
+                                      counted_edges_of_specific_window_size, 'tuple')
         else:
-            encoded_edges_count_file_prefix = "encoded_edges_count_window_size_"
-        common.write_dict_to_file(output_folder + encoded_edges_count_file_prefix + str(i) + ".txt",
-                                  counted_edges_of_specific_window_size, 'tuple')
+            common.write_dict_to_file(output_folder + "encoded_edges_count_window_size_" + str(i) + ".txt",
+                                      counted_edges_of_specific_window_size, 'tuple')
 
     return counted_edges_of_specific_window_size
 
@@ -574,7 +574,7 @@ def part_of_data(units, window_size, process_num,
     multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=window_size, process_num=process_num,
                                                                 max_vocab_size=max_vocab_size, units=units)
     for i in range(2, window_size+1):
-        file_path = config['graph']['graph_folder'] + 'encoded_edges_count_partial_window_size_' + str(i) + '.txt'
+        file_path = config['graph']['graph_folder'] + 'encoded_edges_count_window_size_' + str(i) + '_partial.txt'
         merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path)
 
 
