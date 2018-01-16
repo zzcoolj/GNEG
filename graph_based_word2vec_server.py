@@ -17,7 +17,7 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                        workers=50, sg=sg, negative=20, units=1)
+                        workers=50, sg=sg, negative=20, units=['AA'])
 
 gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
 # gs.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_10_undirected_3_step_rw_matrix.npy',

@@ -14,7 +14,7 @@ import multi_processing
 
 # WikiSentences class modified based on the code from https://rare-technologies.com/word2vec-tutorial/
 class WikiSentences(object):
-    def __init__(self, dirname, units=0, random_selection=False):
+    def __init__(self, dirname, units=None):
         """
         :param dirname:
         :param units: 0: use all data in dir
@@ -24,12 +24,13 @@ class WikiSentences(object):
         # wiki data has folders like 'AA', 'AB', ..., 'EJ', one unit stands for one of these folders.
         self.sub_folder_names = [sub_folder_name for sub_folder_name in os.listdir(self.dirname)
                                  if not sub_folder_name.startswith('.')]
-        if units != 0:
-            if random_selection:
-                self.sub_folder_names = random.sample(self.sub_folder_names, units)
-            else:
-                # get last units number of elements; the original list is like ['AB', 'AA']
-                self.sub_folder_names = self.sub_folder_names[-units:]
+        if units:
+            # if random_selection:
+            #     self.sub_folder_names = random.sample(self.sub_folder_names, units)
+            # else:
+            #     # get last units number of elements; the original list is like ['AB', 'AA']
+            #     self.sub_folder_names = self.sub_folder_names[-units:]
+            self.sub_folder_names = units
             print('ATTENTION: Only part of the corpus is used.', self.sub_folder_names)
 
     def __iter__(self):
@@ -128,7 +129,7 @@ class GridSearch_old(object):
 
 class GridSearch_new(object):
     def __init__(self, training_data_folder, index2word_path, merged_word_count_path, valid_vocabulary_path,
-                 workers, sg, negative, units=0, random_selection=False):
+                 workers, sg, negative, units=None):
         # common parameters
         self.training_data_folder = training_data_folder
         self.index2word_path = index2word_path  # same as merged_dict_path
@@ -138,10 +139,9 @@ class GridSearch_new(object):
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
         self.negative = negative
         self.units = units
-        self.random_selection = random_selection
 
     def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx=0):
-        sentences = WikiSentences(self.training_data_folder, units=self.units, random_selection=self.random_selection)
+        sentences = WikiSentences(self.training_data_folder, units=self.units)
 
         # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
         if matrix_path:
@@ -245,7 +245,7 @@ if __name__ == '__main__':
                          index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                          merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                         workers=5, sg=sg, negative=20, units=0)
+                         workers=5, sg=sg, negative=20, units=None)
     gs2.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
     # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_9_undirected_2_step_rw_matrix.npy',
     #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_9_undirected_nodes.pickle',
