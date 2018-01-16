@@ -36,7 +36,7 @@ gs = gbw.GridSearch_new(training_data_folder='data/training data/Wikipedia-Dumps
                         index2word_path='output/intermediate_data_for_small_corpus/dicts_and_encoded_texts/dict_merged.txt',
                         merged_word_count_path='output/intermediate_data_for_small_corpus/dicts_and_encoded_texts/word_count_all.txt',
                         valid_vocabulary_path='output/intermediate_data_for_small_corpus/dicts_and_encoded_texts/valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                        workers=4, sg=sg, negative=20)
+                        workers=20, sg=sg, negative=20)
 
 gs.one_search(matrix_path='output/intermediate_data_for_small_corpus/negative_samples/encoded_edges_count_window_size_9_undirected_2_step_rw_matrix.npy',
               graph_index2wordId_path='output/intermediate_data_for_small_corpus/negative_samples/encoded_edges_count_window_size_9_undirected_nodes.pickle',
