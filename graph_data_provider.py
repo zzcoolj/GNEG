@@ -578,7 +578,6 @@ def part_of_data(units, window_size, process_num,
         merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path)
 
 
-
 def filter_edges(min_count,
                  old_encoded_edges_count_path,
                  max_vocab_size=config['graph']['max_vocab_size'],
@@ -644,7 +643,11 @@ def merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path,
         else:
             # The first time merged_weight_edges meets edge[source][target] or its inverse edge edge[target][source]
             merged_weight_edges[(source, target)] = int(weight)
-    output_name = multi_processing.get_file_name(old_encoded_edges_count_path).split('.txt')[0] + '_undirected.txt'
+    file_name = multi_processing.get_file_name(old_encoded_edges_count_path)
+    if file_name.endswith('_partial'):
+        output_name = file_name.split('_partial')[0] + '_undirected_partial.txt'
+    else:
+        output_name = file_name + '_undirected.txt'
     common.write_dict_to_file(output_folder + output_name, merged_weight_edges, 'tuple')
     return merged_weight_edges
 

@@ -191,20 +191,27 @@ class NegativeSamplesGenerator:
         print('need memory clean')
         return None
 
-    def many_to_many(self, encoded_edges_count_file_folder, directed, t_max, process_num):
+    def many_to_many(self, encoded_edges_count_file_folder, directed, t_max, process_num, partial=False):
         """
         For all encoded_edges_count_file (of different window size)
+        There are four types of files/extension:
+            encoded_edges_count_window_size_3.txt
+            encoded_edges_count_window_size_3_undirected.txt
+            encoded_edges_count_window_size_3_partial.txt
+            encoded_edges_count_window_size_3_undirected_partial.txt
 
         t_max does not influence memory usage
 
         ATTENTION: for real server test, set process_num to 3.
         """
-        # kw = {'directed': directed, 't_max': t_max}
         if directed:
             # TODO LATER: So far, all directed encoded_edges_count files don't have such file extension below.
             file_extension = '_directed.txt'
         else:
-            file_extension = '_undirected.txt'
+            if partial:
+                file_extension = '_undirected_partial.txt'
+            else:
+                file_extension = '_undirected.txt'
 
         files_list = multi_processing.get_files_endswith(encoded_edges_count_file_folder, file_extension)
         p = Pool(process_num, maxtasksperchild=1)
