@@ -435,7 +435,6 @@ def multiprocessing_merge_edges_count_of_a_specific_window_size(window_size, pro
                 window_size = i - 1
                 break
             else:
-                print(files_of_specific_distance_selected)
                 files[i] = files_of_specific_distance_selected
     else:
         for i in range(2, window_size + 1):
