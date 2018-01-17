@@ -181,8 +181,13 @@ class GridSearch_new(object):
         evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
         if ns_mode_pyx == 1:
             ns_name = multi_processing.get_file_name(matrix_path)
-            # e.g. encoded_edges_count_window_size_5_undirected_1_step_rw_matrix
-            ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_(.*)_step_rw_matrix', ns_name)
+            if self.units:
+                # e.g. encoded_edges_count_window_size_9_undirected_partial_2_step_rw_matrix
+                ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_partial_(.*)_step_rw_matrix',
+                                                ns_name)
+            else:
+                # e.g. encoded_edges_count_window_size_5_undirected_1_step_rw_matrix
+                ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_(.*)_step_rw_matrix', ns_name)
             result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
                       int(ns_name_information.group(3)), power,
                       evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
@@ -198,20 +203,20 @@ class GridSearch_new(object):
         return result
 
     def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
-        file = open(ns_folder+'op.txt', 'w')
-
-        # # frontline: original word2vec
-        # evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
+        file_txt = open(ns_folder+'op.txt', 'w')
         df = pd.DataFrame(columns=['NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
                                    'Pearson correlation', 'Pearson pvalue', 'Spearman correlation',
                                    'Spearman pvalue', 'Ration of pairs with OOV'])
-        # df.loc[0] = evaluation_result
-        # file.write(' '.join([str(e) for e in evaluation_result]))
-        #
-        # # bottomline: uniformly distribution
-        # evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=-1)
-        # df.loc[1] = evaluation_result
-        # file.write(' '.join([str(e) for e in evaluation_result]))
+
+        # frontline: original word2vec
+        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
+        df.loc[0] = evaluation_result
+        file_txt.write(' '.join([str(e) for e in evaluation_result]))
+
+        # bottomline: uniformly distribution
+        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=-1)
+        df.loc[1] = evaluation_result
+        file_txt.write(' '.join([str(e) for e in evaluation_result]))
 
         i = 2
         files = multi_processing.get_files_endswith(data_folder=ns_folder, file_extension='.npy')
@@ -228,9 +233,9 @@ class GridSearch_new(object):
                 else:
                     df.loc[i] = evaluation_result
                     i += 1
-                    file.write(' '.join([str(e) for e in evaluation_result]))
+                    file_txt.write(' '.join([str(e) for e in evaluation_result]))
 
-        file.close()
+        file_txt.close()
         writer = pd.ExcelWriter(ns_folder+'output.xlsx')
         df.to_excel(writer, 'Sheet1')
         writer.save()
