@@ -35,6 +35,6 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
-                        workers=50, sg=sg, negative=20, units=units)
+                        workers=60, sg=sg, negative=20, units=units)
 gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial/')
 print('time in seconds:', common.count_time(start_time))
