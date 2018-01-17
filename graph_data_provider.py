@@ -573,6 +573,7 @@ def part_of_data(units, window_size, process_num,
     multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=window_size, process_num=process_num,
                                                                 max_vocab_size=max_vocab_size, units=units)
     for i in range(2, window_size+1):
+        # TODO LATER need multiprocessing
         file_path = config['graph']['graph_folder'] + 'encoded_edges_count_window_size_' + str(i) + '_partial.txt'
         merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path)
 

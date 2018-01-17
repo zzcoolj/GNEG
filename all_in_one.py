@@ -13,19 +13,20 @@ config.read('config.ini')
 window_size = 10
 units = ['AA']
 
-print('build graph')
-start_time = time.time()
-
-gdp.part_of_data(units=units, window_size=window_size, process_num=50)
-
-print('time in seconds:', common.count_time(start_time))
-
-print('build ns')
-start_time = time.time()
-grid_searcher = nsg.NegativeSamplesGenerator(ns_folder='output/intermediate data/negative_samples_partial/',
-                                             valid_vocabulary_path='output/intermediate data/dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt')
-grid_searcher.many_to_many(encoded_edges_count_file_folder='output/intermediate data/graph/', directed=False, t_max=6, process_num=window_size-1, partial=True)
-print('time in seconds:', common.count_time(start_time))
+# print('build graph')
+# start_time = time.time()
+#
+# # 100 files in one unit, so set process_num to be 10 is okay
+# gdp.part_of_data(units=units, window_size=window_size, process_num=10)
+#
+# print('time in seconds:', common.count_time(start_time))
+#
+# print('build ns')
+# start_time = time.time()
+# grid_searcher = nsg.NegativeSamplesGenerator(ns_folder='output/intermediate data/negative_samples_partial/',
+#                                              valid_vocabulary_path='output/intermediate data/dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt')
+# grid_searcher.many_to_many(encoded_edges_count_file_folder='output/intermediate data/graph/', directed=False, t_max=6, process_num=window_size-1, partial=True)
+# print('time in seconds:', common.count_time(start_time))
 
 print('graph-based word2vec')
 start_time = time.time()
