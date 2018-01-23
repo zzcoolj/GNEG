@@ -747,6 +747,7 @@ class Word2Vec(utils.SaveLoad):
         merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(self.merged_word_count_path, key_type=str, value_type=int)
         valid_vocabulary = dict.fromkeys(gdp.read_valid_vocabulary(self.valid_vocabulary_path))
         for index in valid_vocabulary:
+            # vocab items order does not follow valid_vocabulary, because of the dict type.
             vocab[graph_index2word[int(index)]] = merged_word_count[str(index)]
         for sentence_no, sentence in enumerate(sentences):
             continue
