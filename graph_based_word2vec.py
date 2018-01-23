@@ -189,15 +189,18 @@ class GridSearch_new(object):
 
         # negative samples source information
         ns_source_info = negative_samples_source_information()
+        print(ns_source_info)
         # evaluation results
         eval = Evaluation(word_vectors=model.wv)
         # TODO LATER save wv
         del model
-        eval.evaluate_questions_words()
-        evaluation = eval.evaluate_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
+        labels1, results1 = eval.evaluation_questions_words()
+        eval.print_lables_results(labels1, results1)
+        labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
+        eval.print_lables_results(labels2, results2)
+
         # merge ns source info and evaluation results
-        result = ns_source_info + evaluation
-        print(result)
+        result = ns_source_info + results2
         return result
 
     def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
@@ -243,17 +246,28 @@ class Evaluation(object):
     def __init__(self, word_vectors):
         self.word_vectors = word_vectors
 
-    def evaluate_questions_words(self):
-        accuracy = self.word_vectors.accuracy('data/evaluation data/questions-words.txt')  # 4478
-        # accuracy = self.word_vectors.accuracy('data/evaluation data/questions-words.txt', restrict_vocab=10000)  # 4478
+    def print_lables_results(self, labels, results):
+        if len(labels) != len(results):
+            print('[ERROR] labels and results do not have the same length')
+            exit()
+        to_print = ''
+        for i in range(len(labels)):
+            to_print += labels[i] + ': ' + str(results[i]) + ';\t'
+        print(to_print)
+
+    def evaluation_questions_words(self, path='data/evaluation data/questions-words.txt'):
+        accuracy = self.word_vectors.accuracy(path)  # 4478
         sum_corr = len(accuracy[-1]['correct'])
         sum_incorr = len(accuracy[-1]['incorrect'])
         total = sum_corr + sum_incorr
         percent = lambda a: a / total * 100
-        print('Total sentences: {}, Correct: {:.2f}%, Incorrect: {:.2f}%'.format(total, percent(sum_corr),
-                                                                                 percent(sum_incorr)))
+        # print('Total sentences: {}, Correct: {:.2f}%, Incorrect: {:.2f}%'.format(total, percent(sum_corr),
+        #                                                                          percent(sum_incorr)))
+        labels = ['#sentences', 'correct%', 'incorrect%']
+        results = [total, percent(sum_corr), percent(sum_incorr)]
+        return labels, results
 
-    def evaluate_word_pairs(self, path):
+    def evaluation_word_pairs(self, path):
         """ Result of evaluate_word_pairs contains 3 parts:
         ((0.43915524919358867, 2.3681259690228147e-13),                                     Pearson
         SpearmanrResult(correlation=0.44614214937080449, pvalue=8.8819867392097872e-14),    Spearman
@@ -261,7 +275,10 @@ class Evaluation(object):
                                                                                             words (float)
         """
         evaluation = self.word_vectors.evaluate_word_pairs(path)
-        return [evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        labels = ['Pearson correlation', 'Pearson pvalue', 'Spearman correlation', 'Spearman pvalue',
+                  'Ration of pairs with OOV']
+        results = [evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        return labels, results
 
 
 if __name__ == '__main__':
