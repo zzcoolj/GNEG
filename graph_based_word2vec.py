@@ -197,7 +197,11 @@ class GridSearch_new(object):
         labels1, results1 = eval.evaluation_questions_words()
         eval.print_lables_results(labels1, results1)
         labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
-        eval.print_lables_results(labels2, results2)
+        # eval.print_lables_results(labels2, results2)
+        print(results2)
+        labels3, results3 = eval.evaluation_word_pairs(path='data/evaluation data/simlex999.txt')
+        # eval.print_lables_results(labels3, results3)
+        print(results3)
 
         # merge ns source info and evaluation results
         result = ns_source_info + results2
@@ -257,14 +261,22 @@ class Evaluation(object):
 
     def evaluation_questions_words(self, path='data/evaluation data/questions-words.txt'):
         accuracy = self.word_vectors.accuracy(path)  # 4478
+
+        sem_correct = sum((len(accuracy[i]['correct']) for i in range(5)))
+        sem_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5))
+        sem_acc = 100 * float(sem_correct) / sem_total
+
+        syn_correct = sum((len(accuracy[i]['correct']) for i in range(5, len(accuracy) - 1)))
+        syn_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5, len(accuracy) - 1))
+        syn_acc = 100 * float(syn_correct) / syn_total
+
         sum_corr = len(accuracy[-1]['correct'])
         sum_incorr = len(accuracy[-1]['incorrect'])
         total = sum_corr + sum_incorr
-        percent = lambda a: a / total * 100
-        # print('Total sentences: {}, Correct: {:.2f}%, Incorrect: {:.2f}%'.format(total, percent(sum_corr),
-        #                                                                          percent(sum_incorr)))
-        labels = ['#sentences', 'correct%', 'incorrect%']
-        results = [total, percent(sum_corr), percent(sum_incorr)]
+        total_acc = sum_corr / total * 100
+
+        labels = ['sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total']
+        results = [sem_acc, sem_total, syn_acc, syn_total, total_acc, total]
         return labels, results
 
     def evaluation_word_pairs(self, path):

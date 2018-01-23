@@ -39,6 +39,9 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
                         workers=60, sg=sg, negative=20, units=units)
-# gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial/')
+# gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial/')  # 116876.32733845711s
 gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+gs.one_search(matrix_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_8_undirected_partial_2_step_rw_matrix.npy',
+              graph_index2wordId_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_8_undirected_partial_nodes.pickle',
+              power=0.75, ns_mode_pyx=1)
 print('time in seconds:', common.count_time(start_time))
