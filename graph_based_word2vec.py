@@ -140,16 +140,34 @@ class GridSearch_new(object):
         self.negative = negative
         self.units = units
 
-    def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx=0):
-        sentences = WikiSentences(self.training_data_folder, units=self.units)
+    def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx):
+        def negative_samples_source_information():
+            info = None
+            if ns_mode_pyx == 1:
+                ns_name = multi_processing.get_file_name(matrix_path)
+                if self.units:
+                    # e.g. encoded_edges_count_window_size_9_undirected_partial_2_step_rw_matrix
+                    ns_name_information = re.search(
+                        'encoded_edges_count_window_size_(.*)_(.*)_partial_(.*)_step_rw_matrix',
+                        ns_name)
+                else:
+                    # e.g. encoded_edges_count_window_size_5_undirected_1_step_rw_matrix
+                    ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_(.*)_step_rw_matrix',
+                                                    ns_name)
+                info = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
+                          int(ns_name_information.group(3)), power]
+            elif ns_mode_pyx == 0:
+                # in original word2vec (frontline), power is set to 0.75 as default.
+                info = [matrix_path, None, None, None, 0.75]
+            elif ns_mode_pyx == -1:
+                # bottomline, power is set to 0 as default.
+                info = [matrix_path, None, None, None, 0]
+            if not info:
+                print('[ERROR] No negative samples source information.')
+                exit()
+            return info
 
-        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table
-        if matrix_path:
-            ns_mode_pyx = 1
-        elif ns_mode_pyx == -1:
-            ns_mode_pyx = -1
-        else:
-            ns_mode_pyx = 0
+        sentences = WikiSentences(self.training_data_folder, units=self.units)
 
         """ATTENTION
         The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to 
@@ -157,7 +175,7 @@ class GridSearch_new(object):
         """
         # TODO LATER a valid word count function in gdp, so as to transfer only one parameter to Word2Vec class.
         # TODO LATER rethink about min_count & max_vocab_size, maybe they are useless?
-
+        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table; -1: bottomline, uniformly distribution
         model = Word2Vec(sentences=sentences,
                          index2word_path=self.index2word_path,
                          merged_word_count_path=self.merged_word_count_path,
@@ -168,37 +186,17 @@ class GridSearch_new(object):
                          power=power,
                          size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
                          negative=self.negative)
-        word_vectors = model.wv
+
+        # negative samples source information
+        ns_source_info = negative_samples_source_information()
+        # evaluation results
+        eval = Evaluation(word_vectors=model.wv)
         # TODO LATER save wv
         del model
-
-        ''' Result of evaluate_word_pairs contains 3 parts:
-        ((0.43915524919358867, 2.3681259690228147e-13),                                     Pearson
-        SpearmanrResult(correlation=0.44614214937080449, pvalue=8.8819867392097872e-14),    Spearman 
-        28.328611898016998)                                                                 ratio of pairs with unknown 
-                                                                                            words (float)
-        '''
-        evaluation = word_vectors.evaluate_word_pairs('data/evaluation data/wordsim353/combined.tab')
-        if ns_mode_pyx == 1:
-            ns_name = multi_processing.get_file_name(matrix_path)
-            if self.units:
-                # e.g. encoded_edges_count_window_size_9_undirected_partial_2_step_rw_matrix
-                ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_partial_(.*)_step_rw_matrix',
-                                                ns_name)
-            else:
-                # e.g. encoded_edges_count_window_size_5_undirected_1_step_rw_matrix
-                ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_(.*)_step_rw_matrix', ns_name)
-            result = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2),
-                      int(ns_name_information.group(3)), power,
-                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
-        elif ns_mode_pyx == 0:
-            # in original word2vec (frontline), power is set to 0.75 as default.
-            result = [matrix_path, None, None, None, 0.75,
-                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
-        elif ns_mode_pyx == -1:
-            # ibottomline, power is set to 0 as default.
-            result = [matrix_path, None, None, None, 0,
-                      evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
+        eval.evaluate_questions_words()
+        evaluation = eval.evaluate_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
+        # merge ns source info and evaluation results
+        result = ns_source_info + evaluation
         print(result)
         return result
 
@@ -209,7 +207,7 @@ class GridSearch_new(object):
                                    'Spearman pvalue', 'Ration of pairs with OOV'])
 
         # frontline: original word2vec
-        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
+        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
         df.loc[0] = evaluation_result
         file_txt.write(' '.join([str(e) for e in evaluation_result]))
 
@@ -226,7 +224,7 @@ class GridSearch_new(object):
             for power in [0.01, 0.25, 0.75, 1]:
                 try:
                     evaluation_result = self.one_search(matrix_path=file, graph_index2wordId_path=nodes_path,
-                                                        power=power)
+                                                        power=power, ns_mode_pyx=1)
                 except:
                     print('ERROR:', file, nodes_path)
                     continue
@@ -239,6 +237,31 @@ class GridSearch_new(object):
         writer = pd.ExcelWriter(ns_folder+'output.xlsx')
         df.to_excel(writer, 'Sheet1')
         writer.save()
+
+
+class Evaluation(object):
+    def __init__(self, word_vectors):
+        self.word_vectors = word_vectors
+
+    def evaluate_questions_words(self):
+        accuracy = self.word_vectors.accuracy('data/evaluation data/questions-words.txt')  # 4478
+        # accuracy = self.word_vectors.accuracy('data/evaluation data/questions-words.txt', restrict_vocab=10000)  # 4478
+        sum_corr = len(accuracy[-1]['correct'])
+        sum_incorr = len(accuracy[-1]['incorrect'])
+        total = sum_corr + sum_incorr
+        percent = lambda a: a / total * 100
+        print('Total sentences: {}, Correct: {:.2f}%, Incorrect: {:.2f}%'.format(total, percent(sum_corr),
+                                                                                 percent(sum_incorr)))
+
+    def evaluate_word_pairs(self, path):
+        """ Result of evaluate_word_pairs contains 3 parts:
+        ((0.43915524919358867, 2.3681259690228147e-13),                                     Pearson
+        SpearmanrResult(correlation=0.44614214937080449, pvalue=8.8819867392097872e-14),    Spearman
+        28.328611898016998)                                                                 ratio of pairs with unknown
+                                                                                            words (float)
+        """
+        evaluation = self.word_vectors.evaluate_word_pairs(path)
+        return [evaluation[0][0], evaluation[0][1], evaluation[1][0], evaluation[1][1], evaluation[2]]
 
 
 if __name__ == '__main__':
@@ -258,7 +281,7 @@ if __name__ == '__main__':
                          merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
                          workers=5, sg=sg, negative=20, units=None)
-    gs2.one_search(matrix_path=None, graph_index2wordId_path=None, power=None)
+    gs2.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
     # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_9_undirected_2_step_rw_matrix.npy',
     #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_9_undirected_nodes.pickle',
     #                power=1)
