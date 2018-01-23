@@ -204,14 +204,23 @@ class GridSearch_new(object):
         print(results3)
 
         # merge ns source info and evaluation results
-        result = ns_source_info + results2
+        result = ns_source_info + results2 + results3 + results1
         return result
 
     def grid_search(self, ns_folder=config['word2vec']['negative_samples_folder']):
         file_txt = open(ns_folder+'op.txt', 'w')
-        df = pd.DataFrame(columns=['NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
-                                   'Pearson correlation', 'Pearson pvalue', 'Spearman correlation',
-                                   'Spearman pvalue', 'Ration of pairs with OOV'])
+        df = pd.DataFrame(columns=[
+            # negative sampling source information
+            'NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
+            # wordsim353
+            'wordsim353_Pearson correlation', 'Pearson pvalue',
+            'Spearman correlation', 'Spearman pvalue', 'Ration of pairs with OOV',
+            # simlex999
+            'simlex999_Pearson correlation', 'Pearson pvalue',
+            'Spearman correlation', 'Spearman pvalue', 'Ration of pairs with OOV',
+            # questions-words
+            'sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total'
+        ])
 
         # frontline: original word2vec
         evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
