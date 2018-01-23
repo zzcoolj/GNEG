@@ -184,7 +184,7 @@ class GridSearch_new(object):
                          graph_index2wordId_path=graph_index2wordId_path,
                          ns_mode_pyx=ns_mode_pyx,
                          power=power,
-                         size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
+                         size=200, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
                          negative=self.negative)
 
         # negative samples source information
