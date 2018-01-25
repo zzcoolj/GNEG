@@ -6,7 +6,11 @@ graph_builder is used by negative_samples_generator.py to get what is needed to 
 
 import numpy as np
 import networkx as nx
+
+import matplotlib
+matplotlib.use('agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
+
 import configparser
 import graph_data_provider as gdp
 import sys
@@ -218,5 +222,7 @@ if __name__ == '__main__':
     output_folder = config['graph']['graph_folder'] + 'png/'
     cooc = ng.cooccurrence_matrix
     nsg.NegativeSamples.heatmap_bis(ng.cooccurrence_matrix, output_folder=output_folder, name='cooc.png')
+    print('saved1')
     stoc = ng.get_stochastic_matrix()
     nsg.NegativeSamples.heatmap_bis(stoc, output_folder=output_folder, name='stochastic.png')
+    print('saved2')
