@@ -5,6 +5,8 @@ import numpy as np
 import configparser
 from multiprocessing import Pool
 from itertools import repeat
+import matplotlib
+matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 from graph_builder import NoGraph, NXGraph
 import sys
