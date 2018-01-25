@@ -5,6 +5,7 @@ import numpy as np
 import configparser
 from multiprocessing import Pool
 from itertools import repeat
+import matplotlib.pyplot as plt
 from graph_builder import NoGraph, NXGraph
 import sys
 sys.path.insert(0, '../common/')
@@ -152,6 +153,60 @@ class NegativeSamples:
             for ns_word in ns_words:
                 print('\t', ns_word, '\t', self.get_matrix_value_by_token_xy(token_x=word, token_y=ns_word))
 
+    @staticmethod
+    def plot(prob, count):
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        # line, used when y trend is stable
+        # ax.plot(prob, color='r', ls='-.', lw=1)
+        # ax2.plot(count, color='b', ls=':', lw=1)
+
+        # dot
+        ax.plot(prob, 'o', color='r', ms=1)
+        ax2.plot(count, 'o', color='b', ms=0.5)
+
+        ax.set_xlabel('word index')
+        ax.set_ylabel('prob')
+        ax2.set_ylabel('count')
+
+        plt.xlim(xmin=0, xmax=len(prob))
+        # ax.set_ylim(0, np.max(y1[0]))
+        # ax2.set_ylim(0, np.max(y2[0]))
+        # ax.set_yscale('log')
+        # ax2.set_yscale('log')
+
+        def color_y_axis(ax, color):
+            """Color your axes."""
+            for t in ax.get_yticklabels():
+                t.set_color(color)
+            return None
+
+        color_y_axis(ax, 'r')
+        color_y_axis(ax2, 'b')
+
+        plt.show()
+
+        plt.plot(count, prob)
+        plt.show()
+
+    @staticmethod
+    def heatmap(matrix_path, output_folder):
+        matrix = np.load(matrix_path)
+        matrix = np.log10(matrix)
+        plt.imshow(matrix, interpolation='nearest')
+        # plt.show()
+        png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
+        print(png_name)
+        plt.savefig(output_folder+png_name)
+
+    @staticmethod
+    def multi_heatmap(ns_folder):
+        files = multi_processing.get_files_endswith(ns_folder, '.npy')
+        for file in files:
+            NegativeSamples.heatmap(file, output_folder=ns_folder+'png/')
+
+
 
 class NegativeSamplesGenerator:
     """
@@ -281,14 +336,15 @@ if __name__ == '__main__':
     #                       directed=False, t_max=1, negative=20)
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
 
-    start_time = time.time()
-    grid_searcher = NegativeSamplesGenerator(ns_folder=config['word2vec']['negative_samples_folder'],
-                                             valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
-    grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
-                             t=1)
-    print(common.count_time(start_time))
+    # start_time = time.time()
+    # grid_searcher = NegativeSamplesGenerator(ns_folder=config['word2vec']['negative_samples_folder'],
+    #                                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
+    # grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
+    #                          t=1)
+    # print(common.count_time(start_time))
 
-    # TODO NOW NOW NOW partial version
 
     # grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
     #                            process_num=3)
+
+    NegativeSamples.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy')
