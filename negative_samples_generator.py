@@ -206,6 +206,15 @@ class NegativeSamples:
         plt.savefig(output_folder+png_name)
 
     @staticmethod
+    def heatmap_bis(matrix, output_folder, name):
+        matrix = np.log10(matrix)
+        plt.imshow(matrix, cmap="hot")
+        plt.colorbar()
+        # plt.show()
+        plt.savefig(output_folder + name)
+        plt.clf()
+
+    @staticmethod
     def multi_heatmap(ns_folder):
         files = multi_processing.get_files_endswith(ns_folder, '.npy')
         for file in files:

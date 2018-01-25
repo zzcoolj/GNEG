@@ -209,3 +209,14 @@ class NXGraph:
             if t != 1:
                 result = np.matmul(result, transition_matrix)
             yield result, t
+
+
+if __name__ == '__main__':
+    ng = NoGraph(encoded_edges_count_file_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3_undirected.txt',
+                 valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
+    import negative_samples_generator as nsg
+    output_folder = config['graph']['graph_folder'] + 'png/'
+    cooc = ng.cooccurrence_matrix
+    nsg.NegativeSamples.heatmap_bis(ng.cooccurrence_matrix, output_folder=output_folder, name='cooc.png')
+    stoc = ng.get_stochastic_matrix()
+    nsg.NegativeSamples.heatmap_bis(stoc, output_folder=output_folder, name='stochastic.png')
