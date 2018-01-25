@@ -20,6 +20,9 @@ config.read('config.ini')
 
 
 class NegativeSamples:
+    """
+    NegativeSamples class is for word2vec_gensim_modified.py
+    """
     def __init__(self, matrix, graph_index2wordId, merged_dict_path, name_prefix):
         self.name_prefix = name_prefix
         self.matrix = np.asarray(matrix)  # ATTENTION: change NumPy matrix type to NumPy ndarray.
@@ -209,7 +212,6 @@ class NegativeSamples:
             NegativeSamples.heatmap(file, output_folder=ns_folder+'png/')
 
 
-
 class NegativeSamplesGenerator:
     """
     This class is just a helper for NXGraph. When there are several encoded_edges_count files. This class goes through
@@ -277,6 +279,7 @@ class NegativeSamplesGenerator:
         p.join()
 
 
+'''[DEPRECATED]
 class NegativeSamplesGenerator_old:
     """ATTENTION [DEPRECATED]
     This class only serves the old uniform ns selection idea, which should be deprecated.
@@ -324,10 +327,10 @@ class NegativeSamplesGenerator_old:
                                 worker=self.one_to_many_rw,
                                 process_num=process_num,
                                 **kw)
-
+'''
 
 if __name__ == '__main__':
-    # # [DEPRECATED]
+    '''[DEPRECATED]
     # bridge = NegativeSamplesGenerator_old(encoded_edges_count_file_folder=config['graph']['graph_folder'],
     #                                                  ns_folder=config['word2vec']['negative_samples_folder'],
     #                                                  merged_dict_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt')
@@ -337,16 +340,15 @@ if __name__ == '__main__':
     # bridge.one_to_many_rw(encoded_edges_count_file_path=bridge.encoded_edges_count_file_folder+'encoded_edges_count_window_size_5_undirected.txt',
     #                       directed=False, t_max=1, negative=20)
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
+    '''
 
     # start_time = time.time()
     # grid_searcher = NegativeSamplesGenerator(ns_folder=config['word2vec']['negative_samples_folder'],
     #                                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
     # grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
     #                          t=1)
-    # print(common.count_time(start_time))
-
-
     # grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
     #                            process_num=3)
+    # print(common.count_time(start_time))
 
     NegativeSamples.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')
