@@ -194,7 +194,7 @@ class NegativeSamples:
     def heatmap(matrix_path, output_folder):
         matrix = np.load(matrix_path)
         matrix = np.log10(matrix)
-        plt.imshow(matrix, interpolation='nearest')
+        plt.imshow(matrix)
         # plt.show()
         png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
         print(png_name)
@@ -347,4 +347,4 @@ if __name__ == '__main__':
     # grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
     #                            process_num=3)
 
-    NegativeSamples.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy')
+    NegativeSamples.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')
