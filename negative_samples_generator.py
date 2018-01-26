@@ -233,7 +233,11 @@ class NegativeSamples:
     def multi_heatmap(ns_folder):
         files = multi_processing.get_files_endswith(ns_folder, '.npy')
         for file in files:
-            NoGraph.heatmap(file, output_folder=ns_folder + 'png/')
+            ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
+                                          graph_index2wordId_path=self.graph_index2wordId_path,
+                                          merged_dict_path=self.graph_index2word_path)
+
+            NegativeSamples.heatmap(file, output_folder=ns_folder + 'png/')
 
 
 class NegativeSamplesGenerator:
@@ -375,20 +379,20 @@ if __name__ == '__main__':
     #                            process_num=3)
     # print(common.count_time(start_time))
 
-
-    ng = NoGraph(encoded_edges_count_file_path=config['graph'][
-                                                   'graph_folder'] + 'encoded_edges_count_window_size_3_undirected.txt',
-                 valid_vocabulary_path=config['graph'][
-                                           'dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
-    output_folder = config['graph']['graph_folder'] + 'png/'
+    output_folder = config['word2vec']['negative_samples_folder'] + 'png/'
     word_count_path = config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt'
-    cooc = ng.cooccurrence_matrix
-    _, reorder_cooc = ng.reorder_matrix(cooc, word_count_path)
-    NoGraph.heatmap(reorder_cooc, output_folder=output_folder, png_name='reorder_cooc.png')
+    ng = NoGraph(encoded_edges_count_file_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3_undirected.txt',
+                 valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
+    ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
+                         merged_dict_path=None, name_prefix=None)
+    _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
+    NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name='reorder_cooc.png')
     print('saved1')
-    stoc = ng.get_stochastic_matrix()
-    _, reorder_stoc = ng.reorder_matrix(stoc, word_count_path)
-    NoGraph.heatmap(reorder_stoc, output_folder=output_folder, png_name='reorder_stochastic.png')
+
+    ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
+                              merged_dict_path=None, name_prefix=None)
+    _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
+    NegativeSamples.heatmap(reorder_stoc, output_folder=output_folder, png_name='reorder_stochastic.png')
     print('saved2')
 
     # NoGraph.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')
