@@ -274,3 +274,4 @@ if __name__ == '__main__':
     print('saved2')
 
     NegativeSamples.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')
+    nsg.NegativeSamples.multi_heatmap(config['word2vec']['negative_samples_folder'])
