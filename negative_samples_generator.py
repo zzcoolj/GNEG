@@ -228,8 +228,12 @@ class NegativeSamples:
     def heatmap(matrix, output_folder, png_name):
         # matrix = np.log10(matrix)
         # plt.cm.BuPu_r
-        plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=10000)
-        plt.colorbar()
+        # plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=10000)
+        # plt.imshow(matrix, cmap="nipy_spectral")
+        # plt.colorbar()
+        print(np.amax(matrix))
+        print(np.amin(matrix))
+        plt.hist(matrix.ravel(), fc='k', ec='k')
         # plt.show()
         plt.savefig(output_folder + png_name)
         plt.clf()
@@ -263,11 +267,11 @@ class NegativeSamples:
         png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_cooc.png'
         NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name=png_name)
 
-        # ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
-        #                           merged_dict_path=None, name_prefix=None)
-        # _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
-        # png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_stoc.png'
-        # NegativeSamples.heatmap(reorder_stoc, output_folder=output_folder, png_name=png_name)
+        ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
+                                  merged_dict_path=None, name_prefix=None)
+        _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
+        png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_stoc.png'
+        NegativeSamples.heatmap(reorder_stoc, output_folder=output_folder, png_name=png_name)
 
     @staticmethod
     def multi_heatmap_cooc(encoded_edges_count_files_folder, word_count_path, valid_vocabulary_path, output_folder, process_num):
