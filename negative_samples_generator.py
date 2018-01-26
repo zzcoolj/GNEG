@@ -174,6 +174,7 @@ class NegativeSamples:
         wordId2count = {}
         for valid_wordId in self.graph_index2wordId:  # a list of valid vocabulary wordIds => old wordId order
             wordId2count[valid_wordId] = word_count[valid_wordId]
+        # TODO NOW get new_wordId_order list directly.
         new_wordId_order = list(sorted(wordId2count, key=wordId2count.get, reverse=True))
         # max_count = word_count[new_wordId_order[0]]
         # min_count = word_count[new_wordId_order[len(new_wordId_order)-1]]
@@ -227,7 +228,7 @@ class NegativeSamples:
     def heatmap(matrix, output_folder, png_name):
         # matrix = np.log10(matrix)
         # plt.cm.BuPu_r
-        plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=137853562)
+        plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=10000)
         plt.colorbar()
         # plt.show()
         plt.savefig(output_folder + png_name)
