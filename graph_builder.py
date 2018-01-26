@@ -94,6 +94,26 @@ class NoGraph:
             common.write_to_pickle(self.graph_index2wordId, file_prefix + '_step_rw_nodes.pickle')
         return self.graph_index2wordId, result
 
+    def reorder_matrix(self, matrix, word_count_path):
+        """
+        Works for cooccurrence_matrix, stochastic_matrix and random walk matrix. They share the same wordId order.
+        :param word_count_path: wordId -> count
+        :return: reordered matrix (following word count in a descending order), new graph_index2wordId
+        """
+        word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(word_count_path, key_type=str,
+                                                                                  value_type=int)
+        wordId2count = {}
+        for valid_wordId in self.graph_index2wordId:  # a list of valid vocabulary wordIds => old wordId order
+            wordId2count[valid_wordId] = word_count[valid_wordId]
+        new_wordId_order = list(sorted(wordId2count, key=wordId2count.get, reverse=True))
+
+        new_index_order = [self.graph_index2wordId.index(wordId) for wordId in new_wordId_order]
+        # reorder rows
+        reordered_matrix = matrix[new_index_order, :]
+        # reorder columns
+        reordered_matrix = reordered_matrix[:, new_index_order]
+        return reordered_matrix
+
 
 class NXGraph:
     def __init__(self, graph, name_prefix, directed):

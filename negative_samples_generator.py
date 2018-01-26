@@ -205,7 +205,6 @@ class NegativeSamples:
         plt.imshow(matrix)
         # plt.show()
         png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
-        print(png_name)
         plt.savefig(output_folder+png_name)
 
     @staticmethod
