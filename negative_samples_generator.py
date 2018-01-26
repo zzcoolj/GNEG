@@ -1,6 +1,7 @@
 __author__ = 'Zheng ZHANG'
 
 import time
+import re
 import numpy as np
 import configparser
 from multiprocessing import Pool
@@ -169,6 +170,7 @@ class NegativeSamples:
         """
         word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(word_count_path, key_type=int,
                                                                                   value_type=int)
+        self.graph_index2wordId = list(self.graph_index2wordId)
         wordId2count = {}
         for valid_wordId in self.graph_index2wordId:  # a list of valid vocabulary wordIds => old wordId order
             wordId2count[valid_wordId] = word_count[valid_wordId]
@@ -218,10 +220,7 @@ class NegativeSamples:
         plt.show()
 
     @staticmethod
-    def heatmap(matrix, output_folder, png_name='no_name.png'):
-        if isinstance(matrix, str):
-            matrix = np.load(matrix)
-            png_name = multi_processing.get_file_name(matrix).split('.npy')[0] + '.png'
+    def heatmap(matrix, output_folder, png_name):
         matrix = np.log10(matrix)
         plt.imshow(matrix, cmap="hot")
         plt.colorbar()
@@ -230,14 +229,23 @@ class NegativeSamples:
         plt.clf()
 
     @staticmethod
-    def multi_heatmap(ns_folder):
-        files = multi_processing.get_files_endswith(ns_folder, '.npy')
-        for file in files:
-            ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
-                                          graph_index2wordId_path=self.graph_index2wordId_path,
-                                          merged_dict_path=self.graph_index2word_path)
+    def multi_heatmap_worker(matrix_path, word_count_path, output_folder):
+        print(matrix_path)
+        nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', matrix_path).group(1) + '_nodes.pickle'
+        ns = NegativeSamples.load(matrix_path=matrix_path, graph_index2wordId_path=nodes_path,
+                                  merged_dict_path=None)
+        _, reordered_matrix = ns.reorder_matrix_by_word_count(word_count_path)
+        png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
+        NegativeSamples.heatmap(reordered_matrix, output_folder=output_folder + 'png/', png_name=png_name)
 
-            NegativeSamples.heatmap(file, output_folder=ns_folder + 'png/')
+    @staticmethod
+    def multi_heatmap(ns_folder, word_count_path, process_num):
+
+        files_list = multi_processing.get_files_endswith(ns_folder, '.npy')
+        p = Pool(process_num, maxtasksperchild=1)
+        p.starmap_async(NegativeSamples.multi_heatmap_worker, zip(files_list, repeat(word_count_path), repeat(ns_folder)))
+        p.close()
+        p.join()
 
 
 class NegativeSamplesGenerator:
@@ -379,21 +387,20 @@ if __name__ == '__main__':
     #                            process_num=3)
     # print(common.count_time(start_time))
 
-    output_folder = config['word2vec']['negative_samples_folder'] + 'png/'
+    # output_folder = config['word2vec']['negative_samples_folder'] + 'png/'
     word_count_path = config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt'
-    ng = NoGraph(encoded_edges_count_file_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3_undirected.txt',
-                 valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
-    ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
-                         merged_dict_path=None, name_prefix=None)
-    _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
-    NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name='reorder_cooc.png')
-    print('saved1')
+    # ng = NoGraph(encoded_edges_count_file_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3_undirected.txt',
+    #              valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
+    # ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
+    #                      merged_dict_path=None, name_prefix=None)
+    # _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
+    # NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name='reorder_cooc.png')
+    # print('saved1')
+    #
+    # ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
+    #                           merged_dict_path=None, name_prefix=None)
+    # _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
+    # NegativeSamples.heatmap(reorder_stoc, output_folder=output_folder, png_name='reorder_stochastic.png')
+    # print('saved2')
 
-    ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
-                              merged_dict_path=None, name_prefix=None)
-    _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
-    NegativeSamples.heatmap(reorder_stoc, output_folder=output_folder, png_name='reorder_stochastic.png')
-    print('saved2')
-
-    # NoGraph.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')
-    # NoGraph.multi_heatmap(config['word2vec']['negative_samples_folder'])
+    NegativeSamples.multi_heatmap(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, process_num=10)
