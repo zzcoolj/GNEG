@@ -240,10 +240,35 @@ class NegativeSamples:
 
     @staticmethod
     def multi_heatmap(ns_folder, word_count_path, process_num):
-
         files_list = multi_processing.get_files_endswith(ns_folder, '.npy')
         p = Pool(process_num, maxtasksperchild=1)
         p.starmap_async(NegativeSamples.multi_heatmap_worker, zip(files_list, repeat(word_count_path), repeat(ns_folder)))
+        p.close()
+        p.join()
+
+    @staticmethod
+    def multi_heatmap_cooc_worker(encoded_edges_count_file_path, valid_vocabulary_path, word_count_path, output_folder):
+        print(encoded_edges_count_file_path)
+        ng = NoGraph(encoded_edges_count_file_path=encoded_edges_count_file_path,
+                     valid_vocabulary_path=valid_vocabulary_path)
+        ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
+                             merged_dict_path=None, name_prefix=None)
+        _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
+        png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_cooc.png'
+        NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name='reorder_cooc.png')
+
+        ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
+                                  merged_dict_path=None, name_prefix=None)
+        _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
+        png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_stoc.png'
+        NegativeSamples.heatmap(reorder_stoc, output_folder=output_folder, png_name=png_name)
+
+    @staticmethod
+    def multi_heatmap_cooc(encoded_edges_count_files_folder, word_count_path, valid_vocabulary_path, output_folder, process_num):
+        files_list = multi_processing.get_files_endswith(encoded_edges_count_files_folder, '_undirected.txt')
+        p = Pool(process_num, maxtasksperchild=1)
+        p.starmap_async(NegativeSamples.multi_heatmap_cooc_worker,
+                        zip(files_list, repeat(valid_vocabulary_path), repeat(word_count_path), repeat(output_folder)))
         p.close()
         p.join()
 
@@ -387,20 +412,12 @@ if __name__ == '__main__':
     #                            process_num=3)
     # print(common.count_time(start_time))
 
-    # output_folder = config['word2vec']['negative_samples_folder'] + 'png/'
     word_count_path = config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt'
-    # ng = NoGraph(encoded_edges_count_file_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3_undirected.txt',
-    #              valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
-    # ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
-    #                      merged_dict_path=None, name_prefix=None)
-    # _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
-    # NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name='reorder_cooc.png')
-    # print('saved1')
-    #
-    # ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
-    #                           merged_dict_path=None, name_prefix=None)
-    # _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
-    # NegativeSamples.heatmap(reorder_stoc, output_folder=output_folder, png_name='reorder_stochastic.png')
-    # print('saved2')
+    # NegativeSamples.multi_heatmap(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, process_num=10)
 
-    NegativeSamples.multi_heatmap(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, process_num=10)
+    valid_vocabulary_path = config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt'
+    NegativeSamples.multi_heatmap_cooc(encoded_edges_count_files_folder=config['graph']['graph_folder'],
+                                       word_count_path=word_count_path,
+                                       valid_vocabulary_path=valid_vocabulary_path,
+                                       output_folder=config['graph']['graph_folder']+'png/',
+                                       process_num=5)
