@@ -1,5 +1,6 @@
 import unittest
 import negative_samples_generator as gbn
+import graph_builder as gb
 import numpy as np
 
 
@@ -11,6 +12,7 @@ class TestGraphDataProvider(unittest.TestCase):
     merged_dict_undirected_path = 'output/intermediate data for unittest/graph/keep/dict_merged_undirected_for_unittest.txt'
     encoded_edges_count_undirected_path = 'output/intermediate data for unittest/graph/keep/encoded_edges_count_window_size_6_vocab_size_none_undirected_for_unittest.txt'
     valid_vocabulary_undirected_path = 'output/intermediate data for unittest/graph/keep/valid_vocabulary_min_count_5_undirected.txt'
+    word_count_undirected_path = 'output/intermediate data for unittest/graph/keep/word_count_all_undirected.txt'
 
     def test_1_get_ns_dict_by_shortest_path(self):
         # Directed graph
@@ -215,6 +217,26 @@ class TestGraphDataProvider(unittest.TestCase):
                 graph_matrix_value = matrix[x][y]
                 word2vec_matrix_value = reordered_matrix[word2vec_word2index[x_token]][word2vec_word2index[y_token]]
                 self.assertTrue(graph_matrix_value == word2vec_matrix_value)
+
+    def test_5_reorder_matrix_by_word_count(self):
+        # stochastic matrix calculated by NoGraph class
+        no_graph = gb.NoGraph(self.encoded_edges_count_undirected_path,
+                              valid_vocabulary_path=self.valid_vocabulary_undirected_path)
+        print('old order')
+        print(no_graph.graph_index2wordId)
+        print(no_graph.cooccurrence_matrix)
+        ns = gbn.NegativeSamples(matrix=no_graph.cooccurrence_matrix, graph_index2wordId=no_graph.graph_index2wordId,
+                                 merged_dict_path=None, name_prefix=None)
+        new_wordId_order, reordered_matrix = ns.reorder_matrix_by_word_count(self.word_count_undirected_path)
+        print('new order (based on count in descending order)')
+        print(new_wordId_order)
+        print(reordered_matrix)
+        self.assertTrue(new_wordId_order[:3] == [12, 6, 14])
+        for i in range(no_graph.cooccurrence_matrix.shape[0]):
+            for j in range(no_graph.cooccurrence_matrix.shape[1]):
+                new_i = new_wordId_order.index(no_graph.graph_index2wordId[i])
+                new_j = new_wordId_order.index(no_graph.graph_index2wordId[j])
+                self.assertTrue(no_graph.cooccurrence_matrix[i][j] == reordered_matrix[new_i][new_j])
 
 
 if __name__ == '__main__':

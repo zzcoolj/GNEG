@@ -94,49 +94,6 @@ class NoGraph:
             common.write_to_pickle(self.graph_index2wordId, file_prefix + '_step_rw_nodes.pickle')
         return self.graph_index2wordId, result
 
-    def reorder_matrix(self, matrix, word_count_path):
-        """
-        Works for cooccurrence_matrix, stochastic_matrix and random walk matrix. They share the same wordId order.
-        :param word_count_path: wordId -> count
-        :return: reordered matrix (following word count in a descending order), new graph_index2wordId
-        """
-        word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(word_count_path, key_type=int,
-                                                                                  value_type=int)
-        wordId2count = {}
-        for valid_wordId in self.graph_index2wordId:  # a list of valid vocabulary wordIds => old wordId order
-            wordId2count[valid_wordId] = word_count[valid_wordId]
-        new_wordId_order = list(sorted(wordId2count, key=wordId2count.get, reverse=True))
-        new_index_order = [self.graph_index2wordId.index(wordId) for wordId in new_wordId_order]
-        # reorder rows
-        reordered_matrix = matrix[new_index_order, :]
-        # reorder columns
-        reordered_matrix = reordered_matrix[:, new_index_order]
-        return new_wordId_order, reordered_matrix
-
-    @staticmethod
-    def heatmap(matrix_path, output_folder):
-        matrix = np.load(matrix_path)
-        matrix = np.log10(matrix)
-        plt.imshow(matrix)
-        # plt.show()
-        png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
-        plt.savefig(output_folder + png_name)
-
-    @staticmethod
-    def heatmap_bis(matrix, output_folder, name):
-        matrix = np.log10(matrix)
-        plt.imshow(matrix, cmap="hot")
-        plt.colorbar()
-        # plt.show()
-        plt.savefig(output_folder + name)
-        plt.clf()
-
-    @staticmethod
-    def multi_heatmap(ns_folder):
-        files = multi_processing.get_files_endswith(ns_folder, '.npy')
-        for file in files:
-            NegativeSamples.heatmap(file, output_folder=ns_folder + 'png/')
-
 
 class NXGraph:
     def __init__(self, graph, name_prefix, directed):
@@ -256,22 +213,3 @@ class NXGraph:
             if t != 1:
                 result = np.matmul(result, transition_matrix)
             yield result, t
-
-
-if __name__ == '__main__':
-    ng = NoGraph(encoded_edges_count_file_path=config['graph']['graph_folder'] + 'encoded_edges_count_window_size_3_undirected.txt',
-                 valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
-    import negative_samples_generator as nsg
-    output_folder = config['graph']['graph_folder'] + 'png/'
-    word_count_path = config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt'
-    cooc = ng.cooccurrence_matrix
-    _, reorder_cooc = ng.reorder_matrix(cooc, word_count_path)
-    nsg.NegativeSamples.heatmap_bis(reorder_cooc, output_folder=output_folder, name='reorder_cooc.png')
-    print('saved1')
-    stoc = ng.get_stochastic_matrix()
-    _, reorder_stoc = ng.reorder_matrix(stoc, word_count_path)
-    nsg.NegativeSamples.heatmap_bis(reorder_stoc, output_folder=output_folder, name='reorder_stochastic.png')
-    print('saved2')
-
-    NegativeSamples.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')
-    nsg.NegativeSamples.multi_heatmap(config['word2vec']['negative_samples_folder'])

@@ -161,6 +161,25 @@ class NegativeSamples:
             for ns_word in ns_words:
                 print('\t', ns_word, '\t', self.get_matrix_value_by_token_xy(token_x=word, token_y=ns_word))
 
+    def reorder_matrix_by_word_count(self, word_count_path):
+        """
+        Works for cooccurrence_matrix, stochastic_matrix and random walk matrix. They share the same wordId order.
+        :param word_count_path: wordId -> count
+        :return: reordered matrix (following word count in a descending order), new graph_index2wordId
+        """
+        word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(word_count_path, key_type=int,
+                                                                                  value_type=int)
+        wordId2count = {}
+        for valid_wordId in self.graph_index2wordId:  # a list of valid vocabulary wordIds => old wordId order
+            wordId2count[valid_wordId] = word_count[valid_wordId]
+        new_wordId_order = list(sorted(wordId2count, key=wordId2count.get, reverse=True))
+        new_index_order = [self.graph_index2wordId.index(wordId) for wordId in new_wordId_order]
+        # reorder rows
+        reordered_matrix = self.matrix[new_index_order, :]
+        # reorder columns
+        reordered_matrix = reordered_matrix[:, new_index_order]
+        return new_wordId_order, reordered_matrix
+
     @staticmethod
     def plot(prob, count):
         fig, ax = plt.subplots()
@@ -197,6 +216,24 @@ class NegativeSamples:
 
         plt.plot(count, prob)
         plt.show()
+
+    @staticmethod
+    def heatmap(matrix, output_folder, png_name='no_name.png'):
+        if isinstance(matrix, str):
+            matrix = np.load(matrix)
+            png_name = multi_processing.get_file_name(matrix).split('.npy')[0] + '.png'
+        matrix = np.log10(matrix)
+        plt.imshow(matrix, cmap="hot")
+        plt.colorbar()
+        # plt.show()
+        plt.savefig(output_folder + png_name)
+        plt.clf()
+
+    @staticmethod
+    def multi_heatmap(ns_folder):
+        files = multi_processing.get_files_endswith(ns_folder, '.npy')
+        for file in files:
+            NoGraph.heatmap(file, output_folder=ns_folder + 'png/')
 
 
 class NegativeSamplesGenerator:
@@ -329,12 +366,30 @@ if __name__ == '__main__':
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
     '''
 
-    start_time = time.time()
-    grid_searcher = NegativeSamplesGenerator(ns_folder=config['word2vec']['negative_samples_folder'],
-                                             valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
-    grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
-                             t=1)
-    grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
-                               process_num=3)
-    print(common.count_time(start_time))
+    # start_time = time.time()
+    # grid_searcher = NegativeSamplesGenerator(ns_folder=config['word2vec']['negative_samples_folder'],
+    #                                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
+    # grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
+    #                          t=1)
+    # grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
+    #                            process_num=3)
+    # print(common.count_time(start_time))
 
+
+    ng = NoGraph(encoded_edges_count_file_path=config['graph'][
+                                                   'graph_folder'] + 'encoded_edges_count_window_size_3_undirected.txt',
+                 valid_vocabulary_path=config['graph'][
+                                           'dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
+    output_folder = config['graph']['graph_folder'] + 'png/'
+    word_count_path = config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt'
+    cooc = ng.cooccurrence_matrix
+    _, reorder_cooc = ng.reorder_matrix(cooc, word_count_path)
+    NoGraph.heatmap(reorder_cooc, output_folder=output_folder, png_name='reorder_cooc.png')
+    print('saved1')
+    stoc = ng.get_stochastic_matrix()
+    _, reorder_stoc = ng.reorder_matrix(stoc, word_count_path)
+    NoGraph.heatmap(reorder_stoc, output_folder=output_folder, png_name='reorder_stochastic.png')
+    print('saved2')
+
+    # NoGraph.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')
+    # NoGraph.multi_heatmap(config['word2vec']['negative_samples_folder'])
