@@ -113,6 +113,30 @@ class NoGraph:
         reordered_matrix = reordered_matrix[:, new_index_order]
         return new_wordId_order, reordered_matrix
 
+    @staticmethod
+    def heatmap(matrix_path, output_folder):
+        matrix = np.load(matrix_path)
+        matrix = np.log10(matrix)
+        plt.imshow(matrix)
+        # plt.show()
+        png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
+        plt.savefig(output_folder + png_name)
+
+    @staticmethod
+    def heatmap_bis(matrix, output_folder, name):
+        matrix = np.log10(matrix)
+        plt.imshow(matrix, cmap="hot")
+        plt.colorbar()
+        # plt.show()
+        plt.savefig(output_folder + name)
+        plt.clf()
+
+    @staticmethod
+    def multi_heatmap(ns_folder):
+        files = multi_processing.get_files_endswith(ns_folder, '.npy')
+        for file in files:
+            NegativeSamples.heatmap(file, output_folder=ns_folder + 'png/')
+
 
 class NXGraph:
     def __init__(self, graph, name_prefix, directed):
@@ -248,3 +272,5 @@ if __name__ == '__main__':
     _, reorder_stoc = ng.reorder_matrix(stoc, word_count_path)
     nsg.NegativeSamples.heatmap_bis(reorder_stoc, output_folder=output_folder, name='reorder_stochastic.png')
     print('saved2')
+
+    NegativeSamples.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')

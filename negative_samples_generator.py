@@ -198,30 +198,6 @@ class NegativeSamples:
         plt.plot(count, prob)
         plt.show()
 
-    @staticmethod
-    def heatmap(matrix_path, output_folder):
-        matrix = np.load(matrix_path)
-        matrix = np.log10(matrix)
-        plt.imshow(matrix)
-        # plt.show()
-        png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
-        plt.savefig(output_folder+png_name)
-
-    @staticmethod
-    def heatmap_bis(matrix, output_folder, name):
-        matrix = np.log10(matrix)
-        plt.imshow(matrix, cmap="hot")
-        plt.colorbar()
-        # plt.show()
-        plt.savefig(output_folder + name)
-        plt.clf()
-
-    @staticmethod
-    def multi_heatmap(ns_folder):
-        files = multi_processing.get_files_endswith(ns_folder, '.npy')
-        for file in files:
-            NegativeSamples.heatmap(file, output_folder=ns_folder+'png/')
-
 
 class NegativeSamplesGenerator:
     """
@@ -353,13 +329,12 @@ if __name__ == '__main__':
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
     '''
 
-    # start_time = time.time()
-    # grid_searcher = NegativeSamplesGenerator(ns_folder=config['word2vec']['negative_samples_folder'],
-    #                                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
-    # grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
-    #                          t=1)
-    # grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
-    #                            process_num=3)
-    # print(common.count_time(start_time))
+    start_time = time.time()
+    grid_searcher = NegativeSamplesGenerator(ns_folder=config['word2vec']['negative_samples_folder'],
+                                             valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
+    grid_searcher.one_to_one(encoded_edges_count_file_path='output/intermediate data/graph/encoded_edges_count_window_size_10_undirected.txt',
+                             t=1)
+    grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
+                               process_num=3)
+    print(common.count_time(start_time))
 
-    NegativeSamples.heatmap('encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy', output_folder='')
