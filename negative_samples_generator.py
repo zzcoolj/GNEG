@@ -175,6 +175,11 @@ class NegativeSamples:
         for valid_wordId in self.graph_index2wordId:  # a list of valid vocabulary wordIds => old wordId order
             wordId2count[valid_wordId] = word_count[valid_wordId]
         new_wordId_order = list(sorted(wordId2count, key=wordId2count.get, reverse=True))
+        max_count = word_count[new_wordId_order[0]]
+        min_count = word_count[new_wordId_order[len(new_wordId_order)-1]]
+        print(max_count)
+        print(min_count)
+        exit()
         new_index_order = [self.graph_index2wordId.index(wordId) for wordId in new_wordId_order]
         # reorder rows
         reordered_matrix = self.matrix[new_index_order, :]
@@ -421,4 +426,4 @@ if __name__ == '__main__':
                                        word_count_path=word_count_path,
                                        valid_vocabulary_path=valid_vocabulary_path,
                                        output_folder=config['graph']['graph_folder']+'png/',
-                                       process_num=9)
+                                       process_num=1)
