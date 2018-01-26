@@ -255,7 +255,7 @@ class NegativeSamples:
                              merged_dict_path=None, name_prefix=None)
         _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
         png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_cooc.png'
-        NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name='reorder_cooc.png')
+        NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name=png_name)
 
         ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
                                   merged_dict_path=None, name_prefix=None)
