@@ -175,11 +175,10 @@ class NegativeSamples:
         for valid_wordId in self.graph_index2wordId:  # a list of valid vocabulary wordIds => old wordId order
             wordId2count[valid_wordId] = word_count[valid_wordId]
         new_wordId_order = list(sorted(wordId2count, key=wordId2count.get, reverse=True))
-        max_count = word_count[new_wordId_order[0]]
-        min_count = word_count[new_wordId_order[len(new_wordId_order)-1]]
-        print(max_count)
-        print(min_count)
-        exit()
+        # max_count = word_count[new_wordId_order[0]]
+        # min_count = word_count[new_wordId_order[len(new_wordId_order)-1]]
+        # print(max_count) 137853562
+        # print(min_count) 13186
         new_index_order = [self.graph_index2wordId.index(wordId) for wordId in new_wordId_order]
         # reorder rows
         reordered_matrix = self.matrix[new_index_order, :]
@@ -228,7 +227,7 @@ class NegativeSamples:
     def heatmap(matrix, output_folder, png_name):
         matrix = np.log10(matrix)
         # plt.cm.BuPu_r
-        plt.imshow(matrix, cmap="nipy_spectral", vmin=0)
+        plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=np.log10(137853562))
         plt.colorbar()
         # plt.show()
         plt.savefig(output_folder + png_name)
@@ -426,4 +425,4 @@ if __name__ == '__main__':
                                        word_count_path=word_count_path,
                                        valid_vocabulary_path=valid_vocabulary_path,
                                        output_folder=config['graph']['graph_folder']+'png/',
-                                       process_num=1)
+                                       process_num=9)
