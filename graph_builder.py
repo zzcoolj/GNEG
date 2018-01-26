@@ -239,9 +239,12 @@ if __name__ == '__main__':
                  valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
     import negative_samples_generator as nsg
     output_folder = config['graph']['graph_folder'] + 'png/'
+    word_count_path = config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt'
     cooc = ng.cooccurrence_matrix
-    nsg.NegativeSamples.heatmap_bis(ng.cooccurrence_matrix, output_folder=output_folder, name='cooc.png')
+    _, reorder_cooc = ng.reorder_matrix(cooc, word_count_path)
+    nsg.NegativeSamples.heatmap_bis(reorder_cooc, output_folder=output_folder, name='reorder_cooc.png')
     print('saved1')
     stoc = ng.get_stochastic_matrix()
-    nsg.NegativeSamples.heatmap_bis(stoc, output_folder=output_folder, name='stochastic.png')
+    _, reorder_stoc = ng.reorder_matrix(stoc, word_count_path)
+    nsg.NegativeSamples.heatmap_bis(reorder_stoc, output_folder=output_folder, name='reorder_stochastic.png')
     print('saved2')
