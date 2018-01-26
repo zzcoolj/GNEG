@@ -226,6 +226,7 @@ class NegativeSamples:
 
     @staticmethod
     def heatmap(matrix, output_folder, png_name):
+        matrix = matrix[5000]
         # matrix = np.log10(matrix)
         # plt.cm.BuPu_r
         # plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=10000)
@@ -233,7 +234,8 @@ class NegativeSamples:
         # plt.colorbar()
         print(np.amax(matrix))
         print(np.amin(matrix))
-        bins = np.linspace(0, np.amax(matrix)/100, 10000)
+        # bins = np.linspace(0, np.amax(matrix)/100, 10000)
+        bins = np.linspace(0, np.amax(matrix), 100)
         result = plt.hist(matrix.ravel(), bins=bins, histtype='bar', ec='black')
         print(result)
         # plt.show()
