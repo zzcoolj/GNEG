@@ -235,7 +235,7 @@ class NegativeSamples:
         print(np.amax(matrix))
         print(np.amin(matrix))
         # bins = np.linspace(0, np.amax(matrix)/100, 10000)
-        bins = np.linspace(0, np.amax(matrix), 100)
+        bins = np.linspace(0, np.amax(matrix)/1000, 1000)
         result = plt.hist(matrix.ravel(), bins=bins, histtype='bar', ec='black')
         print(result)
         # plt.show()
