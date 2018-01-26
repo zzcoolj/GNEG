@@ -225,9 +225,9 @@ class NegativeSamples:
 
     @staticmethod
     def heatmap(matrix, output_folder, png_name):
-        matrix = np.log10(matrix)
+        # matrix = np.log10(matrix)
         # plt.cm.BuPu_r
-        plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=np.log10(137853562))
+        plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=137853562)
         plt.colorbar()
         # plt.show()
         plt.savefig(output_folder + png_name)
