@@ -8,7 +8,7 @@ from multiprocessing import Pool
 from itertools import repeat
 
 import matplotlib
-# matplotlib.use('agg') # Must be before importing matplotlib.pyplot or pylab!
+matplotlib.use('agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 
 from graph_builder import NoGraph, NXGraph
@@ -196,50 +196,6 @@ class NegativeSamples:
             count_list.append(merged_word_count[str(index)])
         return count_list
 
-    @staticmethod
-    def multi_heatmap_worker(matrix_path, word_count_path, output_folder):
-        print(matrix_path)
-        nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', matrix_path).group(1) + '_nodes.pickle'
-        ns = NegativeSamples.load(matrix_path=matrix_path, graph_index2wordId_path=nodes_path,
-                                  merged_dict_path=None)
-        _, reordered_matrix = ns.reorder_matrix_by_word_count(word_count_path)
-        png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
-        NegativeSamples.heatmap(reordered_matrix, output_folder=output_folder + 'png/', png_name=png_name)
-
-    @staticmethod
-    def multi_heatmap(ns_folder, word_count_path, process_num):
-        files_list = multi_processing.get_files_endswith(ns_folder, '.npy')
-        p = Pool(process_num, maxtasksperchild=1)
-        p.starmap_async(NegativeSamples.multi_heatmap_worker, zip(files_list, repeat(word_count_path), repeat(ns_folder)))
-        p.close()
-        p.join()
-
-    @staticmethod
-    def multi_heatmap_cooc_worker(encoded_edges_count_file_path, valid_vocabulary_path, word_count_path, output_folder):
-        print(encoded_edges_count_file_path)
-        ng = NoGraph(encoded_edges_count_file_path=encoded_edges_count_file_path,
-                     valid_vocabulary_path=valid_vocabulary_path)
-        ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
-                             merged_dict_path=None, name_prefix=None)
-        _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
-        png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_cooc.png'
-        NegativeSamples.heatmap(reorder_cooc, output_folder=output_folder, png_name=png_name, stochastic=False)
-
-        ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
-                                  merged_dict_path=None, name_prefix=None)
-        _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
-        png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_stoc.png'
-        NegativeSamples.heatmap(reorder_stoc, output_folder=output_folder, png_name=png_name, stochastic=True)
-
-    @staticmethod
-    def multi_heatmap_cooc(encoded_edges_count_files_folder, word_count_path, valid_vocabulary_path, output_folder, process_num):
-        files_list = multi_processing.get_files_endswith(encoded_edges_count_files_folder, '_undirected.txt')
-        p = Pool(process_num, maxtasksperchild=1)
-        p.starmap_async(NegativeSamples.multi_heatmap_cooc_worker,
-                        zip(files_list, repeat(valid_vocabulary_path), repeat(word_count_path), repeat(output_folder)))
-        p.close()
-        p.join()
-
 
 class NegativeSamplesGenerator:
     """
@@ -319,8 +275,8 @@ class Visualization:
         plt.colorbar()
         # print(np.amax(matrix))
         # print(np.amin(matrix))
-        plt.show()
-        # plt.savefig(output_path)
+        # plt.show()
+        plt.savefig(output_path)
         plt.clf()
 
     @staticmethod
@@ -367,6 +323,53 @@ class Visualization:
         color_y_axis(ax2, 'b')
 
         plt.show()
+
+    @staticmethod
+    def cooccurrence_vis(encoded_edges_count_file_path, valid_vocabulary_path, word_count_path, output_folder):
+        print(encoded_edges_count_file_path)
+        ng = NoGraph(encoded_edges_count_file_path=encoded_edges_count_file_path,
+                     valid_vocabulary_path=valid_vocabulary_path)
+        # ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
+        #                      merged_dict_path=None, name_prefix=None)
+        # _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
+        # png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_cooc.png'
+        # Visualization.matrix_vis(reorder_cooc, output_path=output_folder+png_name)
+
+        ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
+                                  merged_dict_path=None, name_prefix=None)
+        _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
+        png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_stoc.png'
+        Visualization.matrix_vis(reorder_stoc, output_path=output_folder + png_name)
+
+    @staticmethod
+    def multi_cooccurrence_vis(encoded_edges_count_files_folder, word_count_path, valid_vocabulary_path, output_folder,
+                           process_num):
+        files_list = multi_processing.get_files_endswith(encoded_edges_count_files_folder, '_undirected.txt')
+        p = Pool(process_num, maxtasksperchild=1)
+        p.starmap_async(Visualization.cooccurrence_vis,
+                        zip(files_list, repeat(valid_vocabulary_path), repeat(word_count_path), repeat(output_folder)))
+        p.close()
+        p.join()
+
+    @staticmethod
+    def negative_samples_matrix_vis(matrix_path, word_count_path, output_folder):
+        print(matrix_path)
+        nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', matrix_path).group(1) + '_nodes.pickle'
+        ns = NegativeSamples.load(matrix_path=matrix_path, graph_index2wordId_path=nodes_path,
+                                  merged_dict_path=None)
+        _, reordered_matrix = ns.reorder_matrix_by_word_count(word_count_path)
+        png_name = multi_processing.get_file_name(matrix_path).split('.npy')[0] + '.png'
+        Visualization.matrix_vis(reordered_matrix, output_path=output_folder+'png/'+png_name)
+
+    @staticmethod
+    def multi_negative_samples_matrix_vis(ns_folder, word_count_path, process_num):
+        # TODO remove
+        files_list = multi_processing.get_files_endswith(ns_folder, '_1_step_rw_matrix.npy')
+        p = Pool(process_num, maxtasksperchild=1)
+        p.starmap_async(Visualization.negative_samples_matrix_vis,
+                        zip(files_list, repeat(word_count_path), repeat(ns_folder)))
+        p.close()
+        p.join()
 
 
 '''[DEPRECATED]
