@@ -175,10 +175,6 @@ class NegativeSamples:
             wordId2count[valid_wordId] = word_count[valid_wordId]
         # TODO NOW get new_wordId_order list directly.
         new_wordId_order = list(sorted(wordId2count, key=wordId2count.get, reverse=True))
-        # max_count = word_count[new_wordId_order[0]]
-        # min_count = word_count[new_wordId_order[len(new_wordId_order)-1]]
-        # print(max_count) 137853562
-        # print(min_count) 13186
         new_index_order = [self.graph_index2wordId.index(wordId) for wordId in new_wordId_order]
         # reorder rows
         reordered_matrix = self.matrix[new_index_order, :]
@@ -329,17 +325,19 @@ class Visualization:
         print(encoded_edges_count_file_path)
         ng = NoGraph(encoded_edges_count_file_path=encoded_edges_count_file_path,
                      valid_vocabulary_path=valid_vocabulary_path)
-        # ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
-        #                      merged_dict_path=None, name_prefix=None)
-        # _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
-        # png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_cooc.png'
-        # Visualization.matrix_vis(reorder_cooc, output_path=output_folder+png_name)
+        ns = NegativeSamples(matrix=ng.cooccurrence_matrix, graph_index2wordId=ng.graph_index2wordId,
+                             merged_dict_path=None, name_prefix=None)
+        _, reorder_cooc = ns.reorder_matrix_by_word_count(word_count_path)
+        png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_cooc.png'
+        Visualization.matrix_vis(reorder_cooc, output_path=output_folder+png_name)
 
+        ''' replaced by negative_samples_matrix_vis endswith='_1_step_rw_matrix.npy'
         ns_stoc = NegativeSamples(matrix=ng.get_stochastic_matrix(), graph_index2wordId=ng.graph_index2wordId,
                                   merged_dict_path=None, name_prefix=None)
         _, reorder_stoc = ns_stoc.reorder_matrix_by_word_count(word_count_path)
         png_name = multi_processing.get_file_name(encoded_edges_count_file_path).split('.txt')[0] + '_stoc.png'
         Visualization.matrix_vis(reorder_stoc, output_path=output_folder + png_name)
+        '''
 
     @staticmethod
     def multi_cooccurrence_vis(encoded_edges_count_files_folder, word_count_path, valid_vocabulary_path, output_folder,
@@ -362,9 +360,8 @@ class Visualization:
         Visualization.matrix_vis(reordered_matrix, output_path=output_folder+'png/'+png_name)
 
     @staticmethod
-    def multi_negative_samples_matrix_vis(ns_folder, word_count_path, process_num):
-        # TODO remove
-        files_list = multi_processing.get_files_endswith(ns_folder, '_1_step_rw_matrix.npy')
+    def multi_negative_samples_matrix_vis(ns_folder, word_count_path, process_num, endswith):
+        files_list = multi_processing.get_files_endswith(ns_folder, endswith)
         p = Pool(process_num, maxtasksperchild=1)
         p.starmap_async(Visualization.negative_samples_matrix_vis,
                         zip(files_list, repeat(word_count_path), repeat(ns_folder)))

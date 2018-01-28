@@ -30,12 +30,21 @@ only for valid word
 
 '''Negative Samples Co-occurrence-based: matrix
 1. normalization
+2. For small corpus, the matrix is not representative enough.
 '''
-nsg.Visualization.multi_cooccurrence_vis(encoded_edges_count_files_folder=config['graph']['graph_folder'],
-                                         word_count_path=word_count_path,
-                                         valid_vocabulary_path=valid_vocabulary_path,
-                                         output_folder=config['graph']['graph_folder']+'png/',
-                                         process_num=9)
+# # Way 1
+# nsg.Visualization.multi_cooccurrence_vis(encoded_edges_count_files_folder=config['graph']['graph_folder'],
+#                                          word_count_path=word_count_path,
+#                                          valid_vocabulary_path=valid_vocabulary_path,
+#                                          output_folder=config['graph']['graph_folder']+'png/',
+#                                          process_num=9)
+# Way 2
+# nsg.Visualization.multi_negative_samples_matrix_vis(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, endswith='_1_step_rw_matrix.npy', process_num=1)
 
-nsg.Visualization.multi_negative_samples_matrix_vis(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, process_num=9)
+
+'''Negative Samples Co-occurrence-based: random walk
+'''
+nsg.Visualization.multi_negative_samples_matrix_vis(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, endswith='.npy', process_num=20)
+
+# TODO NOW NOW NOW graph has removed self loop
 
