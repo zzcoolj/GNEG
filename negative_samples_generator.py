@@ -197,27 +197,6 @@ class NegativeSamples:
         return count_list
 
     @staticmethod
-    def heatmap(matrix, output_folder, png_name, stochastic=True):
-        matrix = matrix[5000]
-        # matrix = np.log10(matrix)
-        # plt.cm.BuPu_r
-        # plt.imshow(matrix, cmap="nipy_spectral", vmin=0, vmax=10000)
-        # plt.imshow(matrix, cmap="nipy_spectral")
-        # plt.colorbar()
-        print(np.amax(matrix))
-        print(np.amin(matrix))
-        # TODO NOW minmum cooc unit is 1
-        if stochastic:
-            bins = np.linspace(0, np.amax(matrix), 100)
-        else:
-            bins = np.linspace(0, np.amax(matrix)/1000, np.amax(matrix)//1000)
-        result = plt.hist(matrix.ravel(), bins=bins, histtype='bar', ec='black')
-        print(result)
-        # plt.show()
-        plt.savefig(output_folder + png_name)
-        plt.clf()
-
-    @staticmethod
     def multi_heatmap_worker(matrix_path, word_count_path, output_folder):
         print(matrix_path)
         nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', matrix_path).group(1) + '_nodes.pickle'
@@ -333,8 +312,16 @@ class Visualization:
     def __init__(self):
         pass
 
-    def matrix_vis(self):
-        pass
+    @staticmethod
+    def matrix_vis(matrix, output_path):
+        matrix = np.log10(matrix)  # Necessary for negative samples matrix, nearly all black if not.
+        plt.imshow(matrix, cmap="nipy_spectral")  # plt.cm.BuPu_r, hot -> bad choices (no big difference)
+        plt.colorbar()
+        # print(np.amax(matrix))
+        # print(np.amin(matrix))
+        plt.show()
+        # plt.savefig(output_path)
+        plt.clf()
 
     @staticmethod
     def list_vis(l, sort=False):
@@ -454,18 +441,3 @@ if __name__ == '__main__':
     # grid_searcher.many_to_many(encoded_edges_count_file_folder=config['graph']['graph_folder'], directed=False, t_max=5,
     #                            process_num=3)
     # print(common.count_time(start_time))
-
-    # # visualization
-    word_count_path = config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt'
-    valid_vocabulary_path = config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt'
-    # # NegativeSamples.multi_heatmap(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, process_num=10)
-    #
-
-    # NegativeSamples.multi_heatmap_cooc(encoded_edges_count_files_folder=config['graph']['graph_folder'],
-    #                                    word_count_path=word_count_path,
-    #                                    valid_vocabulary_path=valid_vocabulary_path,
-    #                                    output_folder=config['graph']['graph_folder']+'png/',
-    #                                    process_num=9)
-
-    # valid word count visualization
-    Visualization.list_vis(NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path), sort=True)

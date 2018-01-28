@@ -611,15 +611,6 @@ class Word2Vec(utils.SaveLoad):
 
         self.cum_matrix = np_power(reordered_matrix, power)
         train_words_pow = np_sum(self.cum_matrix, axis=1, keepdims=True)  # sum of each row and preserve the dimension
-
-        prob = self.cum_matrix/train_words_pow
-
-        # gbn.NegativeSamples.plot(prob[0], reordered_matrix[0])
-        # gbn.NegativeSamples.plot(prob[5000], reordered_matrix[5000])
-        # gbn.NegativeSamples.plot(prob[9999], reordered_matrix[9999])
-        gbn.NegativeSamples.heatmap(prob)
-        exit()
-
         self.cum_matrix = cumsum(self.cum_matrix, axis=1) / train_words_pow * domain
         # round elements to the nearest integer, float64 => uint32
         self.cum_matrix = rint(self.cum_matrix).astype(uint32)
