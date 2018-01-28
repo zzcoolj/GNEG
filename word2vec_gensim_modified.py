@@ -594,19 +594,11 @@ class Word2Vec(utils.SaveLoad):
         for word_index in xrange(vocab_size):
             train_words_pow += self.wv.vocab[self.wv.index2word[word_index]].count ** power
         cumulative = 0.0
-        count_cumulative = 0.0  # used for plot
-        ns_prob = zeros(vocab_size)  # used for plot
-        word_count = zeros(vocab_size)  # used for plot
         for word_index in xrange(vocab_size):
             cumulative += self.wv.vocab[self.wv.index2word[word_index]].count ** power
-            word_count[word_index] = self.wv.vocab[self.wv.index2word[word_index]].count
             self.cum_table[word_index] = round(cumulative / train_words_pow * domain)
-            ns_prob[word_index] = word_count[word_index] ** power/train_words_pow
         if len(self.cum_table) > 0:
             assert self.cum_table[-1] == domain
-        # TODO NOW
-        gbn.NegativeSamples.plot(ns_prob, word_count)
-        exit()
 
     def make_cum_matrix(self, domain=2 ** 31 - 1):
         power = self.power

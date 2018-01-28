@@ -8,9 +8,8 @@ from multiprocessing import Pool
 from itertools import repeat
 
 import matplotlib
-matplotlib.use('agg') # Must be before importing matplotlib.pyplot or pylab!
+# matplotlib.use('agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
-# plt.switch_backend('agg')
 
 from graph_builder import NoGraph, NXGraph
 import sys
@@ -163,7 +162,7 @@ class NegativeSamples:
                 print('\t', ns_word, '\t', self.get_matrix_value_by_token_xy(token_x=word, token_y=ns_word))
 
     def reorder_matrix_by_word_count(self, word_count_path):
-        """
+        """ For visualization
         Works for cooccurrence_matrix, stochastic_matrix and random walk matrix. They share the same wordId order.
         :param word_count_path: wordId -> count
         :return: reordered matrix (following word count in a descending order), new graph_index2wordId
@@ -188,41 +187,14 @@ class NegativeSamples:
         return new_wordId_order, reordered_matrix
 
     @staticmethod
-    def plot(prob, count):
-        fig, ax = plt.subplots()
-        ax2 = ax.twinx()
-
-        # line, used when y trend is stable
-        # ax.plot(prob, color='r', ls='-.', lw=1)
-        # ax2.plot(count, color='b', ls=':', lw=1)
-
-        # dot
-        ax.plot(prob, 'o', color='r', ms=1)
-        ax2.plot(count, 'o', color='b', ms=0.5)
-
-        ax.set_xlabel('word index')
-        ax.set_ylabel('prob')
-        ax2.set_ylabel('count')
-
-        plt.xlim(xmin=0, xmax=len(prob))
-        # ax.set_ylim(0, np.max(y1[0]))
-        # ax2.set_ylim(0, np.max(y2[0]))
-        # ax.set_yscale('log')
-        # ax2.set_yscale('log')
-
-        def color_y_axis(ax, color):
-            """Color your axes."""
-            for t in ax.get_yticklabels():
-                t.set_color(color)
-            return None
-
-        color_y_axis(ax, 'r')
-        color_y_axis(ax2, 'b')
-
-        plt.show()
-
-        plt.plot(count, prob)
-        plt.show()
+    def get_valid_vocab_count_list(word_count_path, valid_vocabulary_path):
+        count_list = []
+        merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(word_count_path,
+                                                                                         key_type=str, value_type=int)
+        valid_vocabulary = dict.fromkeys(gdp.read_valid_vocabulary(valid_vocabulary_path))
+        for index in valid_vocabulary:
+            count_list.append(merged_word_count[str(index)])
+        return count_list
 
     @staticmethod
     def heatmap(matrix, output_folder, png_name, stochastic=True):
@@ -357,6 +329,59 @@ class NegativeSamplesGenerator:
         p.join()
 
 
+class Visualization:
+    def __init__(self):
+        pass
+
+    def matrix_vis(self):
+        pass
+
+    @staticmethod
+    def list_vis(l, sort=False):
+        if sort:
+            l.sort(reverse=True)
+        # plt.xlim(xmin=0, xmax=len(l))  # for visualization, it's better don't use it, cause many points are near to x=0
+        # ax.plot(prob, color='r', ls='-.', lw=1)  # line, used when y trend is stable
+        plt.plot(range(1, len(l)+1), l, 'o', color='r', ms=1)  # dot
+        plt.yscale('log')
+        plt.show()
+
+    @staticmethod
+    def double_list_vis(prob, count):
+        def color_y_axis(ax, color):
+            """Color your axes."""
+            for t in ax.get_yticklabels():
+                t.set_color(color)
+            return None
+
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        # line, used when y trend is stable
+        # ax.plot(prob, color='r', ls='-.', lw=1)
+        # ax2.plot(count, color='b', ls=':', lw=1)
+
+        # dot
+        ax.plot(prob, 'o', color='r', ms=1)
+        ax2.plot(count, 'o', color='b', ms=0.5)
+
+        ax.set_xlabel('word index')
+        ax.set_ylabel('prob')
+        ax2.set_ylabel('count')
+
+        plt.xlim(xmin=0, xmax=len(prob))
+
+        # ax.set_yscale('log')
+        # ax2.set_yscale('log')
+        # ax.set_ylim(0, np.max(y1[0]))
+        # ax2.set_ylim(0, np.max(y2[0]))
+
+        color_y_axis(ax, 'r')
+        color_y_axis(ax2, 'b')
+
+        plt.show()
+
+
 '''[DEPRECATED]
 class NegativeSamplesGenerator_old:
     """ATTENTION [DEPRECATED]
@@ -420,6 +445,7 @@ if __name__ == '__main__':
     # bridge.many_to_many_rw(directed=False, t_max=2, potential_ns_len=1000, process_num=2)
     '''
 
+    # # Generate ns matrix
     # start_time = time.time()
     # grid_searcher = NegativeSamplesGenerator(ns_folder=config['word2vec']['negative_samples_folder'],
     #                                          valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt')
@@ -429,12 +455,17 @@ if __name__ == '__main__':
     #                            process_num=3)
     # print(common.count_time(start_time))
 
+    # # visualization
     word_count_path = config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt'
-    # NegativeSamples.multi_heatmap(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, process_num=10)
-
     valid_vocabulary_path = config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt'
-    NegativeSamples.multi_heatmap_cooc(encoded_edges_count_files_folder=config['graph']['graph_folder'],
-                                       word_count_path=word_count_path,
-                                       valid_vocabulary_path=valid_vocabulary_path,
-                                       output_folder=config['graph']['graph_folder']+'png/',
-                                       process_num=9)
+    # # NegativeSamples.multi_heatmap(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, process_num=10)
+    #
+
+    # NegativeSamples.multi_heatmap_cooc(encoded_edges_count_files_folder=config['graph']['graph_folder'],
+    #                                    word_count_path=word_count_path,
+    #                                    valid_vocabulary_path=valid_vocabulary_path,
+    #                                    output_folder=config['graph']['graph_folder']+'png/',
+    #                                    process_num=9)
+
+    # valid word count visualization
+    Visualization.list_vis(NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path), sort=True)
