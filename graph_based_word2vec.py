@@ -129,7 +129,7 @@ class GridSearch_old(object):
 
 class GridSearch_new(object):
     def __init__(self, training_data_folder, index2word_path, merged_word_count_path, valid_vocabulary_path,
-                 workers, sg, negative, units=None):
+                 workers, sg, size, units=None):
         # common parameters
         self.training_data_folder = training_data_folder
         self.index2word_path = index2word_path  # same as merged_dict_path
@@ -137,10 +137,11 @@ class GridSearch_new(object):
         self.valid_vocabulary_path = valid_vocabulary_path
         self.workers = workers  # number of threads use for one word2vec calculation.
         self.sg = sg  # (sg=0), CBOW is used. Otherwise (sg=1), skip-gram is employed.
-        self.negative = negative
+        # TODO NOW put negative back
+        self.size = size
         self.units = units
 
-    def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx, size=100):
+    def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx, negative):
         def negative_samples_source_information():
             info = None
             if ns_mode_pyx == 1:
@@ -184,8 +185,8 @@ class GridSearch_new(object):
                          graph_index2wordId_path=graph_index2wordId_path,
                          ns_mode_pyx=ns_mode_pyx,
                          power=power,
-                         size=size, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
-                         negative=self.negative)
+                         size=self.size, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
+                         negative=negative)
 
         # negative samples source information
         ns_source_info = negative_samples_source_information()
