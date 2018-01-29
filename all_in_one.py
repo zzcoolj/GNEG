@@ -3,6 +3,7 @@ import negative_samples_generator as nsg
 import graph_based_word2vec as gbw
 import configparser
 import time
+import pandas as pd
 import sys
 sys.path.insert(0, '../common/')
 import common
@@ -40,8 +41,30 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
                         workers=60, sg=sg, negative=20, units=units)
 # gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial/')  # 116876.32733845711s
-gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
-gs.one_search(matrix_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_5_undirected_partial_3_step_rw_matrix.npy',
-              graph_index2wordId_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_5_undirected_partial_nodes.pickle',
-              power=0.75, ns_mode_pyx=1)
+# gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+# gs.one_search(matrix_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_5_undirected_partial_3_step_rw_matrix.npy',
+#               graph_index2wordId_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_5_undirected_partial_nodes.pickle',
+#               power=0.75, ns_mode_pyx=1)
+
+# TODO NOW try negative=10
+df = pd.DataFrame(columns=[
+    # negative sampling source information
+    'size', 'NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
+    # wordsim353
+    'wordsim353_Pearson correlation', 'Pearson pvalue',
+    'Spearman correlation', 'Spearman pvalue', 'Ration of pairs with OOV',
+    # simlex999
+    'simlex999_Pearson correlation', 'Pearson pvalue',
+    'Spearman correlation', 'Spearman pvalue', 'Ration of pairs with OOV',
+    # questions-words
+    'sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total'
+])
+sizes = [100, 150, 200, 250, 300, 350, 400]
+for i in range(len(sizes)):
+    evaluation_result = gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0, size=sizes[i])
+    df.loc[i] = [str(sizes[i])] + evaluation_result
+writer = pd.ExcelWriter('output/intermediate data/negative_samples_partial/' + 'sizes.xlsx')
+df.to_excel(writer, 'Sheet1')
+writer.save()
+
 print('time in seconds:', common.count_time(start_time))
