@@ -266,7 +266,6 @@ class Visualization:
 
     @staticmethod
     def matrix_vis(matrix, output_path):
-        # TODO NOW
         # NoGraph matrix is initialized with all zeros. So here we don't consider empty cell case, only zero cell case.
         # find zero position in the matrix
         zero_indices_x, zero_indices_y = np.where(matrix == 0)
