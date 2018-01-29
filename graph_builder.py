@@ -61,9 +61,11 @@ class NoGraph:
         # power co-occurrence if needed.
         if power:
             stochastic_matrix = np.power(stochastic_matrix, power)
+        """ No need to remove self loop: 1. gensim already handles that; 2. influence matrix visualization.
         # remove self loop
         for i in range(vocab_size):
             stochastic_matrix[i][i] = 0
+        """
         # calculate percentage
         matrix_sum_row = np.sum(stochastic_matrix, axis=1, keepdims=True)  # sum of each row and preserve the dimension
         stochastic_matrix /= matrix_sum_row
@@ -82,7 +84,7 @@ class NoGraph:
             yield result, t
 
     def get_t_step_random_walk_stochastic_matrix(self, t, output_folder=None):
-        # TODO NOW not the same result from 1 step random walk
+        # TODO LATER not the same result from 1 step random walk
         transition_matrix = self.get_stochastic_matrix()
         result = transition_matrix
         while t > 1:
@@ -152,7 +154,7 @@ class NXGraph:
         print('###############################################################\n')
 
     def log_edges_count(self):
-        # TODO NOW maybe could be repalced in make_cum_matrix part
+        # TODO LATER maybe could be repalced in make_cum_matrix part
         pass
 
     def get_shortest_path_lengths_between_all_nodes(self, output_folder):
