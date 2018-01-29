@@ -266,6 +266,20 @@ class Visualization:
 
     @staticmethod
     def matrix_vis(matrix, output_path):
+        # TODO NOW
+        # NoGraph matrix is initialized with all zeros. So here we don't consider empty cell case, only zero cell case.
+        # find zero position in the matrix
+        zero_indices_x, zero_indices_y = np.where(matrix == 0)
+        # find the second minimum value in matrix, temp_matrix is used for that
+        max_value = np.amax(matrix)
+        temp_matrix = np.copy(matrix)
+        for i in range(len(zero_indices_x)):
+            temp_matrix[zero_indices_x[i]][zero_indices_y[i]] = max_value
+        second_minimum = np.amin(temp_matrix)  # first minimum is always 0
+        # set all zeros to second minimum value
+        for i in range(len(zero_indices_x)):
+            matrix[zero_indices_x[i]][zero_indices_y[i]] = second_minimum
+
         matrix = np.log10(matrix)  # Necessary for negative samples matrix, nearly all black if not.
         plt.imshow(matrix, cmap="nipy_spectral")  # plt.cm.BuPu_r, hot -> bad choices (no big difference)
         plt.colorbar()

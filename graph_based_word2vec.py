@@ -185,9 +185,8 @@ class GridSearch_new(object):
                          ns_mode_pyx=ns_mode_pyx,
                          power=power,
                          size=size, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
-                         negative=self.negative, hs=1)
+                         negative=self.negative)
 
-        # TODO NOW NOW NOW remove hs=1
         # negative samples source information
         ns_source_info = negative_samples_source_information()
         print(ns_source_info)
@@ -337,7 +336,8 @@ if __name__ == '__main__':
                                                    'dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
                         valid_vocabulary_path=config['graph'][
                                                   'dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
-                        workers=60, sg=1, negative=0, units=['AA'])
+                        workers=60, sg=1, negative=20, units=['AA'])
+    # TODO NOW try negative=10
     df = pd.DataFrame(columns=[
         # negative sampling source information
         'size', 'NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
@@ -350,7 +350,7 @@ if __name__ == '__main__':
         # questions-words
         'sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total'
     ])
-    sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500]
+    sizes = [100, 150, 200, 250, 300, 350, 400]
     for i in range(len(sizes)):
         evaluation_result = gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0, size=sizes[i])
         df.loc[i] = [str(sizes[i])] + evaluation_result

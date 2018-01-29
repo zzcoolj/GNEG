@@ -20,25 +20,25 @@ only for valid word
 2. power=0.75
 3. normalization
 '''
-count_list = nsg.NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path)
-count_list.sort(reverse=True)
-count_list = [i**0.75 for i in count_list]
-count_list = [float(i)/sum(count_list) for i in count_list]
-matrix = np.array([count_list for i in range(len(count_list))])
-nsg.Visualization.matrix_vis(matrix, output_path=config['word2vec']['negative_samples_folder']+'png/'+'ns_original_matrix.png')
+# count_list = nsg.NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path)
+# count_list.sort(reverse=True)
+# count_list = [i**0.75 for i in count_list]
+# count_list = [float(i)/sum(count_list) for i in count_list]
+# matrix = np.array([count_list for i in range(len(count_list))])
+# nsg.Visualization.matrix_vis(matrix, output_path=config['word2vec']['negative_samples_folder']+'png/'+'ns_original_matrix.png')
 
 
 '''Negative Samples Co-occurrence-based: matrix
 1. normalization
 2. For small corpus, the matrix is not representative enough.
 '''
-# # Way 1
-# nsg.Visualization.multi_cooccurrence_vis(encoded_edges_count_files_folder=config['graph']['graph_folder'],
-#                                          word_count_path=word_count_path,
-#                                          valid_vocabulary_path=valid_vocabulary_path,
-#                                          output_folder=config['graph']['graph_folder']+'png/',
-#                                          process_num=9)
-# Way 2
+# Way 1
+nsg.Visualization.multi_cooccurrence_vis(encoded_edges_count_files_folder=config['graph']['graph_folder'],
+                                         word_count_path=word_count_path,
+                                         valid_vocabulary_path=valid_vocabulary_path,
+                                         output_folder=config['graph']['graph_folder']+'png/',
+                                         process_num=1)
+# # Way 2
 # nsg.Visualization.multi_negative_samples_matrix_vis(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, endswith='_1_step_rw_matrix.npy', process_num=1)
 
 
@@ -47,7 +47,5 @@ nsg.Visualization.matrix_vis(matrix, output_path=config['word2vec']['negative_sa
 # nsg.Visualization.multi_negative_samples_matrix_vis(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, endswith='.npy', process_num=20)
 
 # TODO NOW NOW NOW graph has removed self loop
-# TODO NOW NOW NOW original ns matrix vis
-# TODO NOW NOW NOW matrix log vis eviod 0
 
 
