@@ -13,8 +13,8 @@ valid_vocabulary_path = config['graph']['dicts_and_encoded_texts_folder'] + 'val
 '''Negative Samples Original: list
 only for valid word
 '''
-# count_list = nsg.NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path)
-# Visualization.list_vis(count_list, sort=True)
+count_list = nsg.NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path)
+nsg.Visualization.list_vis(count_list, sort=True, output_path=config['word2vec']['negative_samples_folder']+'png/'+'ns_original.png')
 '''Negative Samples Original: matrix
 1. sort by word count
 2. power=0.75
@@ -44,7 +44,7 @@ only for valid word
 
 '''Negative Samples Co-occurrence-based: random walk
 '''
-nsg.Visualization.multi_negative_samples_matrix_vis(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, endswith='.npy', process_num=20)
+# nsg.Visualization.multi_negative_samples_matrix_vis(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, endswith='.npy', process_num=20)
 
 # TODO NOW NOW NOW graph has removed self loop
 # TODO NOW NOW NOW original ns matrix vis

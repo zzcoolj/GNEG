@@ -276,14 +276,16 @@ class Visualization:
         plt.clf()
 
     @staticmethod
-    def list_vis(l, sort=False):
+    def list_vis(l, sort=False, output_path=None):
         if sort:
             l.sort(reverse=True)
         # plt.xlim(xmin=0, xmax=len(l))  # for visualization, it's better don't use it, cause many points are near to x=0
         # ax.plot(prob, color='r', ls='-.', lw=1)  # line, used when y trend is stable
         plt.plot(range(1, len(l)+1), l, 'o', color='r', ms=1)  # dot
         plt.yscale('log')
-        plt.show()
+        # plt.show()
+        plt.savefig(output_path)
+        plt.clf()
 
     @staticmethod
     def double_list_vis(prob, count):
