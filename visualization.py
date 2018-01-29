@@ -47,4 +47,7 @@ only for valid word
 nsg.Visualization.multi_negative_samples_matrix_vis(config['word2vec']['negative_samples_folder'], word_count_path=word_count_path, endswith='.npy', process_num=20)
 
 # TODO NOW NOW NOW graph has removed self loop
+# TODO NOW NOW NOW original ns matrix vis
+# TODO NOW NOW NOW matrix log vis eviod 0
+
 

@@ -140,7 +140,7 @@ class GridSearch_new(object):
         self.negative = negative
         self.units = units
 
-    def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx):
+    def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx, size=100):
         def negative_samples_source_information():
             info = None
             if ns_mode_pyx == 1:
@@ -184,9 +184,10 @@ class GridSearch_new(object):
                          graph_index2wordId_path=graph_index2wordId_path,
                          ns_mode_pyx=ns_mode_pyx,
                          power=power,
-                         size=100, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
-                         negative=self.negative)
+                         size=size, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
+                         negative=self.negative, hs=1)
 
+        # TODO NOW NOW NOW remove hs=1
         # negative samples source information
         ns_source_info = negative_samples_source_information()
         print(ns_source_info)
@@ -314,12 +315,12 @@ if __name__ == '__main__':
     #                     workers=5, sg=sg, negative=20, potential_ns_len=200)
     # gs.grid_search(ns_folder='output/intermediate data/negative_samples_potential_ns_len_200/')
 
-    gs2 = GridSearch_new(training_data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep',
-                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
-                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-                         workers=5, sg=sg, negative=20, units=None)
-    gs2.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+    # gs2 = GridSearch_new(training_data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep',
+    #                      index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
+    #                      merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
+    #                      valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
+    #                      workers=5, sg=sg, negative=20, units=None)
+    # gs2.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
     # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_9_undirected_2_step_rw_matrix.npy',
     #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_9_undirected_nodes.pickle',
     #                power=1, ns_mode_pyx=1)
@@ -328,3 +329,32 @@ if __name__ == '__main__':
     #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'shelter/encoded_edges_count_window_size_10_undirected_nodes.pickle',
     #                power=0.75)
 
+
+    # dimension search
+    gs = GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
+                        index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
+                        merged_word_count_path=config['graph'][
+                                                   'dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
+                        valid_vocabulary_path=config['graph'][
+                                                  'dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
+                        workers=60, sg=1, negative=0, units=['AA'])
+    df = pd.DataFrame(columns=[
+        # negative sampling source information
+        'size', 'NS file', 'Graph window size', 'Directed/Undirected', 't-random-walk', 'power',
+        # wordsim353
+        'wordsim353_Pearson correlation', 'Pearson pvalue',
+        'Spearman correlation', 'Spearman pvalue', 'Ration of pairs with OOV',
+        # simlex999
+        'simlex999_Pearson correlation', 'Pearson pvalue',
+        'Spearman correlation', 'Spearman pvalue', 'Ration of pairs with OOV',
+        # questions-words
+        'sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total'
+    ])
+    sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500]
+    for i in range(len(sizes)):
+        evaluation_result = gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0, size=sizes[i])
+        df.loc[i] = [str(sizes[i])].extend(evaluation_result)
+
+    writer = pd.ExcelWriter('output/intermediate data/negative_samples_partial/' + 'sizes.xlsx')
+    df.to_excel(writer, 'Sheet1')
+    writer.save()
