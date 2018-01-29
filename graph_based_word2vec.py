@@ -350,7 +350,8 @@ if __name__ == '__main__':
         # questions-words
         'sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total'
     ])
-    sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500]
+    # sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500]
+    sizes = [100]
     for i in range(len(sizes)):
         evaluation_result = gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0, size=sizes[i])
         df.loc[i] = [str(sizes[i])].extend(evaluation_result)
