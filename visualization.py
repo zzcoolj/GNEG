@@ -13,19 +13,19 @@ valid_vocabulary_path = config['graph']['dicts_and_encoded_texts_folder'] + 'val
 '''Negative Samples Original: list
 only for valid word
 '''
-count_list = nsg.NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path)
-nsg.Visualization.list_vis(count_list, sort=True, output_path=config['word2vec']['negative_samples_folder']+'png/'+'ns_original.png')
+# count_list = nsg.NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path)
+# nsg.Visualization.list_vis(count_list, sort=True, output_path=config['word2vec']['negative_samples_folder']+'png/'+'ns_original.png')
 '''Negative Samples Original: matrix
 1. sort by word count
 2. power=0.75
 3. normalization
 '''
-# count_list = nsg.NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path)
-# count_list.sort(reverse=True)
-# count_list = [i**0.75 for i in count_list]
-# count_list = [float(i)/sum(count_list) for i in count_list]
-# matrix = np.array([count_list for i in range(len(count_list))])
-# nsg.Visualization.matrix_vis(matrix, output_path=None)
+count_list = nsg.NegativeSamples.get_valid_vocab_count_list(word_count_path=word_count_path, valid_vocabulary_path=valid_vocabulary_path)
+count_list.sort(reverse=True)
+count_list = [i**0.75 for i in count_list]
+count_list = [float(i)/sum(count_list) for i in count_list]
+matrix = np.array([count_list for i in range(len(count_list))])
+nsg.Visualization.matrix_vis(matrix, output_path=config['word2vec']['negative_samples_folder']+'png/'+'ns_original_matrix.png')
 
 
 '''Negative Samples Co-occurrence-based: matrix
