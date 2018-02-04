@@ -61,6 +61,10 @@ class NoGraph:
         # power co-occurrence if needed.
         if power:
             stochastic_matrix = np.power(stochastic_matrix, power)
+
+        # remove self loop
+        for i in range(vocab_size):
+            stochastic_matrix[i][i] = 0
         """ No need to remove self loop: 1. gensim already handles that; 2. influence matrix visualization.
         # remove self loop
         for i in range(vocab_size):
