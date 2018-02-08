@@ -93,7 +93,7 @@ class NoGraph:
             for i in range(vocab_size):
                 stochastic_matrix[i][i] = 0
 
-        print(stochastic_matrix)
+        # print(stochastic_matrix)
 
         # calculate percentage
         matrix_sum_row = np.sum(stochastic_matrix, axis=1, keepdims=True)  # sum of each row and preserve the dimension
