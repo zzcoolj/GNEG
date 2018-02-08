@@ -259,6 +259,40 @@ class NegativeSamplesGenerator:
         p.close()
         p.join()
 
+    def get_stochastic_matrix(self, encoded_edges_count_file_path):
+        print(multi_processing.get_pid(), encoded_edges_count_file_path)
+        no_graph = NoGraph(encoded_edges_count_file_path, valid_vocabulary_path=self.valid_vocabulary_path)
+        common.write_to_pickle(no_graph.graph_index2wordId, self.ns_folder + no_graph.name_prefix + '_nodes.pickle')
+        file_prefix = self.ns_folder + no_graph.name_prefix
+
+        stochastic_matrix = no_graph.get_stochastic_matrix(change_zeros_to_minimum_positive_value=False)
+        print('write matrix zeros ', file_prefix)
+        np.save(file_prefix + '_zeros_matrix.npy', stochastic_matrix, fix_imports=False)
+
+        stochastic_matrix = no_graph.get_stochastic_matrix(change_zeros_to_minimum_positive_value=True)
+        print('write matrix no zeros ', file_prefix)
+        np.save(file_prefix + '_noZeros_matrix.npy', stochastic_matrix, fix_imports=False)
+
+        print('need memory clean')
+        return None
+
+    @staticmethod
+    def multi_functions(f, encoded_edges_count_file_folder, directed, process_num, partial=False):
+        if directed:
+            # TODO LATER: So far, all directed encoded_edges_count files don't have such file extension below.
+            file_extension = '_directed.txt'
+        else:
+            if partial:
+                file_extension = '_undirected_partial.txt'
+            else:
+                file_extension = '_undirected.txt'
+
+        files_list = multi_processing.get_files_endswith(encoded_edges_count_file_folder, file_extension)
+        p = Pool(process_num, maxtasksperchild=1)
+        p.starmap_async(f, zip(files_list))
+        p.close()
+        p.join()
+
 
 class Visualization:
     def __init__(self):
