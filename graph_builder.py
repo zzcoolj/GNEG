@@ -59,7 +59,12 @@ class NoGraph:
         vocab_size = self.cooccurrence_matrix.shape[0]
         stochastic_matrix = self.cooccurrence_matrix.copy()
 
-        # change all zeros values to the minimum positive value
+        """ change all zeros values to the minimum positive value
+        change in the co-occurrence stage or change after percentage will get same result.
+        The only difference is:
+             change in the co-occurrence stage then calculate percentage, stochastic matrix is already normalized.
+             change after percentage, stochastic matrix need to be normalized again. So the previous one is better.
+        """
         if change_zeros_to_minimum_positive_value:
             # find zero position in the matrix
             zero_indices_x, zero_indices_y = np.where(stochastic_matrix == 0)
@@ -75,7 +80,7 @@ class NoGraph:
                 second_minimums = np.amin(temp_matrix, axis=1)  # Minima along the second axis
                 # set all zeros to second minimum values
                 for i in range(zeros_length):
-                    stochastic_matrix[zero_indices_x[i]][zero_indices_y[i]] = second_minimums[i]
+                    stochastic_matrix[zero_indices_x[i]][zero_indices_y[i]] = second_minimums[zero_indices_x[i]]
 
         """ remove self loop
         1. gensim makes sure that even with self loops in matrix, for a training word, the noise candidate won't be itself.
@@ -87,6 +92,8 @@ class NoGraph:
         if remove_self_loops:
             for i in range(vocab_size):
                 stochastic_matrix[i][i] = 0
+
+        print(stochastic_matrix)
 
         # calculate percentage
         matrix_sum_row = np.sum(stochastic_matrix, axis=1, keepdims=True)  # sum of each row and preserve the dimension

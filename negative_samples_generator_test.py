@@ -219,7 +219,6 @@ class TestGraphDataProvider(unittest.TestCase):
                 self.assertTrue(graph_matrix_value == word2vec_matrix_value)
 
     def test_5_reorder_matrix_by_word_count(self):
-        # stochastic matrix calculated by NoGraph class
         no_graph = gb.NoGraph(self.encoded_edges_count_undirected_path,
                               valid_vocabulary_path=self.valid_vocabulary_undirected_path)
         print('old order')
@@ -230,13 +229,29 @@ class TestGraphDataProvider(unittest.TestCase):
         new_wordId_order, reordered_matrix = ns.reorder_matrix_by_word_count(self.word_count_undirected_path)
         print('new order (based on count in descending order)')
         print(new_wordId_order)
-        print(reordered_matrix)
+        print(reordered_matrix, '\n')
         self.assertTrue(new_wordId_order[:3] == [12, 6, 14])
         for i in range(no_graph.cooccurrence_matrix.shape[0]):
             for j in range(no_graph.cooccurrence_matrix.shape[1]):
                 new_i = new_wordId_order.index(no_graph.graph_index2wordId[i])
                 new_j = new_wordId_order.index(no_graph.graph_index2wordId[j])
                 self.assertTrue(no_graph.cooccurrence_matrix[i][j] == reordered_matrix[new_i][new_j])
+
+    def test_6_NoGraph_get_stochastic_matrix_change_zeros(self):
+        """
+        Hard to automatically test. Uncomment print in get_stochastic_matrix function in NoGraph class
+        """
+        no_graph = gb.NoGraph(self.encoded_edges_count_undirected_path,
+                              valid_vocabulary_path=self.valid_vocabulary_undirected_path)
+        stochastic_matrix_old = no_graph.get_stochastic_matrix()
+        print('with zeors')
+        print(stochastic_matrix_old, '\n')
+        stochastic_matrix_new = no_graph.get_stochastic_matrix(change_zeros_to_minimum_positive_value=True)
+        print('change zeros to second minimum values')
+        print(stochastic_matrix_new, '\n')
+        stochastic_matrix_new_2 = no_graph.get_stochastic_matrix(change_zeros_to_minimum_positive_value=True,
+                                                                 remove_self_loops=True)
+        print(stochastic_matrix_new_2)
 
 
 if __name__ == '__main__':
