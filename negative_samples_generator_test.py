@@ -128,7 +128,7 @@ class TestGraphDataProvider(unittest.TestCase):
         print('NoGraph')
         no_graph = gbn.NoGraph(self.encoded_edges_count_undirected_path,
                                valid_vocabulary_path=self.valid_vocabulary_undirected_path)
-        matrix11 = no_graph.get_stochastic_matrix()
+        matrix11 = no_graph.get_stochastic_matrix(remove_self_loops=True)
         ns_no_graph = gbn.NegativeSamples(matrix=matrix11,
                                           graph_index2wordId=no_graph.graph_index2wordId,
                                           merged_dict_path=self.merged_dict_undirected_path,
@@ -153,7 +153,7 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue(value_sum == matrix2[3, 5])
 
         # t=2 steps random walk NoGraph
-        nodes, matrix22 = no_graph.get_t_step_random_walk_stochastic_matrix(t=2)
+        nodes, matrix22 = no_graph.get_t_step_random_walk_stochastic_matrix(t=2, remove_self_loops=True)
         ns_no_graph = gbn.NegativeSamples(matrix=matrix22, graph_index2wordId=nodes,
                                           merged_dict_path=self.merged_dict_undirected_path,
                                           name_prefix=no_graph.name_prefix)
@@ -180,7 +180,7 @@ class TestGraphDataProvider(unittest.TestCase):
         self.assertTrue(value_sum == matrix3[3, 5])
 
         # t=3 steps random walk NoGraph
-        nodes, matrix33 = no_graph.get_t_step_random_walk_stochastic_matrix(t=3)
+        nodes, matrix33 = no_graph.get_t_step_random_walk_stochastic_matrix(t=3, remove_self_loops=True)
         ns_no_graph = gbn.NegativeSamples(matrix=matrix33, graph_index2wordId=nodes,
                                           merged_dict_path=self.merged_dict_undirected_path,
                                           name_prefix=no_graph.name_prefix)

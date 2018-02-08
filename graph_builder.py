@@ -1,7 +1,7 @@
 __author__ = 'Zheng ZHANG'
 
 """
-graph_builder is used by negative_samples_generator.py to get what is needed to build the negative samples.
+graph_builder is used by negative_samples_generator.py to build the negative samples.
 """
 
 import numpy as np
@@ -52,44 +52,62 @@ class NoGraph:
             cooccurrence_matrix[graph_wordId2index[target]][graph_wordId2index[source]] = weight
         self.cooccurrence_matrix = cooccurrence_matrix
 
-    def get_stochastic_matrix(self, power=None):
+    def get_stochastic_matrix(self, remove_self_loops=False, change_zeros_to_minimum_positive_value=False):
         """
         A replacement of get_stochastic_matrix function NXGraph class.
         """
         vocab_size = self.cooccurrence_matrix.shape[0]
         stochastic_matrix = self.cooccurrence_matrix.copy()
-        # power co-occurrence if needed.
-        if power:
-            stochastic_matrix = np.power(stochastic_matrix, power)
 
-        # remove self loop
-        for i in range(vocab_size):
-            stochastic_matrix[i][i] = 0
-        """ No need to remove self loop: 1. gensim already handles that; 2. influence matrix visualization.
-        # remove self loop
-        for i in range(vocab_size):
-            stochastic_matrix[i][i] = 0
+        # change all zeros values to the minimum positive value
+        if change_zeros_to_minimum_positive_value:
+            # find zero position in the matrix
+            zero_indices_x, zero_indices_y = np.where(stochastic_matrix == 0)
+            zeros_length = len(zero_indices_x)
+            if zeros_length == 0:
+                print('No zero cells in matrix.')
+            else:
+                # find the second minimum value in matrix, temp_matrix is used for that
+                max_value = np.amax(stochastic_matrix)
+                temp_matrix = np.copy(stochastic_matrix)
+                for i in range(zeros_length):
+                    temp_matrix[zero_indices_x[i]][zero_indices_y[i]] = max_value
+                second_minimums = np.amin(temp_matrix, axis=1)  # Minima along the second axis
+                # set all zeros to second minimum values
+                for i in range(zeros_length):
+                    stochastic_matrix[zero_indices_x[i]][zero_indices_y[i]] = second_minimums[i]
+
+        """ remove self loop
+        1. gensim makes sure that even with self loops in matrix, for a training word, the noise candidate won't be itself.
+        2. Self loops do affect the result of random walks
+        3. If we use 0 step random walk matrix (stochastic matrix), self loops won't affect the noise distribution.
+           But in gensim, if we set negative=20, for a training word if its self-loop takes 50%, the real average 
+           negative is 20*(1-50%)=10 
         """
+        if remove_self_loops:
+            for i in range(vocab_size):
+                stochastic_matrix[i][i] = 0
+
         # calculate percentage
         matrix_sum_row = np.sum(stochastic_matrix, axis=1, keepdims=True)  # sum of each row and preserve the dimension
         stochastic_matrix /= matrix_sum_row
         return stochastic_matrix
 
-    def one_to_t_step_random_walk_stochastic_matrix_yielder(self, t):
+    def one_to_t_step_random_walk_stochastic_matrix_yielder(self, t, remove_self_loops=False):
         """
         Instead of getting a specific t step random walk result, this method gets a dict of result from 1 step random
         walk to t step random walk. This method should be used for grid search.
         """
-        transition_matrix = self.get_stochastic_matrix()
+        transition_matrix = self.get_stochastic_matrix(remove_self_loops=remove_self_loops)
         result = transition_matrix
         for t in range(1, t+1):
             if t != 1:
                 result = np.matmul(result, transition_matrix)
             yield result, t
 
-    def get_t_step_random_walk_stochastic_matrix(self, t, output_folder=None):
+    def get_t_step_random_walk_stochastic_matrix(self, t, output_folder=None, remove_self_loops=False):
         # TODO LATER not the same result from 1 step random walk
-        transition_matrix = self.get_stochastic_matrix()
+        transition_matrix = self.get_stochastic_matrix(remove_self_loops=remove_self_loops)
         result = transition_matrix
         while t > 1:
             result = np.matmul(result, transition_matrix)
