@@ -202,6 +202,7 @@ class NegativeSamplesGenerator:
         self.ns_folder = ns_folder  # output folder
         self.valid_vocabulary_path = valid_vocabulary_path
 
+    # for t-step random walk
     def one_to_one(self, encoded_edges_count_file_path, t):
         # # [DEPRECATED] NXGraph version: too slow, it takes around 50 mins for window size 10 for whole wiki data.
         # graph = NXGraph.from_encoded_edges_count_file(encoded_edges_count_file_path, directed=directed)
@@ -259,6 +260,7 @@ class NegativeSamplesGenerator:
         p.close()
         p.join()
 
+    # for stochastic matrix
     def get_stochastic_matrix(self, encoded_edges_count_file_path):
         print(multi_processing.get_pid(), encoded_edges_count_file_path)
         no_graph = NoGraph(encoded_edges_count_file_path, valid_vocabulary_path=self.valid_vocabulary_path)
@@ -290,6 +292,35 @@ class NegativeSamplesGenerator:
         files_list = multi_processing.get_files_endswith(encoded_edges_count_file_folder, file_extension)
         p = Pool(process_num, maxtasksperchild=1)
         p.starmap_async(f, zip(files_list))
+        p.close()
+        p.join()
+
+    # difference between unigram and stochastic matrix
+    def get_difference_matrix(self, encoded_edges_count_file_path, merged_word_count_path):
+        print(multi_processing.get_pid(), encoded_edges_count_file_path)
+        no_graph = NoGraph(encoded_edges_count_file_path, valid_vocabulary_path=self.valid_vocabulary_path)
+        common.write_to_pickle(no_graph.graph_index2wordId, self.ns_folder + no_graph.name_prefix + '_nodes.pickle')
+        file_prefix = self.ns_folder + no_graph.name_prefix
+        difference_matrix = no_graph.get_difference_matrix(merged_word_count_path=merged_word_count_path)
+        print('write matrix zeros ', file_prefix)
+        np.save(file_prefix + '_matrix.npy', difference_matrix, fix_imports=False)
+        print('need memory clean')
+        return None
+
+    def multi_difference_matrix(self, encoded_edges_count_file_folder, merged_word_count_path, directed, process_num,
+                                partial=False):
+        if directed:
+            # TODO LATER: So far, all directed encoded_edges_count files don't have such file extension below.
+            file_extension = '_directed.txt'
+        else:
+            if partial:
+                file_extension = '_undirected_partial.txt'
+            else:
+                file_extension = '_undirected.txt'
+
+        files_list = multi_processing.get_files_endswith(encoded_edges_count_file_folder, file_extension)
+        p = Pool(process_num, maxtasksperchild=1)
+        p.starmap_async(self.get_difference_matrix, zip(files_list, repeat(merged_word_count_path)))
         p.close()
         p.join()
 

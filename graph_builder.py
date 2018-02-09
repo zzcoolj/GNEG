@@ -135,15 +135,15 @@ class NoGraph:
             unigram[i] = merged_word_count[str(self.graph_index2wordId[i])]
         matrix_sum_row = np.sum(unigram)
         unigram /= matrix_sum_row
-        print(unigram)
+        # print(unigram)
 
         # stochastic matrix
         stochastic = self.get_stochastic_matrix(remove_self_loops=False, change_zeros_to_minimum_positive_value=False)
-        print(stochastic)
+        # print(stochastic)
 
         # unigram - stochastic
         difference = unigram - stochastic
-        print(difference)
+        # print(difference)
 
         # replace non-positive values in difference matrix
         zero_indices_x, zero_indices_y = np.where(difference < 0)
@@ -160,8 +160,8 @@ class NoGraph:
             # set all zeros to second minimum values
             for i in range(zeros_length):
                 difference[zero_indices_x[i]][zero_indices_y[i]] = second_minimums[zero_indices_x[i]]
-        print(difference)
-        return difference
+        # print(difference)
+        return difference  # difference matrix is not normalized
 
 
 class NXGraph:
