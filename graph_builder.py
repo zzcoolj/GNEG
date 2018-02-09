@@ -125,6 +125,44 @@ class NoGraph:
             common.write_to_pickle(self.graph_index2wordId, file_prefix + '_step_rw_nodes.pickle')
         return self.graph_index2wordId, result
 
+    def get_difference_matrix(self, merged_word_count_path):
+        # unigram(word frequency based) matrix
+        vocab_size = len(self.graph_index2wordId)
+        unigram = np.zeros(vocab_size)
+        merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(merged_word_count_path,
+                                                                                         key_type=str, value_type=int)
+        for i in range(vocab_size):
+            unigram[i] = merged_word_count[str(self.graph_index2wordId[i])]
+        matrix_sum_row = np.sum(unigram)
+        unigram /= matrix_sum_row
+        print(unigram)
+
+        # stochastic matrix
+        stochastic = self.get_stochastic_matrix(remove_self_loops=False, change_zeros_to_minimum_positive_value=False)
+        print(stochastic)
+
+        # unigram - stochastic
+        difference = unigram - stochastic
+        print(difference)
+
+        # replace non-positive values in difference matrix
+        zero_indices_x, zero_indices_y = np.where(difference < 0)
+        zeros_length = len(zero_indices_x)
+        if zeros_length == 0:
+            print('No non-positive cells in matrix.')
+        else:
+            # find the second minimum value in matrix, temp_matrix is used for that
+            max_value = np.amax(difference)
+            temp_matrix = np.copy(difference)
+            for i in range(zeros_length):
+                temp_matrix[zero_indices_x[i]][zero_indices_y[i]] = max_value
+            second_minimums = np.amin(temp_matrix, axis=1)  # Minima along the second axis
+            # set all zeros to second minimum values
+            for i in range(zeros_length):
+                difference[zero_indices_x[i]][zero_indices_y[i]] = second_minimums[zero_indices_x[i]]
+        print(difference)
+        return difference
+
 
 class NXGraph:
     def __init__(self, graph, name_prefix, directed):

@@ -535,7 +535,7 @@ class Word2Vec(utils.SaveLoad):
         self.compute_loss = compute_loss
         self.running_training_loss = 0
         # for construct graph based vocab
-        self.graph_index2word_path = index2word_path
+        self.graph_wordId2word_path = index2word_path
         self.merged_word_count_path = merged_word_count_path
         self.valid_vocabulary_path = valid_vocabulary_path
         # ns_mode_pyx:  -1: uniform distribution cum_table ; 0: original, using cum_table; 1: using graph-based ns_table
@@ -605,7 +605,7 @@ class Word2Vec(utils.SaveLoad):
         # NegativeSamples instance
         ns = gbn.NegativeSamples.load(matrix_path=self.matrix_path,
                                       graph_index2wordId_path=self.graph_index2wordId_path,
-                                      merged_dict_path=self.graph_index2word_path)
+                                      merged_dict_path=self.graph_wordId2word_path)
         # reorder matrix's row and column to follow wv.index2word's order
         reordered_matrix = ns.reorder_matrix(self.wv.index2word)
 
@@ -743,12 +743,12 @@ class Word2Vec(utils.SaveLoad):
         # TODO LATER It takes arount 20 minutes for whole wiki data, worth it?
         """Do an initial scan of all words appearing in sentences."""
         vocab = defaultdict(int)
-        graph_index2word = gdp.get_index2word(self.graph_index2word_path)
+        graph_wordId2word = gdp.get_index2word(self.graph_wordId2word_path)
         merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(self.merged_word_count_path, key_type=str, value_type=int)
         valid_vocabulary = dict.fromkeys(gdp.read_valid_vocabulary(self.valid_vocabulary_path))
-        for index in valid_vocabulary:
+        for wordId in valid_vocabulary:
             # vocab items order does not follow valid_vocabulary, because of the dict type of vocab.
-            vocab[graph_index2word[int(index)]] = merged_word_count[str(index)]
+            vocab[graph_wordId2word[int(wordId)]] = merged_word_count[str(wordId)]
         for sentence_no, sentence in enumerate(sentences):
             continue
         self.corpus_count = sentence_no + 1

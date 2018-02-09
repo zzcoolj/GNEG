@@ -253,6 +253,12 @@ class TestGraphDataProvider(unittest.TestCase):
                                                                  remove_self_loops=True)
         print(stochastic_matrix_new_2)
 
+    def test_7_NoGraph_get_difference_matrix(self):
+        no_graph = gb.NoGraph(self.encoded_edges_count_undirected_path,
+                              valid_vocabulary_path=self.valid_vocabulary_undirected_path)
+        print('graph wordId order', no_graph.graph_index2wordId)
+        no_graph.get_difference_matrix(merged_word_count_path=self.word_count_undirected_path)
+
 
 if __name__ == '__main__':
     unittest.main()
