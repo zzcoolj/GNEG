@@ -129,7 +129,7 @@ class GridSearch_old(object):
 
 class GridSearch_new(object):
     def __init__(self, training_data_folder, index2word_path, merged_word_count_path, valid_vocabulary_path,
-                 workers, sg, negative, size, units=None):
+                 workers, sg, negative, size, units=None, iterations=5):
         # common parameters
         self.training_data_folder = training_data_folder
         self.index2word_path = index2word_path  # same as merged_dict_path
@@ -140,6 +140,7 @@ class GridSearch_new(object):
         self.negative = negative
         self.size = size
         self.units = units
+        self.iterations = iterations
 
     def one_search(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx):
         def negative_samples_source_information():
@@ -186,7 +187,7 @@ class GridSearch_new(object):
                          ns_mode_pyx=ns_mode_pyx,
                          power=power,
                          size=self.size, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
-                         negative=self.negative)
+                         negative=self.negative, iter=self.iterations)
 
         # negative samples source information
         ns_source_info = negative_samples_source_information()
