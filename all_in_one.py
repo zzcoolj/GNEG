@@ -56,7 +56,7 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 # # stochastic matrix
 # gs.grid_search_bis(ns_folder='output/intermediate data/negative_samples_partial_stochastic/')  # 68200s
 # difference matrix
-gs.grid_search_tri(ns_folder='output/intermediate data/negative_samples_partial_difference')
+gs.grid_search_tri(ns_folder='output/intermediate data/negative_samples_partial_difference/')
 
 
 # # whole wiki data
