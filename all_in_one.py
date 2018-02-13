@@ -17,14 +17,14 @@ medium_units = ['AA', 'BB', 'CC', 'DD', 'EE']
 medium_folder = 'output/medium/'
 sg = 1  # Only care about skip-gram
 
-print('build graph')
-start_time = time.time()
-
-# 100 files in one unit, so set process_num to be 10 is okay
-# TODO TEMP medium_folder
-gdp.part_of_data(units=medium_units, window_size=window_size, process_num=30, output_folder='output/intermediate data/')
-
-print('time in seconds:', common.count_time(start_time))
+# print('build graph')
+# start_time = time.time()
+#
+# # 100 files in one unit, so set process_num to be 10 is okay
+# # TODO TEMP medium_folder
+# gdp.part_of_data(units=medium_units, window_size=window_size, process_num=30, output_folder='output/intermediate data/')
+#
+# print('time in seconds:', common.count_time(start_time))
 
 # print('build ns')
 # start_time = time.time()
