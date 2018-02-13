@@ -12,38 +12,43 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 window_size = 10
+sg = 1  # Only care about skip-gram
+
 small_units = ['AA']
 small_folder = 'output/small/'
 medium_units = ['AA', 'BB', 'CC', 'DD', 'EE']
 medium_folder = 'output/medium/'
-sg = 1  # Only care about skip-gram
+whole_folder = 'output/intermediate data/'
 
-print('build graph')
-start_time = time.time()
-
-# 100 files in one unit, so set process_num to be 10 is okay
-gdp.part_of_data(units=small_units, window_size=window_size, process_num=10, output_folder=small_folder)
-# gdp.part_of_data(units=medium_units, window_size=window_size, process_num=30, output_folder=medium_folder)
-
-print('time in seconds:', common.count_time(start_time))
-
-# print('build ns')
+# print('build graph')  # Only for partial data
 # start_time = time.time()
 #
-# # output/intermediate data/negative_samples_partial/
-# # output/intermediate data/dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt
-# grid_searcher = nsg.NegativeSamplesGenerator(ns_folder='output/intermediate data/negative_samples_partial_difference/',
-#                                              valid_vocabulary_path='output/intermediate data/dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt')
-# # # t-step random walks
-# # grid_searcher.many_to_many(encoded_edges_count_file_folder='output/intermediate data/graph/', directed=False, t_max=4, process_num=window_size-1, partial=True)
-# # # stochastic matrix
-# # grid_searcher.multi_functions(f=grid_searcher.get_stochastic_matrix, encoded_edges_count_file_folder='output/intermediate data/graph/', directed=False, process_num=window_size-1, partial=True)
+# # 100 files in one unit, so set process_num to be 10 is okay
+# gdp.part_of_data(units=small_units, window_size=window_size, process_num=10, output_folder=small_folder)
+# # gdp.part_of_data(units=medium_units, window_size=window_size, process_num=30, output_folder=medium_folder)
+#
+# print('time in seconds:', common.count_time(start_time))
+
+
+print('build ns')
+start_time = time.time()
+
+grid_searcher = nsg.NegativeSamplesGenerator(ns_folder=medium_folder + 'ns_stochastic/',
+                                             valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt')
+
+# stochastic matrix
+grid_searcher.multi_functions(f=grid_searcher.get_stochastic_matrix,
+                              encoded_edges_count_file_folder=medium_folder + 'graph/',
+                              directed=False, process_num=window_size-1, partial=True)
 # # difference matrix
 # grid_searcher.multi_difference_matrix(encoded_edges_count_file_folder='output/intermediate data/graph/',
 #                                       merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
 #                                       directed=False, process_num=window_size-1, partial=True)
-#
-# print('time in seconds:', common.count_time(start_time))
+# # t-step random walks
+# grid_searcher.many_to_many(encoded_edges_count_file_folder='output/intermediate data/graph/', directed=False, t_max=4, process_num=window_size-1, partial=True)
+
+print('time in seconds:', common.count_time(start_time))
+
 
 # print('graph-based word2vec')
 # start_time = time.time()
