@@ -290,7 +290,7 @@ class GridSearch_new(object):
             # encoded_edges_count_window_size_7_undirected_partial_nodes.pickle
             nodes_path = re.search('(.*)_(.*)_matrix.npy', file).group(1) + '_nodes.pickle'
             # for power in [-0.001, -0.1, -1, 0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 2]:
-            for power in [0.01, 0.25, 0.5, 0.75, 1]:
+            for power in [0.25, 0.5, 0.75]:
                 try:
                     evaluation_result = self.one_search_bis(matrix_path=file, graph_index2wordId_path=nodes_path,
                                                         power=power, ns_mode_pyx=1)

@@ -65,7 +65,7 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
                         merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
                         valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
                         workers=62, sg=sg, size=200, negative=5, units=medium_units, iterations=3)
-gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+# gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
 # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 #                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
 #                         merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
@@ -78,12 +78,12 @@ gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mod
 #                         valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
 #                         workers=62, sg=sg, size=200, negative=15, units=medium_units, iterations=3)
 # gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
-# # t-step random walks
-# gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial_noSelfLoops/')  # 116876.32733845711s
-# # stochastic matrix
-# gs.grid_search_bis(ns_folder='output/intermediate data/negative_samples_partial_stochastic/')  # 68200s
+# stochastic matrix
+gs.grid_search_bis(ns_folder=medium_folder+'ns_stochastic/')  # 68200s
 # # difference matrix
 # gs.grid_search_tri(ns_folder='output/intermediate data/negative_samples_partial_difference/')  # 31848s
+# # t-step random walks
+# gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial_noSelfLoops/')  # 116876.32733845711s
 
 # # whole wiki data
 # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
