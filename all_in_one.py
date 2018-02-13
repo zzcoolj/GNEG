@@ -44,53 +44,59 @@ print('time in seconds:', common.count_time(start_time))
 #
 # print('time in seconds:', common.count_time(start_time))
 
-# print('graph-based word2vec')
-# start_time = time.time()
-#
-# # partial wiki data
-# # data/training data/Wikipedia-Dumps_en_20170420_prep
-# # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
-# #                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-# #                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
-# #                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
-# #                         workers=62, sg=sg, size=200, negative=5, units=medium_units)
+print('graph-based word2vec')
+start_time = time.time()
+
+# partial wiki data
+# data/training data/Wikipedia-Dumps_en_20170420_prep
 # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 #                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-#                         merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
-#                         valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
-#                         workers=62, sg=sg, size=200, negative=5, units=medium_units)
-# gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+#                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
+#                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
+#                         workers=62, sg=sg, size=200, negative=5, units=small_units, iterations=3)
+gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
+                        index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
+                        merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
+                        valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
+                        workers=62, sg=sg, size=200, negative=5, units=medium_units, iterations=3)
+gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
+                        index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
+                        merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
+                        valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
+                        workers=62, sg=sg, size=200, negative=10, units=medium_units, iterations=3)
+gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
+                        index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
+                        merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
+                        valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
+                        workers=62, sg=sg, size=200, negative=15, units=medium_units, iterations=3)
+gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+# # t-step random walks
+# gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial_noSelfLoops/')  # 116876.32733845711s
+# # stochastic matrix
+# gs.grid_search_bis(ns_folder='output/intermediate data/negative_samples_partial_stochastic/')  # 68200s
+# # difference matrix
+# gs.grid_search_tri(ns_folder='output/intermediate data/negative_samples_partial_difference/')  # 31848s
+
+# # whole wiki data
 # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 #                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-#                         merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
-#                         valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
-#                         workers=62, sg=sg, size=200, negative=10, units=medium_units)
+#                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
+#                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
+#                         workers=62, sg=sg, size=200, negative=5, iterations=3)
 # gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
-# gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
-#                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-#                         merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
-#                         valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
-#                         workers=62, sg=sg, size=200, negative=15, units=medium_units)
-# gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
-# # # t-step random walks
-# # gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial_noSelfLoops/')  # 116876.32733845711s
-# # # stochastic matrix
-# # gs.grid_search_bis(ns_folder='output/intermediate data/negative_samples_partial_stochastic/')  # 68200s
-# # # difference matrix
-# # gs.grid_search_tri(ns_folder='output/intermediate data/negative_samples_partial_difference/')  # 31848s
-#
-# # # whole wiki data
-# # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
-# #                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-# #                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
-# #                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-# #                         workers=62, sg=sg, size=200, negative=5, iterations=3)
-# # gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
-# # gs.one_search(matrix_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_5_undirected_partial_3_step_rw_matrix.npy',
-# #               graph_index2wordId_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_5_undirected_partial_nodes.pickle',
-# #               power=0.75, ns_mode_pyx=1)
-#
-# print('time in seconds:', common.count_time(start_time))
+# gs.one_search(matrix_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_5_undirected_partial_3_step_rw_matrix.npy',
+#               graph_index2wordId_path='output/intermediate data/negative_samples_partial/encoded_edges_count_window_size_5_undirected_partial_nodes.pickle',
+#               power=0.75, ns_mode_pyx=1)
+
+print('time in seconds:', common.count_time(start_time))
+
+
+
+
+
+
 
 
 

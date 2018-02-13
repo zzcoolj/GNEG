@@ -579,20 +579,20 @@ def part_of_data(units, window_size, process_num, output_folder,
     graph_folder_name = 'graph/'
     word_count_name = 'word_count_partial.txt'
 
-    # merge_transferred_word_count(word_count_folder=dicts_folder, output_folder=output_folder+dicts_folder_name,
-    #                              file_name=word_count_name, units=units)
-    # valid_vocabulary_name = output_folder + dicts_folder_name + 'valid_vocabulary_partial_min_count_' + str(min_count) \
-    #                         + '_vocab_size_' + str(max_vocab_size) + '.txt'
-    # write_valid_vocabulary(
-    #     merged_word_count_path=output_folder + dicts_folder_name + word_count_name,
-    #     output_path=valid_vocabulary_name,
-    #     min_count=int(min_count),
-    #     max_vocab_size=max_vocab_size)
-    # # dicts_folder should be the folder which contains the new partial valid vocabulary
-    # multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=window_size, process_num=process_num,
-    #                                                             max_vocab_size=max_vocab_size, units=units,
-    #                                                             dicts_folder=output_folder + dicts_folder_name,
-    #                                                             output_folder=output_folder + graph_folder_name)
+    merge_transferred_word_count(word_count_folder=dicts_folder, output_folder=output_folder+dicts_folder_name,
+                                 file_name=word_count_name, units=units)
+    valid_vocabulary_name = output_folder + dicts_folder_name + 'valid_vocabulary_partial_min_count_' + str(min_count) \
+                            + '_vocab_size_' + str(max_vocab_size) + '.txt'
+    write_valid_vocabulary(
+        merged_word_count_path=output_folder + dicts_folder_name + word_count_name,
+        output_path=valid_vocabulary_name,
+        min_count=int(min_count),
+        max_vocab_size=max_vocab_size)
+    # dicts_folder should be the folder which contains the new partial valid vocabulary
+    multiprocessing_merge_edges_count_of_a_specific_window_size(window_size=window_size, process_num=process_num,
+                                                                max_vocab_size=max_vocab_size, units=units,
+                                                                dicts_folder=output_folder + dicts_folder_name,
+                                                                output_folder=output_folder + graph_folder_name)
     for i in range(2, window_size+1):
         # TODO LATER need multiprocessing
         file_path = output_folder + graph_folder_name + 'encoded_edges_count_window_size_' + str(i) + '_partial.txt'
