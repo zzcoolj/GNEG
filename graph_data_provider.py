@@ -596,7 +596,8 @@ def part_of_data(units, window_size, process_num, output_folder,
     for i in range(2, window_size+1):
         # TODO LATER need multiprocessing
         file_path = output_folder + graph_folder_name + 'encoded_edges_count_window_size_' + str(i) + '_partial.txt'
-        merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path, output_folder=output_folder+graph_folder_name)
+        merge_encoded_edges_count_for_undirected_graph(old_encoded_edges_count_path=file_path,
+                                                       output_folder=output_folder+graph_folder_name)
 
 
 def filter_edges(min_count,
