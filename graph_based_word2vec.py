@@ -548,17 +548,3 @@ if __name__ == '__main__':
     #                     valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
     #                     workers=5, sg=sg, negative=20, potential_ns_len=200)
     # gs.grid_search(ns_folder='output/intermediate data/negative_samples_potential_ns_len_200/')
-
-    # gs2 = GridSearch_new(training_data_folder='data/training data/Wikipedia-Dumps_en_20170420_prep',
-    #                      index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-    #                      merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
-    #                      valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
-    #                      workers=5, sg=sg, negative=20, units=None)
-    # gs2.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
-    # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_9_undirected_2_step_rw_matrix.npy',
-    #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'encoded_edges_count_window_size_9_undirected_nodes.pickle',
-    #                power=1, ns_mode_pyx=1)
-    # gs2.grid_search()
-    # gs2.one_search(matrix_path=config['word2vec']['negative_samples_folder']+'shelter/encoded_edges_count_window_size_10_undirected_1_step_rw_matrix_new.npy',
-    #                graph_index2wordId_path=config['word2vec']['negative_samples_folder']+'shelter/encoded_edges_count_window_size_10_undirected_nodes.pickle',
-    #                power=0.75)

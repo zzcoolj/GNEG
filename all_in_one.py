@@ -16,13 +16,13 @@ small_units = ['AA']
 medium_units = ['AA', 'BB', 'CC', 'DD', 'EE']
 sg = 1  # Only care about skip-gram
 
-print('build graph')
-start_time = time.time()
-
-# 100 files in one unit, so set process_num to be 10 is okay
-gdp.part_of_data(units=medium_units, window_size=window_size, process_num=30, output_folder='output/medium/')
-
-print('time in seconds:', common.count_time(start_time))
+# print('build graph')
+# start_time = time.time()
+#
+# # 100 files in one unit, so set process_num to be 10 is okay
+# gdp.part_of_data(units=medium_units, window_size=window_size, process_num=30, output_folder='output/medium/')
+#
+# print('time in seconds:', common.count_time(start_time))
 
 # print('build ns')
 # start_time = time.time()
@@ -78,7 +78,7 @@ print('time in seconds:', common.count_time(start_time))
 
 
 
-# # corpus size count
+# corpus size count
 # merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(
 #     config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt', key_type=str, value_type=int)
 # count = 0
@@ -91,4 +91,11 @@ print('time in seconds:', common.count_time(start_time))
 # count = 0
 # for temp in merged_word_count.values():
 #     count += temp
-# print('partial', count)
+# print('small partial', count)
+
+merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+    'output/medium/dicts_and_encoded_texts/' + 'word_count_partial.txt', key_type=str, value_type=int)
+count = 0
+for temp in merged_word_count.values():
+    count += temp
+print('medium partial', count)
