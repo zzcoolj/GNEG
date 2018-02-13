@@ -14,15 +14,16 @@ config.read('config.ini')
 window_size = 10
 small_units = ['AA']
 medium_units = ['AA', 'BB', 'CC', 'DD', 'EE']
+medium_folder = 'output/medium/'
 sg = 1  # Only care about skip-gram
 
-# print('build graph')
-# start_time = time.time()
-#
-# # 100 files in one unit, so set process_num to be 10 is okay
-# gdp.part_of_data(units=medium_units, window_size=window_size, process_num=30, output_folder='output/medium/')
-#
-# print('time in seconds:', common.count_time(start_time))
+print('build graph')
+start_time = time.time()
+
+# 100 files in one unit, so set process_num to be 10 is okay
+gdp.part_of_data(units=medium_units, window_size=window_size, process_num=30, output_folder=medium_folder)
+
+print('time in seconds:', common.count_time(start_time))
 
 # print('build ns')
 # start_time = time.time()
@@ -47,10 +48,15 @@ sg = 1  # Only care about skip-gram
 #
 # # partial wiki data
 # # data/training data/Wikipedia-Dumps_en_20170420_prep
+# # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
+# #                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
+# #                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
+# #                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
+# #                         workers=62, sg=sg, size=200, negative=5, units=medium_units)
 # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 #                         index2word_path=config['graph']['dicts_and_encoded_texts_folder'] + 'dict_merged.txt',
-#                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_partial.txt',
-#                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
+#                         merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
+#                         valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt',
 #                         workers=62, sg=sg, size=200, negative=5, units=medium_units)
 # gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
 # # # t-step random walks
@@ -92,10 +98,10 @@ sg = 1  # Only care about skip-gram
 # for temp in merged_word_count.values():
 #     count += temp
 # print('small partial', count)
-
-merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(
-    'output/medium/dicts_and_encoded_texts/' + 'word_count_partial.txt', key_type=str, value_type=int)
-count = 0
-for temp in merged_word_count.values():
-    count += temp
-print('medium partial', count)
+#
+# merged_word_count = gdp.read_two_columns_file_to_build_dictionary_type_specified(
+#     'output/medium/dicts_and_encoded_texts/' + 'word_count_partial.txt', key_type=str, value_type=int)
+# count = 0
+# for temp in merged_word_count.values():
+#     count += temp
+# print('medium partial', count)
