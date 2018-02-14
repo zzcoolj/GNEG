@@ -45,7 +45,7 @@ grid_searcher = nsg.NegativeSamplesGenerator(ns_folder=medium_folder + 'ns_rando
 #                                       merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
 #                                       directed=False, process_num=window_size-1, partial=True)
 # t-step random walks
-grid_searcher.many_to_many(encoded_edges_count_file_folder=medium_folder+'graph/', directed=False, t_max=4, process_num=2, partial=True)
+grid_searcher.many_to_many(encoded_edges_count_file_folder=medium_folder+'graph/', directed=False, t_max=4, process_num=9, partial=True)
 
 print('time in seconds:', common.count_time(start_time))
 
