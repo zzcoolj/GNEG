@@ -33,19 +33,19 @@ whole_folder = 'output/intermediate data/'
 print('build ns')
 start_time = time.time()
 
-grid_searcher = nsg.NegativeSamplesGenerator(ns_folder=medium_folder + 'ns_difference/',
+grid_searcher = nsg.NegativeSamplesGenerator(ns_folder=medium_folder + 'ns_random_walk/',
                                              valid_vocabulary_path=medium_folder + 'dicts_and_encoded_texts/valid_vocabulary_partial_min_count_5_vocab_size_10000.txt')
 
 # # stochastic matrix
 # grid_searcher.multi_functions(f=grid_searcher.get_stochastic_matrix,
 #                               encoded_edges_count_file_folder=medium_folder + 'graph/',
 #                               directed=False, process_num=window_size-1, partial=True)
-# difference matrix
-grid_searcher.multi_difference_matrix(encoded_edges_count_file_folder=medium_folder+'graph/',
-                                      merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
-                                      directed=False, process_num=window_size-1, partial=True)
-# # t-step random walks
-# grid_searcher.many_to_many(encoded_edges_count_file_folder='output/intermediate data/graph/', directed=False, t_max=4, process_num=window_size-1, partial=True)
+# # difference matrix
+# grid_searcher.multi_difference_matrix(encoded_edges_count_file_folder=medium_folder+'graph/',
+#                                       merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
+#                                       directed=False, process_num=window_size-1, partial=True)
+# t-step random walks
+grid_searcher.many_to_many(encoded_edges_count_file_folder=medium_folder+'graph/', directed=False, t_max=4, process_num=window_size-1, partial=True)
 
 print('time in seconds:', common.count_time(start_time))
 
