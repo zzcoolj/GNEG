@@ -225,6 +225,7 @@ class NegativeSamplesGenerator:
 
         print('1')
         no_graph = NoGraph(encoded_edges_count_file_path, valid_vocabulary_path=self.valid_vocabulary_path)
+        print('1.5')
         common.write_to_pickle(no_graph.graph_index2wordId, self.ns_folder + no_graph.name_prefix + '_nodes.pickle')
         print('2')
         for matrix, t in no_graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
