@@ -229,13 +229,13 @@ class NegativeSamplesGenerator:
         print(self.ns_folder + no_graph.name_prefix + '_nodes.pickle')
         common.write_to_pickle(no_graph.graph_index2wordId, self.ns_folder + no_graph.name_prefix + '_nodes.pickle')
         print('2')
-        # for matrix, t in no_graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
-        #     print('3')
-        #     file_prefix = self.ns_folder + no_graph.name_prefix + '_' + str(t)
-        #     print('write matrix', file_prefix)
-        #     np.save(file_prefix + '_step_rw_matrix.npy', matrix, fix_imports=False)
-        #     print('4')
-        # print('need memory clean')
+        for matrix, t in no_graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
+            print('3')
+            file_prefix = self.ns_folder + no_graph.name_prefix + '_' + str(t)
+            print('write matrix', file_prefix)
+            np.save(file_prefix + '_step_rw_matrix.npy', matrix, fix_imports=False)
+            print('4')
+        print('need memory clean')
         return None
 
     def many_to_many(self, encoded_edges_count_file_folder, directed, t_max, process_num, partial=False):
