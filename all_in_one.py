@@ -44,7 +44,7 @@ grid_searcher = nsg.NegativeSamplesGenerator(ns_folder=medium_folder + 'ns_rw/',
 # grid_searcher.multi_difference_matrix(encoded_edges_count_file_folder=medium_folder+'graph/',
 #                                       merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
 #                                       directed=False, process_num=window_size-1, partial=True)
-# t-step random walks
+# t-step random walks   [ATTENTION]: If run in feydeau, process_num=1
 grid_searcher.many_to_many(encoded_edges_count_file_folder=medium_folder+'graph/', directed=False, t_max=4, process_num=1, partial=True)
 
 print('time in seconds:', common.count_time(start_time))
