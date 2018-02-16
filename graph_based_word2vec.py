@@ -229,17 +229,17 @@ class GridSearch_new(object):
         df.loc[0] = evaluation_result
         file_txt.write(' '.join([str(e) for e in evaluation_result]))
 
-        # bottomline: uniformly distribution
-        evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=-1)
-        df.loc[1] = evaluation_result
-        file_txt.write(' '.join([str(e) for e in evaluation_result]))
+        # # bottomline: uniformly distribution
+        # evaluation_result = self.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=-1)
+        # df.loc[1] = evaluation_result
+        # file_txt.write(' '.join([str(e) for e in evaluation_result]))
 
-        i = 2
+        i = 1
         files = multi_processing.get_files_endswith(data_folder=ns_folder, file_extension='.npy')
         for file in files:
             nodes_path = re.search('(.*)_(.*)_step_rw_matrix.npy', file).group(1) + '_nodes.pickle'
             # for power in [-0.001, -0.1, -1, 0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 2]:
-            for power in [0.01, 0.25, 0.75, 1]:
+            for power in [0.5, 0.75, 1]:
                 try:
                     evaluation_result = self.one_search(matrix_path=file, graph_index2wordId_path=nodes_path,
                                                         power=power, ns_mode_pyx=1)

@@ -80,10 +80,10 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 # gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
 # # stochastic matrix
 # gs.grid_search_bis(ns_folder=medium_folder+'ns_stochastic/')
-# difference matrix
-gs.grid_search_tri(ns_folder=medium_folder+'ns_difference/')  # 31848s
-# # t-step random walks
-# gs.grid_search(ns_folder='output/intermediate data/negative_samples_partial_noSelfLoops/')  # 116876.32733845711s
+# # difference matrix
+# gs.grid_search_tri(ns_folder=medium_folder+'ns_difference/')
+# t-step random walks
+gs.grid_search(ns_folder=medium_folder+'ns_rw_withSelfLoops/')  # 116876.32733845711s
 
 # # whole wiki data
 # gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
