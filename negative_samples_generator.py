@@ -212,7 +212,7 @@ class NegativeSamplesGenerator:
         no_graph = NoGraph(encoded_edges_count_file_path, valid_vocabulary_path=self.valid_vocabulary_path)
         no_graph.get_t_step_random_walk_stochastic_matrix(t=t, output_folder=self.ns_folder)
 
-    def one_to_many(self, encoded_edges_count_file_path, t_max):
+    def one_to_many(self, encoded_edges_count_file_path, t_max, remove_self_loops):
         print(multi_processing.get_pid(), encoded_edges_count_file_path)
 
         # # [DEPRECATED] NXGraph version: too slow.
@@ -225,13 +225,14 @@ class NegativeSamplesGenerator:
 
         no_graph = NoGraph(encoded_edges_count_file_path, valid_vocabulary_path=self.valid_vocabulary_path)
         common.write_to_pickle(no_graph.graph_index2wordId, self.ns_folder + no_graph.name_prefix + '_nodes.pickle')
-        for matrix, t in no_graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max):
+        for matrix, t in no_graph.one_to_t_step_random_walk_stochastic_matrix_yielder(t=t_max, remove_self_loops=remove_self_loops):
             file_prefix = self.ns_folder + no_graph.name_prefix + '_' + str(t)
             np.save(file_prefix + '_step_rw_matrix.npy', matrix, fix_imports=False)
         print('need memory clean')
         return None
 
-    def many_to_many(self, encoded_edges_count_file_folder, directed, t_max, process_num, partial=False):
+    def many_to_many(self, encoded_edges_count_file_folder, directed, t_max, process_num, partial=False,
+                     remove_self_loops=False):
         """
         For all encoded_edges_count_file (of different window size)
         There are four types of files/extension:
@@ -255,7 +256,7 @@ class NegativeSamplesGenerator:
 
         files_list = multi_processing.get_files_endswith(encoded_edges_count_file_folder, file_extension)
         p = Pool(process_num, maxtasksperchild=1)
-        p.starmap_async(self.one_to_many, zip(files_list, repeat(t_max)))
+        p.starmap_async(self.one_to_many, zip(files_list, repeat(t_max), repeat(remove_self_loops)))
         p.close()
         p.join()
 
