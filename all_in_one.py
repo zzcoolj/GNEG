@@ -33,17 +33,17 @@ whole_folder = 'output/intermediate data/'
 print('build ns')
 start_time = time.time()
 
-grid_searcher = nsg.NegativeSamplesGenerator(ns_folder=whole_folder + 'ns_stochastic/',
+grid_searcher = nsg.NegativeSamplesGenerator(ns_folder=whole_folder + 'ns_difference/',
                                              valid_vocabulary_path=whole_folder + 'dicts_and_encoded_texts/valid_vocabulary_min_count_5_vocab_size_10000.txt')
 
-# stochastic matrix
-grid_searcher.multi_functions(f=grid_searcher.get_stochastic_matrix,
-                              encoded_edges_count_file_folder=whole_folder + 'graph/',
-                              directed=False, process_num=window_size-1, partial=False)
-# # difference matrix
-# grid_searcher.multi_difference_matrix(encoded_edges_count_file_folder=medium_folder+'graph/',
-#                                       merged_word_count_path=medium_folder + 'dicts_and_encoded_texts/word_count_partial.txt',
-#                                       directed=False, process_num=window_size-1, partial=True)
+# # stochastic matrix
+# grid_searcher.multi_functions(f=grid_searcher.get_stochastic_matrix,
+#                               encoded_edges_count_file_folder=whole_folder + 'graph/',
+#                               directed=False, process_num=window_size-1, partial=False)
+# difference matrix
+grid_searcher.multi_difference_matrix(encoded_edges_count_file_folder=whole_folder+'graph/',
+                                      merged_word_count_path=whole_folder + 'dicts_and_encoded_texts/word_count_all.txt',
+                                      directed=False, process_num=window_size-1, partial=False)
 # # t-step random walks   [ATTENTION]: If run in feydeau, process_num=1
 # grid_searcher.many_to_many(encoded_edges_count_file_folder=medium_folder+'graph/', directed=False, t_max=4,
 #                            process_num=9, partial=True, remove_self_loops=True)
