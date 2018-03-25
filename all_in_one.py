@@ -93,7 +93,7 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
                         merged_word_count_path=config['graph']['dicts_and_encoded_texts_folder'] + 'word_count_all.txt',
                         valid_vocabulary_path=config['graph']['dicts_and_encoded_texts_folder'] + 'valid_vocabulary_min_count_5_vocab_size_10000.txt',
                         workers=62, sg=sg, size=200, negative=5, iterations=3)
-# gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
+gs.one_search(matrix_path=None, graph_index2wordId_path=None, power=None, ns_mode_pyx=0)
 # # stochastic matrix
 # gs.one_search_bis(matrix_path='output/intermediate data/ns_stochastic/encoded_edges_count_window_size_3_undirected_noZeros_matrix.npy',
 #                   graph_index2wordId_path='output/intermediate data/ns_stochastic/encoded_edges_count_window_size_3_undirected_nodes.pickle',
@@ -102,10 +102,10 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 # gs.one_search_tri(matrix_path='output/intermediate data/ns_difference/encoded_edges_count_window_size_3_undirected_matrix.npy',
 #                   graph_index2wordId_path='output/intermediate data/ns_difference/encoded_edges_count_window_size_3_undirected_nodes.pickle',
 #                   power=0.01, ns_mode_pyx=1)
-# random walk noSelfLoops
-gs.one_search(matrix_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_7_undirected_4_step_rw_matrix.npy',
-              graph_index2wordId_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_7_undirected_nodes.pickle',
-              power=0.25, ns_mode_pyx=1)
+# # random walk noSelfLoops
+# gs.one_search(matrix_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_7_undirected_4_step_rw_matrix.npy',
+#               graph_index2wordId_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_7_undirected_nodes.pickle',
+#               power=0.25, ns_mode_pyx=1)
 # print('time in seconds:', common.count_time(start_time))
 #
 # gs.one_search(matrix_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_4_undirected_2_step_rw_matrix.npy',

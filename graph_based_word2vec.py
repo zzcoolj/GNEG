@@ -194,7 +194,7 @@ class GridSearch_new(object):
         print(ns_source_info)
         # evaluation results
         eval = Evaluation(word_vectors=model.wv)
-        # TODO LATER save wv
+        model.save(config['word2vec']['negative_samples_folder']+'model')
         del model
         labels1, results1 = eval.evaluation_questions_words()
         eval.print_lables_results(labels1, results1)
