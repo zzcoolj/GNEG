@@ -1,6 +1,6 @@
 from gensim import utils
 from scipy import stats
-
+from smart_open import smart_open
 
 class StatisticalSignificance(object):
 
@@ -19,7 +19,8 @@ class StatisticalSignificance(object):
         self.keyedVectors.vocab = ok_vocab
 
         print("OK1")
-        for line_no, line in enumerate(utils.smart_open(pairs)):
+        # for line_no, line in enumerate(utils.smart_open(pairs)):
+        for line_no, line in enumerate(smart_open(pairs)):
             print(line_no)
             print(line)
             line = utils.to_unicode(line)
@@ -37,6 +38,7 @@ class StatisticalSignificance(object):
                     continue
                 similarity_gold.append(sim)  # Similarity from the dataset
                 similarity_model.append(self.keyedVectors.similarity(a, b))  # Similarity from the model
+
         self.keyedVectors.vocab = original_vocab
         spearman = stats.spearmanr(similarity_gold, similarity_model)
         pearson = stats.pearsonr(similarity_gold, similarity_model)
