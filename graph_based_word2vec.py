@@ -448,7 +448,7 @@ class GridSearch_new(object):
         eval = Evaluation(word_vectors=model.wv)
         labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
         print(results2)
-        print('original works')
+        print('results should be equal to above')
         ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
         pearson, spearman, _ = ss.evaluate_word_pairs(pairs='data/evaluation data/wordsim353/combined.tab',
                                                       output_path='output/intermediate data/ns_difference/difference_model_wordsim353_similarities')
