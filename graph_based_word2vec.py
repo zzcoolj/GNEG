@@ -376,70 +376,77 @@ class GridSearch_new(object):
 
     # for difference matrix
     def one_search_tri(self, matrix_path, graph_index2wordId_path, power, ns_mode_pyx):
-        def negative_samples_source_information():
-            info = None
-            if ns_mode_pyx == 1:
-                ns_name = multi_processing.get_file_name(matrix_path)
-                if self.units:
-                    # e.g. encoded_edges_count_window_size_7_undirected_partial_matrix
-                    ns_name_information = re.search(
-                        'encoded_edges_count_window_size_(.*)_(.*)_partial_matrix',
-                        ns_name)
-                else:
-                    # e.g. encoded_edges_count_window_size_7_undirected_matrix.npy
-                    ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_matrix',
-                                                    ns_name)
-                info = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2), power]
-            elif ns_mode_pyx == 0:
-                # in original word2vec (frontline), power is set to 0.75 as default.
-                info = [matrix_path, None, None, 0.75]
-            elif ns_mode_pyx == -1:
-                # bottomline, power is set to 0 as default.
-                info = [matrix_path, None, None, 0]
-            if not info:
-                print('[ERROR] No negative samples source information.')
-                exit()
-            return info
+        # def negative_samples_source_information():
+        #     info = None
+        #     if ns_mode_pyx == 1:
+        #         ns_name = multi_processing.get_file_name(matrix_path)
+        #         if self.units:
+        #             # e.g. encoded_edges_count_window_size_7_undirected_partial_matrix
+        #             ns_name_information = re.search(
+        #                 'encoded_edges_count_window_size_(.*)_(.*)_partial_matrix',
+        #                 ns_name)
+        #         else:
+        #             # e.g. encoded_edges_count_window_size_7_undirected_matrix.npy
+        #             ns_name_information = re.search('encoded_edges_count_window_size_(.*)_(.*)_matrix',
+        #                                             ns_name)
+        #         info = [ns_name, int(ns_name_information.group(1)), ns_name_information.group(2), power]
+        #     elif ns_mode_pyx == 0:
+        #         # in original word2vec (frontline), power is set to 0.75 as default.
+        #         info = [matrix_path, None, None, 0.75]
+        #     elif ns_mode_pyx == -1:
+        #         # bottomline, power is set to 0 as default.
+        #         info = [matrix_path, None, None, 0]
+        #     if not info:
+        #         print('[ERROR] No negative samples source information.')
+        #         exit()
+        #     return info
+        #
+        # sentences = WikiSentences(self.training_data_folder, units=self.units)
+        #
+        # """ATTENTION
+        # The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to
+        # get valid words' count.
+        # """
+        # # TODO LATER a valid word count function in gdp, so as to transfer only one parameter to Word2Vec class.
+        # # TODO LATER rethink about min_count & max_vocab_size, maybe they are useless?
+        # # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table; -1: bottomline, uniformly distribution
+        # model = Word2Vec(sentences=sentences,
+        #                  index2word_path=self.index2word_path,
+        #                  merged_word_count_path=self.merged_word_count_path,
+        #                  valid_vocabulary_path=self.valid_vocabulary_path,
+        #                  matrix_path=matrix_path,
+        #                  graph_index2wordId_path=graph_index2wordId_path,
+        #                  ns_mode_pyx=ns_mode_pyx,
+        #                  power=power,
+        #                  size=self.size, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
+        #                  negative=self.negative)
+        #
+        # # negative samples source information
+        # ns_source_info = negative_samples_source_information()
+        # print(ns_source_info)
+        # # evaluation results
+        # eval = Evaluation(word_vectors=model.wv)
+        # model.save('output/intermediate data/ns_difference/model_difference')
+        # del model
+        # labels1, results1 = eval.evaluation_questions_words()
+        # eval.print_lables_results(labels1, results1)
+        # labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
+        # # eval.print_lables_results(labels2, results2)
+        # print(results2)
+        # labels3, results3 = eval.evaluation_word_pairs(path='data/evaluation data/simlex999.txt')
+        # # eval.print_lables_results(labels3, results3)
+        # print(results3)
+        #
+        # # merge ns source info and evaluation results
+        # result = ns_source_info + results2 + results3 + results1
+        # return result
 
-        sentences = WikiSentences(self.training_data_folder, units=self.units)
-
-        """ATTENTION
-        The only reason the Word2Vec class needs index2word_path, merged_word_count_path, valid_vocabulary_path is to 
-        get valid words' count.
-        """
-        # TODO LATER a valid word count function in gdp, so as to transfer only one parameter to Word2Vec class.
-        # TODO LATER rethink about min_count & max_vocab_size, maybe they are useless?
-        # ns_mode_pyx:  0: original, using cum_table; 1: using graph-based ns_table; -1: bottomline, uniformly distribution
-        model = Word2Vec(sentences=sentences,
-                         index2word_path=self.index2word_path,
-                         merged_word_count_path=self.merged_word_count_path,
-                         valid_vocabulary_path=self.valid_vocabulary_path,
-                         matrix_path=matrix_path,
-                         graph_index2wordId_path=graph_index2wordId_path,
-                         ns_mode_pyx=ns_mode_pyx,
-                         power=power,
-                         size=self.size, window=5, min_count=5, max_vocab_size=10000, workers=self.workers, sg=self.sg,
-                         negative=self.negative)
-
-        # negative samples source information
-        ns_source_info = negative_samples_source_information()
-        print(ns_source_info)
-        # evaluation results
+        # TODO NOW NOW NOW testing part
+        model = Word2Vec.load('output/intermediate data/ns_difference/model_difference')
+        print('model loaded')
         eval = Evaluation(word_vectors=model.wv)
-        model.save('output/intermediate data/ns_difference/model_difference')
-        del model
-        labels1, results1 = eval.evaluation_questions_words()
-        eval.print_lables_results(labels1, results1)
         labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
-        # eval.print_lables_results(labels2, results2)
         print(results2)
-        labels3, results3 = eval.evaluation_word_pairs(path='data/evaluation data/simlex999.txt')
-        # eval.print_lables_results(labels3, results3)
-        print(results3)
-
-        # merge ns source info and evaluation results
-        result = ns_source_info + results2 + results3 + results1
-        return result
 
     def grid_search_tri(self, ns_folder=config['word2vec']['negative_samples_folder']):
         file_txt = open(ns_folder+'op.txt', 'w')
