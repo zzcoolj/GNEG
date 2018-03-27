@@ -18,6 +18,7 @@ class StatisticalSignificance(object):
         original_vocab = self.keyedVectors.vocab
         self.keyedVectors.vocab = ok_vocab
 
+        print("OK1")
         for line_no, line in enumerate(utils.smart_open(pairs)):
             line = utils.to_unicode(line)
             if line.startswith('#'):

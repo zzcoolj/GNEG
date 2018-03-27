@@ -445,15 +445,16 @@ class GridSearch_new(object):
         # TODO NOW NOW NOW testing part
         model = Word2Vec.load('output/intermediate data/ns_difference/model_difference')
         print('model loaded')
-        eval = Evaluation(word_vectors=model.wv)
-        labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
-        print(results2)
-        print('original works')
+        # eval = Evaluation(word_vectors=model.wv)
+        # labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
+        # print(results2)
+        # print('original works')
         ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
+        print('1')
         pearson, spearman = ss.evaluate_word_pairs(pairs='data/evaluation data/wordsim353/combined.tab')
         print(pearson)
         print(spearman)
-        
+
     def grid_search_tri(self, ns_folder=config['word2vec']['negative_samples_folder']):
         file_txt = open(ns_folder+'op.txt', 'w')
         df = pd.DataFrame(columns=[
