@@ -4,6 +4,7 @@ import pandas as pd
 import re
 import random
 import configparser
+import statistical_significance
 config = configparser.ConfigParser()
 config.read('config.ini')
 
@@ -447,7 +448,12 @@ class GridSearch_new(object):
         eval = Evaluation(word_vectors=model.wv)
         labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
         print(results2)
-
+        print('original works')
+        ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
+        pearson, spearman = ss.evaluate_word_pairs(pairs='data/evaluation data/wordsim353/combined.tab')
+        print(pearson)
+        print(spearman)
+        
     def grid_search_tri(self, ns_folder=config['word2vec']['negative_samples_folder']):
         file_txt = open(ns_folder+'op.txt', 'w')
         df = pd.DataFrame(columns=[
