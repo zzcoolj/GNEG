@@ -447,15 +447,15 @@ class GridSearch_new(object):
         model = Word2Vec.load('output/intermediate data/ns_stochastic/model_stochastic')
         print('model loaded')
         eval = Evaluation(word_vectors=model.wv)
-        # labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
-        labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/simlex999.txt')
+        labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
+        # labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/simlex999.txt')
         print(results2)
         print('results should be equal to above')
         ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
-        # pearson, spearman, _ = ss.evaluate_word_pairs(pairs='data/evaluation data/wordsim353/combined.tab',
-        #                                               output_path='output/intermediate data/ns_difference/difference_model_wordsim353_similarities')
-        pearson, spearman, _ = ss.evaluate_word_pairs(pairs='data/evaluation data/simlex999.txt',
-                                                      output_path='output/intermediate data/ns_stochastic/stochastic_model_simlex999_similarities')
+        pearson, spearman, _ = ss.evaluate_word_pairs(pairs='data/evaluation data/wordsim353/combined.tab',
+                                                      output_path='output/intermediate data/ns_stochastic/stochastic_model_wordsim353_similarities')
+        # pearson, spearman, _ = ss.evaluate_word_pairs(pairs='data/evaluation data/simlex999.txt',
+        #                                               output_path='output/intermediate data/ns_stochastic/stochastic_model_simlex999_similarities')
         print(pearson)
         print(spearman)
 
