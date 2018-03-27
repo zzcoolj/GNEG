@@ -447,7 +447,7 @@ class GridSearch_new(object):
         print('model loaded')
         # eval = Evaluation(word_vectors=model.wv)
         # labels2, results2 = eval.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
-        labels2, results2 = model.wv.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
+        labels2, results2 = model.wv.word_vectors.evaluation_word_pairs(path='data/evaluation data/wordsim353/combined.tab')
         print(results2)
         print('original works')
         ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
