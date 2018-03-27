@@ -98,10 +98,10 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 # gs.one_search_bis(matrix_path='output/intermediate data/ns_stochastic/encoded_edges_count_window_size_3_undirected_noZeros_matrix.npy',
 #                   graph_index2wordId_path='output/intermediate data/ns_stochastic/encoded_edges_count_window_size_3_undirected_nodes.pickle',
 #                   power=0.25, ns_mode_pyx=1)
-# # difference matrix
-# gs.one_search_tri(matrix_path='output/intermediate data/ns_difference/encoded_edges_count_window_size_3_undirected_matrix.npy',
-#                   graph_index2wordId_path='output/intermediate data/ns_difference/encoded_edges_count_window_size_3_undirected_nodes.pickle',
-#                   power=0.01, ns_mode_pyx=1)
+# difference matrix
+gs.one_search_tri(matrix_path='output/intermediate data/ns_difference/encoded_edges_count_window_size_3_undirected_matrix.npy',
+                  graph_index2wordId_path='output/intermediate data/ns_difference/encoded_edges_count_window_size_3_undirected_nodes.pickle',
+                  power=0.01, ns_mode_pyx=1)
 # # random walk noSelfLoops
 # gs.one_search(matrix_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_7_undirected_4_step_rw_matrix.npy',
 #               graph_index2wordId_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_7_undirected_nodes.pickle',
@@ -113,9 +113,9 @@ gs = gbw.GridSearch_new(training_data_folder='/dev/shm/zzheng-tmp/prep/',
 #               power=0.75, ns_mode_pyx=1)
 # print('time in seconds:', common.count_time(start_time))
 #
-gs.one_search(matrix_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy',
-              graph_index2wordId_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_5_undirected_nodes.pickle',
-              power=0.25, ns_mode_pyx=1)
+# gs.one_search(matrix_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_5_undirected_2_step_rw_matrix.npy',
+#               graph_index2wordId_path='output/intermediate data/ns_rw_noSelfLoops/encoded_edges_count_window_size_5_undirected_nodes.pickle',
+#               power=0.25, ns_mode_pyx=1)
 
 print('time in seconds:', common.count_time(start_time))
 

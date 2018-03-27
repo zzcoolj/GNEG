@@ -57,3 +57,13 @@ class StatisticalSignificance(object):
         oov_ratio = float(oov) / (len(similarity_gold) + oov) * 100
 
         return spearman, pearson, oov_ratio
+
+    @staticmethod
+    def coefficient_calculation(similarity_model_1_path, similarity_model_2_path):
+        similarity_model_1 = common.read_pickle(similarity_model_1_path)
+        similarity_model_2 = common.read_pickle(similarity_model_2_path)
+
+        spearman = stats.spearmanr(similarity_model_1, similarity_model_2)
+        pearson = stats.pearsonr(similarity_model_1, similarity_model_2)
+
+        return spearman, pearson
