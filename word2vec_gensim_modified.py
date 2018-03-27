@@ -1576,7 +1576,7 @@ class Word2Vec(utils.SaveLoad):
         if model.negative and hasattr(model.wv, 'index2word'):
             model.make_cum_table()  # rebuild cum_table from vocabulary
             # TODO: Not sure about whether should put code below here.
-            model.make_cum_matrix()
+            # model.make_cum_matrix()
         if not hasattr(model, 'corpus_count'):
             model.corpus_count = None
         for v in model.wv.vocab.values():
