@@ -1,17 +1,29 @@
 from gensim import utils
 from scipy import stats
 
+import sys
+sys.path.insert(0, '../common/')
+import common
+
 
 class StatisticalSignificance(object):
 
     def __init__(self, keyedVectors):
         self.keyedVectors = keyedVectors
 
-    def evaluate_word_pairs(self, pairs, delimiter='\t', restrict_vocab=300000):
+    def evaluate_word_pairs(self, pairs, output_path, delimiter='\t', restrict_vocab=300000):
+        """
+        Given evaluation data set path (e.g. path to the WordSim-353),
+        following the word pairs order in that data set,
+        we calculate similarity of each word pair by using our mode.
+
+        ATTENTION: golden similarity given by the evaluation data set is useless in this function.
+        """
+
         ok_vocab = [(w, self.keyedVectors.vocab[w]) for w in self.keyedVectors.index2word[:restrict_vocab]]
         ok_vocab = dict((w.upper(), v) for w, v in reversed(ok_vocab))
 
-        similarity_gold = []
+        # similarity_gold = []
         similarity_model = []
         oov = 0
 
@@ -32,12 +44,13 @@ class StatisticalSignificance(object):
                 if a not in ok_vocab or b not in ok_vocab:
                     oov += 1
                     continue
-                similarity_gold.append(sim)  # Similarity from the dataset
+                # similarity_gold.append(sim)  # Similarity from the dataset
                 similarity_model.append(self.keyedVectors.similarity(a, b))  # Similarity from the model
 
         self.keyedVectors.vocab = original_vocab
-        spearman = stats.spearmanr(similarity_gold, similarity_model)
-        pearson = stats.pearsonr(similarity_gold, similarity_model)
-        oov_ratio = float(oov) / (len(similarity_gold) + oov) * 100
 
-        return pearson, spearman, oov_ratio
+        common.write_simple_list_to_file(output_path, similarity_model)
+
+        # spearman = stats.spearmanr(similarity_gold, similarity_model)
+        # pearson = stats.pearsonr(similarity_gold, similarity_model)
+        # oov_ratio = float(oov) / (len(similarity_gold) + oov) * 100
