@@ -450,8 +450,7 @@ class GridSearch_new(object):
         print(results2)
         print('original works')
         ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
-        print('1')
-        pearson, spearman = ss.evaluate_word_pairs(pairs='data/evaluation data/wordsim353/combined.tab')
+        pearson, spearman, _ = ss.evaluate_word_pairs(pairs='data/evaluation data/wordsim353/combined.tab')
         print(pearson)
         print(spearman)
 
