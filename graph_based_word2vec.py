@@ -359,7 +359,7 @@ class GridSearch_new(object):
         print(ns_source_info)
         # evaluation results
         eval = Evaluation(word_vectors=model.wv)
-        # TODO LATER save wv
+        model.save('output/intermediate data/ns_stochastic/model_stochastic')
         del model
         labels1, results1 = eval.evaluation_questions_words()
         eval.print_lables_results(labels1, results1)
