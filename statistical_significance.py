@@ -20,7 +20,8 @@ class StatisticalSignificance(object):
 
         print("OK1")
         for line_no, line in enumerate(utils.smart_open(pairs)):
-            print("OK2")
+            print(line_no)
+            print(line)
             line = utils.to_unicode(line)
             if line.startswith('#'):
                 # May be a comment
