@@ -17,13 +17,14 @@ class StatisticalSignificance(object):
         following the word pairs order in that data set,
         we calculate similarity of each word pair by using our mode.
 
-        ATTENTION: golden similarity given by the evaluation data set is useless in this function.
+        ATTENTION: golden similarity given by the evaluation data set is not necessary to this function. Here we use it
+                    for the result check.
         """
 
         ok_vocab = [(w, self.keyedVectors.vocab[w]) for w in self.keyedVectors.index2word[:restrict_vocab]]
         ok_vocab = dict((w.upper(), v) for w, v in reversed(ok_vocab))
 
-        # similarity_gold = []
+        similarity_gold = []
         similarity_model = []
         oov = 0
 
@@ -44,13 +45,15 @@ class StatisticalSignificance(object):
                 if a not in ok_vocab or b not in ok_vocab:
                     oov += 1
                     continue
-                # similarity_gold.append(sim)  # Similarity from the dataset
+                similarity_gold.append(sim)  # Similarity from the dataset
                 similarity_model.append(self.keyedVectors.similarity(a, b))  # Similarity from the model
 
         self.keyedVectors.vocab = original_vocab
 
-        common.write_simple_list_to_file(output_path, similarity_model)
+        common.write_to_pickle(similarity_model, output_path)
 
-        # spearman = stats.spearmanr(similarity_gold, similarity_model)
-        # pearson = stats.pearsonr(similarity_gold, similarity_model)
-        # oov_ratio = float(oov) / (len(similarity_gold) + oov) * 100
+        spearman = stats.spearmanr(similarity_gold, similarity_model)
+        pearson = stats.pearsonr(similarity_gold, similarity_model)
+        oov_ratio = float(oov) / (len(similarity_gold) + oov) * 100
+
+        return spearman, pearson, oov_ratio
