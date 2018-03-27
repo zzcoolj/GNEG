@@ -462,7 +462,7 @@ class GridSearch_new(object):
 
         # TODO NOW NOW NOW Calculate coefficient
         pearson, spearman =statistical_significance.StatisticalSignificance.coefficient_calculation(similarity_model_1_path='output/intermediate data/negative_samples/standard_model_simlex999_similarities',
-                                                                                                    similarity_model_2_path='output/intermediate data/ns_stochastic/stochastic_model_simlex999_similarities')
+                                                                                                    similarity_model_2_path='output/intermediate data/ns_stochastic/stochastic_model_wordsim353_similarities')
         print(pearson)
         print(spearman)
 
