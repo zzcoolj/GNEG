@@ -82,6 +82,7 @@ class StatisticalSignificance(object):
 
         for i in range(len(accuracy) - 1):
             for question_words in accuracy[i]['correct']:
+                print([str(i)].extend(question_words))
                 correct.append([str(i)].extend(question_words))
             for question_words in accuracy[i]['incorrect']:
                 incorrect.append([str(i)].extend(question_words))
