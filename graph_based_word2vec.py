@@ -476,12 +476,12 @@ class GridSearch_new(object):
         # print(spearman)
 
         # # TODO NOW NOW NOW
-        # model = Word2Vec.load('output/intermediate data/ns_difference/model_difference')
+        model = Word2Vec.load('output/intermediate data/ns_difference/model_difference')
         # model = Word2Vec.load('output/intermediate data/ns_stochastic/model_stochastic')
-        model = Word2Vec.load('output/intermediate data/ns_rw_noSelfLoops/model_rw')
+        # model = Word2Vec.load('output/intermediate data/ns_rw_noSelfLoops/model_rw')
         print('model loaded')
         ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
-        ss.write_evaluation_questions_words_result(output_path='output/intermediate data/ns_rw_noSelfLoops/rw_analogy')
+        ss.write_evaluation_questions_words_result(output_path='output/intermediate data/ns_difference/difference_analogy')
 
     def grid_search_tri(self, ns_folder=config['word2vec']['negative_samples_folder']):
         file_txt = open(ns_folder+'op.txt', 'w')
