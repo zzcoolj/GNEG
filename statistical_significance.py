@@ -81,6 +81,7 @@ class StatisticalSignificance(object):
         print(len(correct))
         print(len(correct) + len(incorrect))
         print(correct[0])
+        print(correct[0][0])
         exit()
 
 
