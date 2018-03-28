@@ -77,31 +77,28 @@ class StatisticalSignificance(object):
         accuracy = self.keyedVectors.accuracy(path)  # 4478
 
         result = {}
-        correct = []
-        incorrect = []
 
         for i in range(len(accuracy) - 1):
-            for question_words in accuracy[i]['correct']:
-                print(question_words)
-                temp = [str(i)]
-                print(temp.extend(question_words))
-                correct.append(temp.extend(question_words))
-            # for question_words in accuracy[i]['incorrect']:
-            #     incorrect.append([str(i)].extend(question_words))
+            correct = []
+            incorrect = []
+            correct.extend(accuracy[i]['correct'])
+            incorrect.extend(accuracy[i]['incorrect'])
 
-        for question_words in correct:
-            key = ' '.join(question_words)
-            if key in result:
-                print(key)
-                exit()
-            result[key] = 1
+            for question_words in correct:
+                key = str(i) + ' ' + ' '.join(question_words)
+                if key in result:
+                    print('wrong')
+                    print(key)
+                    exit()
+                result[key] = 1
 
-        for question_words in incorrect:
-            key = ' '.join(question_words)
-            if key in result:
-                print(key)
-                exit()
-            result[key] = 0
+            for question_words in incorrect:
+                key = str(i) + ' ' + ' '.join(question_words)
+                if key in result:
+                    print('wrong')
+                    print(key)
+                    exit()
+                result[key] = 0
 
         print(len(correct))
         print(len(correct) + len(incorrect))
