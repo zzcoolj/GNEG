@@ -81,16 +81,22 @@ class StatisticalSignificance(object):
 
         for question_words in correct:
             key = ' '.join(question_words)
+            if key in result:
+                print(key)
+                exit()
             result[key] = 1
 
         for question_words in incorrect:
             key = ' '.join(question_words)
+            if key in result:
+                print(key)
+                exit()
             result[key] = 0
 
         print(len(correct))
         print(len(correct) + len(incorrect))
         print(len(result), 'this number should be equal to the number above')
-        print(result[0])
+        print(result.items()[0])
         exit()
 
 
