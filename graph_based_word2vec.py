@@ -487,8 +487,8 @@ class GridSearch_new(object):
         # TODO NOW NOW NOW NOW
         statistical_significance.StatisticalSignificance.write_results(
             path_for_first_column='output/intermediate data/negative_samples/NEG_analogy',
-            path_for_second_column='output/intermediate data/ns_stochastic/stochastic_analogy',
-            output_path='output/NEG_stochastic.txt')
+            path_for_second_column='output/intermediate data/ns_difference/difference_analogy',
+            output_path='output/NEG_difference.txt')
 
     def grid_search_tri(self, ns_folder=config['word2vec']['negative_samples_folder']):
         file_txt = open(ns_folder+'op.txt', 'w')
