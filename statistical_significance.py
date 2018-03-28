@@ -68,15 +68,17 @@ class StatisticalSignificance(object):
 
         return spearman, pearson
 
-    def write_evaluation_questions_words_result(self, path='data/evaluation data/questions-words.txt'):
+    def write_evaluation_questions_words_result(self, output_path,
+                                                evaluation_path='data/evaluation data/questions-words.txt'):
         """
         ATTENTION:
         Same questions could appear more than once in different sections.
         e.g. ATHENS GREECE BANGKOK THAILAND appears twice
         """
-        accuracy = self.keyedVectors.accuracy(path)  # 4478
+        accuracy = self.keyedVectors.accuracy(evaluation_path)  # 4478
 
         result = {}
+        correct_count = 0
 
         for i in range(len(accuracy) - 1):
             correct = []
@@ -91,6 +93,7 @@ class StatisticalSignificance(object):
                     print(key)
                     exit()
                 result[key] = 1
+                correct_count += 1
 
             for question_words in incorrect:
                 key = str(i) + ' ' + ' '.join(question_words)
@@ -100,25 +103,27 @@ class StatisticalSignificance(object):
                     exit()
                 result[key] = 0
 
+        print('correct_count:', correct_count)
         print(len(result), 'this number should be equal to 6032')
-        for key, value in result.items():
-            print(key, value)
-            exit()
+        # for key, value in result.items():
+        #     print(key, value)
+        #     exit()
+        common.write_to_pickle(result, output_path)
 
 
-        sem_correct = sum((len(accuracy[i]['correct']) for i in range(5)))
-        sem_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5))
-        sem_acc = 100 * float(sem_correct) / sem_total
-
-        syn_correct = sum((len(accuracy[i]['correct']) for i in range(5, len(accuracy) - 1)))
-        syn_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5, len(accuracy) - 1))
-        syn_acc = 100 * float(syn_correct) / syn_total
-
-        sum_corr = len(accuracy[-1]['correct'])
-        sum_incorr = len(accuracy[-1]['incorrect'])
-        total = sum_corr + sum_incorr
-        total_acc = sum_corr / total * 100
-
-        labels = ['sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total']
-        results = [sem_acc, sem_total, syn_acc, syn_total, total_acc, total]
-        return labels, results
+        # sem_correct = sum((len(accuracy[i]['correct']) for i in range(5)))
+        # sem_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5))
+        # sem_acc = 100 * float(sem_correct) / sem_total
+        #
+        # syn_correct = sum((len(accuracy[i]['correct']) for i in range(5, len(accuracy) - 1)))
+        # syn_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5, len(accuracy) - 1))
+        # syn_acc = 100 * float(syn_correct) / syn_total
+        #
+        # sum_corr = len(accuracy[-1]['correct'])
+        # sum_incorr = len(accuracy[-1]['incorrect'])
+        # total = sum_corr + sum_incorr
+        # total_acc = sum_corr / total * 100
+        #
+        # labels = ['sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total']
+        # results = [sem_acc, sem_total, syn_acc, syn_total, total_acc, total]
+        # return labels, results
