@@ -127,3 +127,13 @@ class StatisticalSignificance(object):
         # labels = ['sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total']
         # results = [sem_acc, sem_total, syn_acc, syn_total, total_acc, total]
         # return labels, results
+
+    @staticmethod
+    def write_results(path_for_first_column, path_for_second_column, output_path):
+        first = common.read_pickle(path_for_first_column)
+        second = common.read_pickle(path_for_second_column)
+
+        with open(output_path, 'w') as f:
+            for key, first_column in first.items():
+                second_column = second[key]
+                f.write(str(first_column) + '\t' + str(second_column))

@@ -475,14 +475,20 @@ class GridSearch_new(object):
         # print(pearson)
         # print(spearman)
 
-        # # TODO NOW NOW NOW
-        # model = Word2Vec.load('output/intermediate data/ns_difference/model_difference')
-        # model = Word2Vec.load('output/intermediate data/ns_stochastic/model_stochastic')
-        # model = Word2Vec.load('output/intermediate data/ns_rw_noSelfLoops/model_rw')
-        model = Word2Vec.load('output/intermediate data/negative_samples/model_NEG')
-        print('model loaded')
-        ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
-        ss.write_evaluation_questions_words_result(output_path='output/intermediate data/negative_samples/NEG_analogy')
+        # # # TODO NOW NOW NOW
+        # # model = Word2Vec.load('output/intermediate data/ns_difference/model_difference')
+        # # model = Word2Vec.load('output/intermediate data/ns_stochastic/model_stochastic')
+        # # model = Word2Vec.load('output/intermediate data/ns_rw_noSelfLoops/model_rw')
+        # model = Word2Vec.load('output/intermediate data/negative_samples/model_NEG')
+        # print('model loaded')
+        # ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
+        # ss.write_evaluation_questions_words_result(output_path='output/intermediate data/negative_samples/NEG_analogy')
+
+        # TODO NOW NOW NOW NOW
+        statistical_significance.StatisticalSignificance.write_results(
+            path_for_first_column='output/intermediate data/negative_samples/NEG_analogy',
+            path_for_second_column='output/intermediate data/ns_stochastic/stochastic_analogy',
+            output_path='output/NEG_stochastic.txt')
 
     def grid_search_tri(self, ns_folder=config['word2vec']['negative_samples_folder']):
         file_txt = open(ns_folder+'op.txt', 'w')
