@@ -133,7 +133,12 @@ class StatisticalSignificance(object):
         first = common.read_pickle(path_for_first_column)
         second = common.read_pickle(path_for_second_column)
 
+        lines_count = 0
+
         with open(output_path, 'w') as f:
             for key, first_column in first.items():
                 second_column = second[key]
-                f.write(str(first_column) + '\t' + str(second_column))
+                f.write(str(first_column) + '\t' + str(second_column) + '\n')
+                lines_count += 1
+
+        print(lines_count, 'should be equal to 6032')
