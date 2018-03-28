@@ -460,20 +460,29 @@ class GridSearch_new(object):
         # print(pearson)
         # print(spearman)
 
-        # TODO NOW NOW NOW Calculate coefficient
-        print('simlex999')
-        spearman, pearson =statistical_significance.StatisticalSignificance.coefficient_calculation(
-            similarity_model_1_path='output/intermediate data/negative_samples/standard_model_simlex999_similarities',
-            similarity_model_2_path='output/intermediate data/ns_rw_noSelfLoops/rw_model_simlex999_similarities')
-        print(pearson)
-        print(spearman)
+        # # TODO NOW NOW NOW Calculate coefficient
+        # print('simlex999')
+        # spearman, pearson =statistical_significance.StatisticalSignificance.coefficient_calculation(
+        #     similarity_model_1_path='output/intermediate data/negative_samples/standard_model_simlex999_similarities',
+        #     similarity_model_2_path='output/intermediate data/ns_rw_noSelfLoops/rw_model_simlex999_similarities')
+        # print(pearson)
+        # print(spearman)
+        #
+        # print('\nwordsim353')
+        # spearman, pearson = statistical_significance.StatisticalSignificance.coefficient_calculation(
+        #     similarity_model_1_path='output/intermediate data/negative_samples/standard_model_wordsim353_similarities',
+        #     similarity_model_2_path='output/intermediate data/ns_rw_noSelfLoops/rw_model_wordsim353_similarities')
+        # print(pearson)
+        # print(spearman)
 
-        print('\nwordsim353')
-        spearman, pearson = statistical_significance.StatisticalSignificance.coefficient_calculation(
-            similarity_model_1_path='output/intermediate data/negative_samples/standard_model_wordsim353_similarities',
-            similarity_model_2_path='output/intermediate data/ns_rw_noSelfLoops/rw_model_wordsim353_similarities')
-        print(pearson)
-        print(spearman)
+        # # TODO NOW NOW NOW
+        # model = Word2Vec.load('output/intermediate data/ns_difference/model_difference')
+        # model = Word2Vec.load('output/intermediate data/ns_stochastic/model_stochastic')
+        model = Word2Vec.load('output/intermediate data/ns_rw_noSelfLoops/model_rw')
+        print('model loaded')
+        ss = statistical_significance.StatisticalSignificance(keyedVectors=model.wv)
+        _, results = ss.write_evaluation_questions_words_result()
+        print(results)
 
 
     def grid_search_tri(self, ns_folder=config['word2vec']['negative_samples_folder']):

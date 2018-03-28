@@ -67,3 +67,23 @@ class StatisticalSignificance(object):
         pearson = stats.pearsonr(similarity_model_1, similarity_model_2)
 
         return spearman, pearson
+
+    def write_evaluation_questions_words_result(self, path='data/evaluation data/questions-words.txt'):
+        accuracy = self.keyedVectors.accuracy(path)  # 4478
+
+        sem_correct = sum((len(accuracy[i]['correct']) for i in range(5)))
+        sem_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5))
+        sem_acc = 100 * float(sem_correct) / sem_total
+
+        syn_correct = sum((len(accuracy[i]['correct']) for i in range(5, len(accuracy) - 1)))
+        syn_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5, len(accuracy) - 1))
+        syn_acc = 100 * float(syn_correct) / syn_total
+
+        sum_corr = len(accuracy[-1]['correct'])
+        sum_incorr = len(accuracy[-1]['incorrect'])
+        total = sum_corr + sum_incorr
+        total_acc = sum_corr / total * 100
+
+        labels = ['sem_acc', '#sem', 'syn_acc', '#syn', 'total_acc', '#total']
+        results = [sem_acc, sem_total, syn_acc, syn_total, total_acc, total]
+        return labels, results
