@@ -71,6 +71,10 @@ class StatisticalSignificance(object):
     def write_evaluation_questions_words_result(self, path='data/evaluation data/questions-words.txt'):
         accuracy = self.keyedVectors.accuracy(path)  # 4478
 
+        print(accuracy[0]['correct'])
+        exit()
+
+
         sem_correct = sum((len(accuracy[i]['correct']) for i in range(5)))
         sem_total = sum((len(accuracy[i]['correct']) + len(accuracy[i]['incorrect'])) for i in range(5))
         sem_acc = 100 * float(sem_correct) / sem_total
