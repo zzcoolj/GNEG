@@ -101,7 +101,7 @@ class StatisticalSignificance(object):
                 result[key] = 0
 
         print(len(result), 'this number should be equal to 6032')
-        for key, value in result:
+        for key, value in result.items():
             print(key, value)
             exit()
 
