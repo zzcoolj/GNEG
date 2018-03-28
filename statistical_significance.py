@@ -69,6 +69,11 @@ class StatisticalSignificance(object):
         return spearman, pearson
 
     def write_evaluation_questions_words_result(self, path='data/evaluation data/questions-words.txt'):
+        """
+        ATTENTION:
+        Same questions could appear more than once in different sections.
+        e.g. ATHENS GREECE BANGKOK THAILAND appears twice
+        """
         accuracy = self.keyedVectors.accuracy(path)  # 4478
 
         result = {}
@@ -76,8 +81,10 @@ class StatisticalSignificance(object):
         incorrect = []
 
         for i in range(len(accuracy) - 1):
-            correct.extend(accuracy[i]['correct'])
-            incorrect.extend(accuracy[i]['incorrect'])
+            for question_words in accuracy[i]['correct']:
+                correct.append([str(i)].extend(question_words))
+            for question_words in accuracy[i]['incorrect']:
+                incorrect.append([str(i)].extend(question_words))
 
         for question_words in correct:
             key = ' '.join(question_words)
