@@ -100,11 +100,10 @@ class StatisticalSignificance(object):
                     exit()
                 result[key] = 0
 
-        print(len(correct))
-        print(len(correct) + len(incorrect))
-        print(len(result), 'this number should be equal to the number above')
-        print(result.items()[0])
-        exit()
+        print(len(result), 'this number should be equal to 6032')
+        for key, value in result:
+            print(key, value)
+            exit()
 
 
         sem_correct = sum((len(accuracy[i]['correct']) for i in range(5)))
