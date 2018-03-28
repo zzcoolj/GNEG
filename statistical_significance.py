@@ -71,7 +71,15 @@ class StatisticalSignificance(object):
     def write_evaluation_questions_words_result(self, path='data/evaluation data/questions-words.txt'):
         accuracy = self.keyedVectors.accuracy(path)  # 4478
 
-        print(accuracy[0]['correct'])
+        correct = []
+        incorrect = []
+
+        for i in range(len(accuracy) - 1):
+            correct.extend(accuracy[i]['correct'])
+            incorrect.extend(accuracy[i]['incorrect'])
+
+        print(len(correct))
+        print(len(correct) + len(incorrect))
         exit()
 
 
