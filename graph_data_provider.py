@@ -722,7 +722,7 @@ if __name__ == '__main__':
     #                           process_num=4,
     #                           max_vocab_size=10000)
 
-    part_of_data(units=['AB', 'AA'], window_size=2, process_num=4)
+    # part_of_data(units=['AB', 'AA'], window_size=2, process_num=4)
 
     # # get undirected edges count for all file
     # for i in range(2, 11):
