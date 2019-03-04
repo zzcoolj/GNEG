@@ -1,6 +1,7 @@
 data/
 build/
 output/
+visualization_png/
 LICENSE.txt
 *.so
 *.c
